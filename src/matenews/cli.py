@@ -77,7 +77,7 @@ def handle_build(args: argparse.Namespace) -> int:
     selected_slugs = set(args.sources) if args.sources else None
     config = RunConfig(output_dir=Path(args.output_dir), site_url=args.site_url)
     batches = fetch_source_batches(selected_slugs=selected_slugs, ignore_schedule=args.all_sources)
-    build_site(batches, config=config, selected_slugs=selected_slugs)
+    build_site(batches, config=config)
     article_count = sum(len(batch.articles) for batch in batches)
     print(f"Generated {article_count} articles across {len(batches)} sources in {config.output_dir}")
     return 0

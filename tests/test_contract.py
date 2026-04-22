@@ -1,16 +1,21 @@
 from __future__ import annotations
 
+import argparse
 import tempfile
 import unittest
 from datetime import datetime
 from pathlib import Path
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
+from matenews.cli import handle_build
 from matenews.domain.dates import file_date_name, frontend_date
 from matenews.domain.models import Article, RunConfig, SourceBatch, SourceConfig
 from matenews.pipeline.runner import build_site
 from matenews.publish import default_commit_message, sync_site_directory
 from matenews.render.site import render_article_page, render_index_sections
+from matenews.sources.letrap import LetraPSource
+from matenews.sources.registry import get_source_definitions
 
 
 ARGENTINA_TZ = ZoneInfo("America/Argentina/Buenos_Aires")
@@ -121,6 +126,45 @@ class ContractTests(unittest.TestCase):
     def test_default_commit_message_is_stable(self) -> None:
         now = datetime(2026, 4, 22, 15, 45, 0)
         self.assertEqual(default_commit_message(now), "Publish MateNews site 2026-04-22 15:45:00")
+
+    def test_letra_p_registration_and_url_filter(self) -> None:
+        definitions = get_source_definitions()
+        self.assertIn("letra_p", {definition.config.slug for definition in definitions})
+
+        source = LetraPSource(
+            SourceConfig(
+                name="Letra P",
+                slug="letra_p",
+                homepage_url="https://www.letrap.com.ar/",
+                base_url="https://www.letrap.com.ar",
+            )
+        )
+
+        self.assertTrue(
+            source._is_article_url(
+                "https://www.letrap.com.ar/politica/la-grieta-y-la-interna-del-gobierno-convirtieron-el-homenaje-al-papa-francisco-un-campo-batalla-n5423312"
+            )
+        )
+        self.assertFalse(source._is_article_url("https://www.letrap.com.ar/seccion/politica"))
+        self.assertFalse(source._is_article_url("https://www.letrap.com.ar/region/buenos-aires"))
+
+    def test_handle_build_fetches_selected_but_renders_cached_sections(self) -> None:
+        args = argparse.Namespace(
+            sources=["letra_p"],
+            output_dir="site",
+            site_url="https://matenews.github.io/MateNews",
+            all_sources=False,
+        )
+
+        with patch("matenews.cli.fetch_source_batches", return_value=[] ) as fetch_mock:
+            with patch("matenews.cli.build_site") as build_mock:
+                result = handle_build(args)
+
+        self.assertEqual(result, 0)
+        fetch_mock.assert_called_once_with(selected_slugs={"letra_p"}, ignore_schedule=False)
+        _, build_kwargs = build_mock.call_args
+        self.assertIn("config", build_kwargs)
+        self.assertNotIn("selected_slugs", build_kwargs)
 
 
 if __name__ == "__main__":

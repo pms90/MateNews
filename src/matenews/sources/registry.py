@@ -9,6 +9,7 @@ from .cohete import CoheteSource
 from .eldia import ElDiaSource
 from .elobservador import ElObservadorSource
 from .infobae import InfobaeSource
+from .letrap import LetraPSource
 from .lpo import LPOSource
 from .nodal import NodalSource
 from .pagina12 import Pagina12Source
@@ -54,6 +55,15 @@ SOURCE_DEFINITIONS = [
             limit=4,
         ),
         implementation=LPOSource,
+    ),
+    SourceDefinition(
+        SourceConfig(
+            name="Letra P",
+            slug="letra_p",
+            homepage_url="https://www.letrap.com.ar/",
+            base_url="https://www.letrap.com.ar",
+        ),
+        implementation=LetraPSource,
     ),
     SourceDefinition(
         SourceConfig(

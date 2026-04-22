@@ -7,7 +7,7 @@ Migracion inicial de MateNews_v3.ipynb a un proyecto Python estructurado.
 - El contrato de salida del sitio ya esta encapsulado en codigo Python.
 - El render usa templates HTML derivados del sitio publicado actual.
 - Hay una CLI inicial para listar fuentes y generar builds locales reproducibles.
-- Ya estan migradas: Infobae, Pagina 12, La Politica Online, Nodal, El Dia, RT, El Cohete a la Luna, Ambito y El Observador.
+- Ya estan migradas: Infobae, Pagina 12, La Politica Online, Letra P, Nodal, El Dia, RT, El Cohete a la Luna, Ambito y El Observador.
 - El pipeline ya reusa secciones cacheadas para fuentes fuera de agenda, replicando el comportamiento del notebook.
 - Financial Times queda deshabilitado por defecto porque su homepage responde 403 tanto en acceso directo como via mirror textual.
 
@@ -38,6 +38,18 @@ Si ya instalaste el paquete con `pip install -e .`, también puedes usar el coma
 
 La primera forma de build respeta la agenda diaria de cada fuente. La segunda ignora la agenda y genera una version completa con todas las fuentes activas.
 
+Si quieres actualizar solo una fuente y conservar en el index las demas secciones ya cacheadas, puedes usar `--sources`. Por ejemplo, este comando vuelve a adquirir solo Letra P y deja el resto del sitio con la informacion previamente generada:
+
+```bash
+python -m matenews.cli build --sources letra_p --output-dir site
+```
+
+Ese flujo sirve para evitar volver a consultar fuentes que ya fueron adquiridas recientemente. Despues de ese build selectivo, la publicacion se hace igual que siempre:
+
+```bash
+python -m matenews.cli publish --source-dir site --target-dir docs --remote origin --branch main
+```
+
 El build escribe:
 
 - site/index.html
@@ -60,6 +72,7 @@ Ejemplos:
 ```bash
 python -m matenews.cli build --output-dir site
 python -m matenews.cli build --all-sources --output-dir site
+python -m matenews.cli build --sources letra_p --output-dir site
 python -m matenews.cli publish --source-dir site --target-dir docs --no-push
 python -m matenews.cli publish --source-dir site --target-dir docs --remote origin --branch main
 ```
