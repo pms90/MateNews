@@ -29,6 +29,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional list of source slugs to build",
     )
+    build_parser_obj.add_argument(
+        "--all-sources",
+        action="store_true",
+        help="Ignore the daily schedule and fetch every enabled source",
+    )
     build_parser_obj.set_defaults(handler=handle_build)
 
     publish_parser = subparsers.add_parser("publish", help="Publish an already generated site")
@@ -71,7 +76,7 @@ def handle_list_sources(args: argparse.Namespace) -> int:
 def handle_build(args: argparse.Namespace) -> int:
     selected_slugs = set(args.sources) if args.sources else None
     config = RunConfig(output_dir=Path(args.output_dir), site_url=args.site_url)
-    batches = fetch_source_batches(selected_slugs=selected_slugs)
+    batches = fetch_source_batches(selected_slugs=selected_slugs, ignore_schedule=args.all_sources)
     build_site(batches, config=config, selected_slugs=selected_slugs)
     article_count = sum(len(batch.articles) for batch in batches)
     print(f"Generated {article_count} articles across {len(batches)} sources in {config.output_dir}")

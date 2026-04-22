@@ -19,11 +19,24 @@ python -m pip install -e .
 
 ## Uso
 
+Primero instala el proyecto en tu entorno:
+
 ```bash
-matenews list-sources
-matenews build --output-dir site
-matenews publish --source-dir site --target-dir docs
+python -m pip install -e .
 ```
+
+En los comandos siguientes se usa `python`; asegúrate de que esté disponible en tu PATH.
+
+```bash
+python -m matenews.cli list-sources
+python -m matenews.cli build --output-dir site
+python -m matenews.cli build --all-sources --output-dir site
+python -m matenews.cli publish --source-dir site --target-dir docs
+```
+
+Si ya instalaste el paquete con `pip install -e .`, también puedes usar el comando corto `matenews` en lugar de `python -m matenews.cli`.
+
+La primera forma de build respeta la agenda diaria de cada fuente. La segunda ignora la agenda y genera una version completa con todas las fuentes activas.
 
 El build escribe:
 
@@ -38,15 +51,16 @@ El publish:
 - crea un commit separado de publicacion
 - hace push al remoto Git configurado, salvo que se use --no-push
 
+La web publicada queda en:
+
+https://pms90.github.io/MateNews/
+
 Ejemplos:
 
 ```bash
-matenews build --output-dir site
-matenews publish --source-dir site --target-dir docs --no-push
-matenews publish --source-dir site --target-dir docs --remote origin --branch main
+python -m matenews.cli build --output-dir site
+python -m matenews.cli build --all-sources --output-dir site
+python -m matenews.cli publish --source-dir site --target-dir docs --no-push
+python -m matenews.cli publish --source-dir site --target-dir docs --remote origin --branch main
 ```
 
-## Siguientes pasos
-
-- Separar la publicacion a GitHub Pages del build local
-- Implementar una estrategia estable para Financial Times o reemplazarlo por una fuente equivalente

@@ -21,6 +21,7 @@ def fetch_source_batches(
     selected_slugs: set[str] | None = None,
     client: HttpClient | None = None,
     now: datetime | None = None,
+    ignore_schedule: bool = False,
 ) -> list[SourceBatch]:
     http_client = client or HttpClient()
     current_time = argentina_now(now)
@@ -29,7 +30,7 @@ def fetch_source_batches(
     for source in get_source_instances(selected_slugs=selected_slugs):
         if not source.config.enabled:
             continue
-        if current_day not in source.config.day_codes:
+        if not ignore_schedule and current_day not in source.config.day_codes:
             continue
         batches.append(source.fetch(http_client))
     return batches
