@@ -1,15 +1,19 @@
 # MateNews
 
-Migracion inicial de MateNews_v3.ipynb a un proyecto Python estructurado.
+Web pública: https://pms90.github.io/MateNews/
+
+MateNews es un agregador estático de noticias implementado en Python que adquiere contenidos desde múltiples medios digitales, normaliza títulos, enlaces, autores y cuerpos de artículo, y genera un sitio HTML publicable en GitHub Pages con estructura de rutas determinística y snapshots históricos por fecha.
+
+Desde el punto de vista técnico, el proyecto está organizado como un pipeline reproducible compuesto por adapters de fuente, un cliente HTTP común, un modelo de dominio explícito, una capa de render estático y una CLI operacional. Cada fuente implementa una interfaz homogénea de adquisición sobre `SourceConfig`, `Article` y `SourceBatch`; el pipeline resuelve agenda por día, reutilización de secciones cacheadas para fuentes no reacquiridas, construcción incremental de páginas de índice y páginas de noticia, y publicación desacoplada mediante sincronización del artefacto generado hacia la carpeta servida por GitHub Pages. El sistema prioriza compatibilidad de salida, aislamiento entre adquisición y publicación, y operación repetible desde terminal con comandos explícitos de build y publish.
 
 ## Estado actual
 
-- El contrato de salida del sitio ya esta encapsulado en codigo Python.
-- El render usa templates HTML derivados del sitio publicado actual.
-- Hay una CLI inicial para listar fuentes y generar builds locales reproducibles.
-- Ya estan migradas: Infobae, Pagina 12, La Politica Online, Letra P, Nodal, El Dia, RT, El Cohete a la Luna, Ambito y El Observador.
-- El pipeline ya reusa secciones cacheadas para fuentes fuera de agenda, replicando el comportamiento del notebook.
-- Financial Times queda deshabilitado por defecto porque su homepage responde 403 tanto en acceso directo como via mirror textual.
+- El contrato de salida del sitio está implementado como código Python y genera artefactos estáticos compatibles con la publicación actual en GitHub Pages.
+- La capa de render utiliza templates HTML preservados a partir del sitio publicado y mantiene la estructura pública de índices, páginas de noticia y snapshots históricos.
+- La operación del sistema está expuesta mediante una CLI reproducible para inspección de fuentes, builds completos, builds selectivos por fuente y publicación desacoplada.
+- Las fuentes actualmente implementadas son Infobae, Página 12, La Política Online, Letra P, Nodal, El Día, RT, El Cohete a la Luna, Ámbito y El Observador.
+- El pipeline soporta reutilización de secciones cacheadas para evitar reacquisición innecesaria cuando una fuente no debe o no conviene volver a consultarse.
+- Financial Times permanece deshabilitada por defecto porque el origen responde 403 tanto en acceso directo como a través del mirror textual utilizado para mitigación.
 
 ## Instalacion
 

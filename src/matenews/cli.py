@@ -4,7 +4,6 @@ import argparse
 from pathlib import Path
 
 from .domain.models import RunConfig
-from .pipeline.runner import build_site, fetch_source_batches
 from .publish import PublishError, publish_site
 from .sources.registry import get_source_definitions
 
@@ -74,6 +73,8 @@ def handle_list_sources(args: argparse.Namespace) -> int:
 
 
 def handle_build(args: argparse.Namespace) -> int:
+    from .pipeline.runner import build_site, fetch_source_batches
+
     selected_slugs = set(args.sources) if args.sources else None
     config = RunConfig(output_dir=Path(args.output_dir), site_url=args.site_url)
     batches = fetch_source_batches(selected_slugs=selected_slugs, ignore_schedule=args.all_sources)

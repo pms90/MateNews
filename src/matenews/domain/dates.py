@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from zoneinfo import ZoneInfo
+from datetime import timezone, timedelta
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
-ARGENTINA_TZ = ZoneInfo("America/Argentina/Buenos_Aires")
+try:
+    ARGENTINA_TZ = ZoneInfo("America/Argentina/Buenos_Aires")
+except ZoneInfoNotFoundError:
+    ARGENTINA_TZ = timezone(timedelta(hours=-3), name="America/Argentina/Buenos_Aires")
 
 DAY_NAMES = {
     0: "Lunes",

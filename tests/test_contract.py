@@ -156,8 +156,8 @@ class ContractTests(unittest.TestCase):
             all_sources=False,
         )
 
-        with patch("matenews.cli.fetch_source_batches", return_value=[] ) as fetch_mock:
-            with patch("matenews.cli.build_site") as build_mock:
+        with patch("matenews.pipeline.runner.fetch_source_batches", return_value=[] ) as fetch_mock:
+            with patch("matenews.pipeline.runner.build_site") as build_mock:
                 result = handle_build(args)
 
         self.assertEqual(result, 0)
