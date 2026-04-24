@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import re
 from pathlib import Path
 
 from .dates import file_date_name
@@ -30,10 +31,25 @@ def current_prev_index_path(config: RunConfig, now: datetime) -> Path:
 def resolve_previous_edition_url(config: RunConfig, current_filename: str) -> str:
     prev_dir = config.output_dir / "prev"
     if not prev_dir.exists():
-        return config.site_url.rstrip("/") + "/"
+        return "./"
 
-    candidates = sorted(path.name for path in prev_dir.glob("*.html") if path.name != current_filename)
-    if not candidates:
-        return config.site_url.rstrip("/") + "/"
+    current_date = _parse_prev_filename_date(current_filename)
+    candidates = [path for path in prev_dir.glob("*.html") if path.name != current_filename]
+    dated_candidates = [path for path in candidates if _parse_prev_filename_date(path.name) is not None]
+    if current_date is not None:
+        dated_candidates = [path for path in dated_candidates if _parse_prev_filename_date(path.name) < current_date]
 
-    return f"{config.site_url.rstrip('/')}/prev/{candidates[-1]}"
+    if not dated_candidates:
+        return "./"
+
+    latest = max(dated_candidates, key=lambda path: _parse_prev_filename_date(path.name))
+    return f"prev/{latest.name}"
+
+
+def _parse_prev_filename_date(filename: str) -> datetime | None:
+    match = re.match(r"^(\d{4})-(\d{2})-(\d{2})-[^.]+\.html$", filename)
+    if match is None:
+        return None
+
+    year, month, day = map(int, match.groups())
+    return datetime(year, month, day)

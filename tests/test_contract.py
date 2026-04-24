@@ -14,6 +14,7 @@ from matenews.domain.models import Article, RunConfig, SourceBatch, SourceConfig
 from matenews.pipeline.runner import build_site
 from matenews.publish import default_commit_message, sync_site_directory
 from matenews.render.site import render_article_page, render_index_sections
+from matenews.sources.lanacion import LanacionSource
 from matenews.sources.letrap import LetraPSource
 from matenews.sources.registry import get_source_definitions
 
@@ -60,7 +61,7 @@ class ContractTests(unittest.TestCase):
                 output_dir=output_dir,
                 templates_dir=REPO_ROOT / "templates",
                 assets_dir=REPO_ROOT / "assets",
-                site_url="https://matenews.github.io/MateNews",
+                site_url="https://pms90.github.io/MateNews",
             )
             batch = SourceBatch(
                 source=SourceConfig(name="Infobae", slug="infobae", homepage_url="https://www.infobae.com"),
@@ -82,7 +83,7 @@ class ContractTests(unittest.TestCase):
                 output_dir=output_dir,
                 templates_dir=REPO_ROOT / "templates",
                 assets_dir=REPO_ROOT / "assets",
-                site_url="https://matenews.github.io/MateNews",
+                site_url="https://pms90.github.io/MateNews",
             )
             source = SourceConfig(
                 name="El Cohete a la Luna",
@@ -152,7 +153,7 @@ class ContractTests(unittest.TestCase):
         args = argparse.Namespace(
             sources=["letra_p"],
             output_dir="site",
-            site_url="https://matenews.github.io/MateNews",
+            site_url="https://pms90.github.io/MateNews",
             all_sources=False,
         )
 
@@ -165,6 +166,27 @@ class ContractTests(unittest.TestCase):
         _, build_kwargs = build_mock.call_args
         self.assertIn("config", build_kwargs)
         self.assertNotIn("selected_slugs", build_kwargs)
+
+    def test_la_nacion_registration_and_url_filter(self) -> None:
+        definitions = get_source_definitions()
+        self.assertIn("la_nacion", {definition.config.slug for definition in definitions})
+
+        source = LanacionSource(
+            SourceConfig(
+                name="La Nación",
+                slug="la_nacion",
+                homepage_url="https://www.lanacion.com.ar/",
+                base_url="https://www.lanacion.com.ar",
+            )
+        )
+
+        self.assertTrue(
+            source._is_article_url(
+                "https://www.lanacion.com.ar/politica/el-gobierno-denuncio-a-dos-periodistas-por-grabar-en-los-pasillos-de-la-casa-rosada-nid22042026/"
+            )
+        )
+        self.assertFalse(source._is_article_url("https://www.lanacion.com.ar/politica/"))
+        self.assertFalse(source._is_article_url("https://www.lanacion.com.ar/tema/gobierno/"))
 
 
 if __name__ == "__main__":

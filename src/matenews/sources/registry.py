@@ -9,6 +9,7 @@ from .cohete import CoheteSource
 from .eldia import ElDiaSource
 from .elobservador import ElObservadorSource
 from .infobae import InfobaeSource
+from .lanacion import LanacionSource
 from .letrap import LetraPSource
 from .lpo import LPOSource
 from .nodal import NodalSource
@@ -52,9 +53,19 @@ SOURCE_DEFINITIONS = [
             slug="la_politica_online",
             homepage_url="https://www.lapoliticaonline.com",
             base_url="https://www.lapoliticaonline.com",
-            limit=4,
+            limit=6,
         ),
         implementation=LPOSource,
+    ),
+    SourceDefinition(
+        SourceConfig(
+            name="La Nación",
+            slug="la_nacion",
+            homepage_url="https://www.lanacion.com.ar/",
+            base_url="https://www.lanacion.com.ar",
+            limit=10,
+        ),
+        implementation=LanacionSource,
     ),
     SourceDefinition(
         SourceConfig(
@@ -62,6 +73,7 @@ SOURCE_DEFINITIONS = [
             slug="letra_p",
             homepage_url="https://www.letrap.com.ar/",
             base_url="https://www.letrap.com.ar",
+            limit=10,
         ),
         implementation=LetraPSource,
     ),

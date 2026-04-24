@@ -42,5 +42,5 @@ class RunConfig:
     output_dir: Path = Path("site")
     templates_dir: Path = Path("templates")
     assets_dir: Path = Path("assets")
-    site_url: str = "https://matenews.github.io/MateNews"
-    keep_prev_count: int = 30
+    site_url: str = "https://pms90.github.io/MateNews"
+    keep_prev_count: int = 3

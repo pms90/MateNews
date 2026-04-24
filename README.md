@@ -1,6 +1,6 @@
 # MateNews
 
-Web pública: https://pms90.github.io/MateNews/
+🔗 https://pms90.github.io/MateNews/
 
 MateNews es un agregador estático de noticias implementado en Python que adquiere contenidos desde múltiples medios digitales, normaliza títulos, enlaces, autores y cuerpos de artículo, y genera un sitio HTML publicable en GitHub Pages con estructura de rutas determinística y snapshots históricos por fecha.
 
@@ -66,10 +66,6 @@ El publish:
 - sincroniza el contenido generado en site/ hacia otra carpeta publicable, por defecto docs/
 - crea un commit separado de publicacion
 - hace push al remoto Git configurado, salvo que se use --no-push
-
-La web publicada queda en:
-
-https://pms90.github.io/MateNews/
 
 Ejemplos:
 

@@ -19,7 +19,7 @@ def build_parser() -> argparse.ArgumentParser:
     build_parser_obj.add_argument("--output-dir", default="site", help="Directory where the static site is written")
     build_parser_obj.add_argument(
         "--site-url",
-        default="https://matenews.github.io/MateNews",
+        default="https://pms90.github.io/MateNews",
         help="Public base URL used in absolute links such as prev",
     )
     build_parser_obj.add_argument(
