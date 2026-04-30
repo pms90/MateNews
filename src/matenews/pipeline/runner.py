@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
+import logging
 from pathlib import Path
-from shutil import copy2
+import re
+from shutil import copy2, rmtree
 
 from ..domain.dates import argentina_now, file_date_name, frontend_date, short_day_code
 from ..domain.models import RunConfig, SourceBatch
@@ -15,6 +17,10 @@ from ..domain.paths import (
 from ..fetchers.http import HttpClient
 from ..render.site import render_article_page, render_index_page, render_index_section
 from ..sources.registry import get_source_definitions, get_source_instances
+
+
+logger = logging.getLogger(__name__)
+_DATED_DIRECTORY_PATTERN = re.compile(r"^(\d{4})-(\d{2})-(\d{2})-[^.]+$")
 
 
 def fetch_source_batches(
@@ -32,7 +38,16 @@ def fetch_source_batches(
             continue
         if not ignore_schedule and current_day not in source.config.day_codes:
             continue
-        batches.append(source.fetch(http_client))
+        logger.info("Recuperando diario %s (%s)", source.config.name, source.config.homepage_url)
+        batch = source.fetch(http_client)
+        logger.info(
+            "Diario %s: %s articulos recuperados",
+            source.config.name,
+            len(batch.articles),
+        )
+        for article in batch.articles:
+            logger.info("Articulo recuperado [%s] %s", source.config.name, article.title)
+        batches.append(batch)
     return batches
 
 
@@ -47,17 +62,24 @@ def build_site(
     output_dir = build_config.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "prev").mkdir(parents=True, exist_ok=True)
+    _cleanup_expired_source_directories(output_dir, current_time)
 
     index_template = (build_config.templates_dir / "index.html").read_text(encoding="utf-8")
     article_template = (build_config.templates_dir / "noticia.html").read_text(encoding="utf-8")
 
     current_prev_name = f"{file_date_name(current_time)}.html"
-    previous_edition_url = resolve_previous_edition_url(build_config, current_prev_name)
     sections_html = _collect_sections_html(batches, build_config, current_time, selected_slugs)
-    index_html = render_index_page(index_template, frontend_date(current_time), sections_html, previous_edition_url)
+    root_previous_edition_url = resolve_previous_edition_url(build_config, current_prev_name)
+    prev_previous_edition_url = resolve_previous_edition_url(
+        build_config,
+        current_prev_name,
+        inside_prev_dir=True,
+    )
+    index_html = render_index_page(index_template, frontend_date(current_time), sections_html, root_previous_edition_url)
+    prev_index_html = render_index_page(index_template, frontend_date(current_time), sections_html, prev_previous_edition_url)
 
     (output_dir / "index.html").write_text(index_html, encoding="utf-8")
-    current_prev_index_path(build_config, current_time).write_text(index_html, encoding="utf-8")
+    current_prev_index_path(build_config, current_time).write_text(prev_index_html, encoding="utf-8")
 
     for batch in batches:
         for index, article in enumerate(batch.articles, start=1):
@@ -108,6 +130,45 @@ def _collect_sections_html(
 
 def _section_cache_path(config: RunConfig, slug: str) -> Path:
     return config.output_dir / slug / "index_section.html"
+
+
+def _cleanup_expired_source_directories(output_dir: Path, now: datetime, retention_days: int = 7) -> None:
+    cutoff_date = argentina_now(now).date() - timedelta(days=retention_days)
+
+    for source_dir in output_dir.iterdir():
+        if not source_dir.is_dir() or source_dir.name == "prev":
+            continue
+        _remove_expired_dated_directories(source_dir, cutoff_date)
+
+    prev_dir = output_dir / "prev"
+    if not prev_dir.exists():
+        return
+
+    for source_dir in prev_dir.iterdir():
+        if not source_dir.is_dir():
+            continue
+        _remove_expired_dated_directories(source_dir, cutoff_date)
+
+
+def _remove_expired_dated_directories(source_dir: Path, cutoff_date) -> None:
+    for child in source_dir.iterdir():
+        if not child.is_dir():
+            continue
+
+        child_date = _parse_dated_directory_name(child.name)
+        if child_date is None or child_date >= cutoff_date:
+            continue
+
+        rmtree(child)
+
+
+def _parse_dated_directory_name(name: str):
+    match = _DATED_DIRECTORY_PATTERN.match(name)
+    if match is None:
+        return None
+
+    year, month, day = map(int, match.groups())
+    return datetime(year, month, day).date()
 
 
 def _copy_assets(config: RunConfig) -> None:

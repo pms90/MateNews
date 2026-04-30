@@ -33,7 +33,7 @@ class ElObservadorSource(BaseSource):
         return SourceBatch(source=self.config, articles=articles)
 
     def _fetch_text(self, client: HttpClient, url: str) -> str:
-        soup = client.get_soup(url)
+        soup = client.get_article_soup(url)
         parts = [
             article.get_text(separator=" ", strip=True)
             for article in soup.find_all("article", class_="article-body")

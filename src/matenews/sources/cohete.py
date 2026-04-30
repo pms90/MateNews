@@ -53,7 +53,7 @@ class CoheteSource(BaseSource):
         return SourceBatch(source=self.config, articles=articles)
 
     def _fetch_text(self, client: HttpClient, url: str) -> str:
-        soup = client.get_soup(url)
+        soup = client.get_article_soup(url)
         paragraphs = []
         for paragraph in soup.find_all("p", attrs={"class": False, "href": False}):
             if paragraph.find("a"):

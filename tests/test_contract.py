@@ -5,13 +5,15 @@ import tempfile
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from zoneinfo import ZoneInfo
 
 from matenews.cli import handle_build
 from matenews.domain.dates import file_date_name, frontend_date
 from matenews.domain.models import Article, RunConfig, SourceBatch, SourceConfig
-from matenews.pipeline.runner import build_site
+from matenews.domain.paths import resolve_previous_edition_url
+from matenews.fetchers.http import HttpClient
+from matenews.pipeline.runner import build_site, fetch_source_batches
 from matenews.publish import default_commit_message, sync_site_directory
 from matenews.render.site import render_article_page, render_index_sections
 from matenews.sources.lanacion import LanacionSource
@@ -25,6 +27,33 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class ContractTests(unittest.TestCase):
+    def test_http_client_get_does_not_sleep_for_generic_requests(self) -> None:
+        client = HttpClient()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        client.session.get = MagicMock(return_value=response)
+
+        with patch("matenews.fetchers.http.time.sleep") as sleep_mock:
+            client.get("https://example.com")
+
+        sleep_mock.assert_not_called()
+        client.session.get.assert_called_once_with("https://example.com", timeout=30.0)
+
+    def test_http_client_get_article_applies_base_delay_plus_jitter(self) -> None:
+        client = HttpClient()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        client.session.get = MagicMock(return_value=response)
+
+        with patch("matenews.fetchers.http.random.uniform", return_value=0.07) as uniform_mock:
+            with patch("matenews.fetchers.http.time.sleep") as sleep_mock:
+                client.get_article("https://example.com/nota")
+
+        uniform_mock.assert_called_once_with(0.05, 0.1)
+        sleep_mock.assert_called_once()
+        self.assertAlmostEqual(sleep_mock.call_args.args[0], 0.12)
+        client.session.get.assert_called_once_with("https://example.com/nota", timeout=30.0)
+
     def test_date_contract_matches_notebook(self) -> None:
         self.assertEqual(file_date_name(FIXED_NOW), "2026-04-21-Martes")
         self.assertEqual(frontend_date(FIXED_NOW), "Martes 21 abril 2026")
@@ -75,6 +104,88 @@ class ContractTests(unittest.TestCase):
             self.assertTrue((output_dir / "infobae" / "2026-04-21-Martes" / "1.html").exists())
             self.assertTrue((output_dir / "prev" / "infobae" / "2026-04-21-Martes" / "1.html").exists())
             self.assertTrue((output_dir / "infobae" / "index_section.html").exists())
+
+    def test_build_removes_source_directories_older_than_seven_days(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "site"
+            config = RunConfig(
+                output_dir=output_dir,
+                templates_dir=REPO_ROOT / "templates",
+                assets_dir=REPO_ROOT / "assets",
+                site_url="https://pms90.github.io/MateNews",
+            )
+            batch = SourceBatch(
+                source=SourceConfig(name="Infobae", slug="infobae", homepage_url="https://www.infobae.com"),
+                articles=[Article(title="Titulo.", url="https://example.com", text="Texto local.")],
+            )
+
+            old_current_dir = output_dir / "infobae" / "2026-04-13-Lunes"
+            retained_current_dir = output_dir / "infobae" / "2026-04-14-Martes"
+            old_archived_dir = output_dir / "prev" / "infobae" / "2026-04-13-Lunes"
+            retained_archived_dir = output_dir / "prev" / "infobae" / "2026-04-14-Martes"
+            old_current_dir.mkdir(parents=True)
+            retained_current_dir.mkdir(parents=True)
+            old_archived_dir.mkdir(parents=True)
+            retained_archived_dir.mkdir(parents=True)
+            (old_current_dir / "1.html").write_text("old", encoding="utf-8")
+            (retained_current_dir / "1.html").write_text("keep", encoding="utf-8")
+            (old_archived_dir / "1.html").write_text("old", encoding="utf-8")
+            (retained_archived_dir / "1.html").write_text("keep", encoding="utf-8")
+
+            build_site([batch], config=config, now=FIXED_NOW)
+
+            self.assertFalse(old_current_dir.exists())
+            self.assertTrue(retained_current_dir.exists())
+            self.assertFalse(old_archived_dir.exists())
+            self.assertTrue(retained_archived_dir.exists())
+
+    def test_fetch_source_batches_logs_sources_and_articles(self) -> None:
+        class DummySource:
+            def __init__(self) -> None:
+                self.config = SourceConfig(name="Diario de prueba", slug="diario_prueba", homepage_url="https://example.com")
+
+            def fetch(self, client):
+                return SourceBatch(
+                    source=self.config,
+                    articles=[Article(title="Nota 1"), Article(title="Nota 2")],
+                )
+
+        with patch("matenews.pipeline.runner.get_source_instances", return_value=[DummySource()]):
+            with self.assertLogs("matenews.pipeline.runner", level="INFO") as captured:
+                fetch_source_batches(ignore_schedule=True)
+
+        output = "\n".join(captured.output)
+        self.assertIn("Recuperando diario Diario de prueba (https://example.com)", output)
+        self.assertIn("Diario Diario de prueba: 2 articulos recuperados", output)
+        self.assertIn("Articulo recuperado [Diario de prueba] Nota 1", output)
+        self.assertIn("Articulo recuperado [Diario de prueba] Nota 2", output)
+
+    def test_previous_edition_url_uses_sibling_path_inside_prev(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "site"
+            config = RunConfig(
+                output_dir=output_dir,
+                templates_dir=REPO_ROOT / "templates",
+                assets_dir=REPO_ROOT / "assets",
+                site_url="https://pms90.github.io/MateNews",
+            )
+            prev_dir = output_dir / "prev"
+            prev_dir.mkdir(parents=True)
+            (prev_dir / "2026-04-21-Martes.html").write_text("prev", encoding="utf-8")
+            (prev_dir / "2026-04-22-Miercoles.html").write_text("prev", encoding="utf-8")
+
+            self.assertEqual(
+                resolve_previous_edition_url(config, "2026-04-22-Miercoles.html"),
+                "prev/2026-04-21-Martes.html",
+            )
+            self.assertEqual(
+                resolve_previous_edition_url(
+                    config,
+                    "2026-04-22-Miercoles.html",
+                    inside_prev_dir=True,
+                ),
+                "2026-04-21-Martes.html",
+            )
 
     def test_build_reuses_cached_section_for_unscheduled_sources(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

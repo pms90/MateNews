@@ -54,7 +54,7 @@ class AmbitoSource(BaseSource):
         return SourceBatch(source=self.config, articles=articles)
 
     def _fetch_text(self, client: HttpClient, url: str, title: str) -> str:
-        raw_text = client.get_text(f"https://r.jina.ai/{url}")
+        raw_text = client.get_article_text(f"https://r.jina.ai/{url}")
         parts: list[str] = []
         for row in raw_text.split("\n"):
             stripped = row.strip()

@@ -104,7 +104,7 @@ class LetraPSource(BaseSource):
         return title
 
     def _fetch_text(self, client: HttpClient, url: str) -> tuple[str, str]:
-        soup = client.get_soup(url)
+        soup = client.get_article_soup(url)
         author = self._extract_author(soup)
 
         h1 = soup.find("h1")

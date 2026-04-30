@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from pathlib import Path
 
 from .domain.models import RunConfig
@@ -110,6 +111,7 @@ def handle_publish(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
     parser = build_parser()
     args = parser.parse_args(argv)
     return args.handler(args)

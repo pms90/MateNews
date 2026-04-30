@@ -28,7 +28,7 @@ def current_prev_index_path(config: RunConfig, now: datetime) -> Path:
     return config.output_dir / "prev" / f"{file_date_name(now)}.html"
 
 
-def resolve_previous_edition_url(config: RunConfig, current_filename: str) -> str:
+def resolve_previous_edition_url(config: RunConfig, current_filename: str, *, inside_prev_dir: bool = False) -> str:
     prev_dir = config.output_dir / "prev"
     if not prev_dir.exists():
         return "./"
@@ -43,6 +43,8 @@ def resolve_previous_edition_url(config: RunConfig, current_filename: str) -> st
         return "./"
 
     latest = max(dated_candidates, key=lambda path: _parse_prev_filename_date(path.name))
+    if inside_prev_dir:
+        return latest.name
     return f"prev/{latest.name}"
 
 

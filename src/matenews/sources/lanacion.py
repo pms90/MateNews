@@ -89,7 +89,7 @@ class LanacionSource(BaseSource):
         return self._normalize_title(text)
 
     def _fetch_article_details(self, client: HttpClient, url: str) -> tuple[str, str, str]:
-        soup = client.get_soup(url)
+        soup = client.get_article_soup(url)
         h1 = soup.find("h1")
         title = self._normalize_title(h1.get_text(" ", strip=True)) if h1 is not None else ""
         author = self._extract_author(soup)

@@ -35,7 +35,7 @@ class NodalSource(BaseSource):
         return SourceBatch(source=self.config, articles=articles)
 
     def _fetch_text(self, client: HttpClient, url: str) -> str:
-        soup = client.get_soup(url)
+        soup = client.get_article_soup(url)
         content = soup.find("article", class_="single-post-content")
         if content is None:
             return FAILED_TEXT

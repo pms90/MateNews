@@ -48,7 +48,7 @@ class InfobaeSource(BaseSource):
         return SourceBatch(source=self.config, articles=articles)
 
     def _fetch_text(self, client: HttpClient, url: str) -> str:
-        soup = client.get_soup(url)
+        soup = client.get_article_soup(url)
         body = soup.find("div", class_="body-article")
         if body is None:
             return FAILED_TEXT
