@@ -8,6 +8,8 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 from zoneinfo import ZoneInfo
 
+from bs4 import BeautifulSoup
+
 from matenews.cli import handle_build
 from matenews.domain.dates import file_date_name, frontend_date
 from matenews.domain.models import Article, RunConfig, SourceBatch, SourceConfig
@@ -16,6 +18,7 @@ from matenews.fetchers.http import HttpClient
 from matenews.pipeline.runner import build_site, fetch_source_batches
 from matenews.publish import default_commit_message, sync_site_directory
 from matenews.render.site import render_article_page, render_index_sections
+from matenews.sources.ladiaria import LaDiariaSource
 from matenews.sources.lanacion import LanacionSource
 from matenews.sources.letrap import LetraPSource
 from matenews.sources.registry import get_source_definitions
@@ -160,6 +163,32 @@ class ContractTests(unittest.TestCase):
         self.assertIn("Articulo recuperado [Diario de prueba] Nota 1", output)
         self.assertIn("Articulo recuperado [Diario de prueba] Nota 2", output)
 
+    def test_fetch_source_batches_continues_when_one_source_fails(self) -> None:
+        class FailingSource:
+            def __init__(self) -> None:
+                self.config = SourceConfig(name="Diario roto", slug="diario_roto", homepage_url="https://broken.example.com")
+
+            def fetch(self, client):
+                raise RuntimeError("boom")
+
+        class HealthySource:
+            def __init__(self) -> None:
+                self.config = SourceConfig(name="Diario sano", slug="diario_sano", homepage_url="https://ok.example.com")
+
+            def fetch(self, client):
+                return SourceBatch(
+                    source=self.config,
+                    articles=[Article(title="Nota sana")],
+                )
+
+        with patch("matenews.pipeline.runner.get_source_instances", return_value=[FailingSource(), HealthySource()]):
+            with self.assertLogs("matenews.pipeline.runner", level="ERROR") as captured:
+                batches = fetch_source_batches(ignore_schedule=True)
+
+        self.assertEqual([batch.source.slug for batch in batches], ["diario_sano"])
+        output = "\n".join(captured.output)
+        self.assertIn("Fallo la recuperacion del diario Diario roto (https://broken.example.com)", output)
+
     def test_previous_edition_url_uses_sibling_path_inside_prev(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             output_dir = Path(temp_dir) / "site"
@@ -298,6 +327,106 @@ class ContractTests(unittest.TestCase):
         )
         self.assertFalse(source._is_article_url("https://www.lanacion.com.ar/politica/"))
         self.assertFalse(source._is_article_url("https://www.lanacion.com.ar/tema/gobierno/"))
+
+    def test_la_diaria_registration_order_and_url_filter(self) -> None:
+        definitions = get_source_definitions()
+        slugs = [definition.config.slug for definition in definitions]
+
+        self.assertIn("la_diaria", slugs)
+        self.assertEqual(slugs[slugs.index("el_observador") + 1], "la_diaria")
+
+        source = LaDiariaSource(
+            SourceConfig(
+                name="la diaria",
+                slug="la_diaria",
+                homepage_url="https://ladiaria.com.uy/",
+                base_url="https://ladiaria.com.uy",
+            )
+        )
+
+        self.assertTrue(
+            source._is_article_url(
+                "https://ladiaria.com.uy/politica/articulo/2026/5/orsi-se-subio-a-un-portaaviones-estadounidense-junto-al-embajador-lou-rinaldi/"
+            )
+        )
+        self.assertTrue(
+            source._is_article_url(
+                "https://ladiaria.com.uy/articulo/2026/5/1o-de-mayo-en-el-estrecho-de-ormuz/"
+            )
+        )
+        self.assertFalse(source._is_article_url("https://ladiaria.com.uy/politica/"))
+        self.assertFalse(source._is_article_url("https://ladiaria.com.uy/periodista/lucia-chu/"))
+
+    def test_la_diaria_fetch_extracts_unique_articles_and_body(self) -> None:
+        source = LaDiariaSource(
+            SourceConfig(
+                name="la diaria",
+                slug="la_diaria",
+                homepage_url="https://ladiaria.com.uy/",
+                base_url="https://ladiaria.com.uy",
+                limit=5,
+            )
+        )
+
+        homepage_html = """
+        <html>
+            <body>
+                <section>
+                    <a href="/politica/articulo/2026/5/orsi-se-subio-a-un-portaaviones-estadounidense-junto-al-embajador-lou-rinaldi/">
+                        <h2>Orsi se subió a un portaaviones estadounidense junto al embajador Lou Rinaldi</h2>
+                    </a>
+                </section>
+                <section>
+                    <h3>
+                        <a href="/politica/articulo/2026/5/renuncio-el-gerente-de-compras-de-la-intendencia-de-montevideo-gustavo-cabrera/">
+                            Renunció el gerente de Compras de la Intendencia de Montevideo, Gustavo Cabrera
+                        </a>
+                    </h3>
+                </section>
+                <section>
+                    <a href="/politica/articulo/2026/5/orsi-se-subio-a-un-portaaviones-estadounidense-junto-al-embajador-lou-rinaldi/">
+                        <h2>Orsi se subió a un portaaviones estadounidense junto al embajador Lou Rinaldi</h2>
+                    </a>
+                </section>
+            </body>
+        </html>
+        """
+        article_html = """
+        <html>
+            <body>
+                <main>
+                    <article>
+                        <h1>Orsi se subió a un portaaviones estadounidense junto al embajador Lou Rinaldi</h1>
+                        <h2>El diputado del PN Federico Casaretto aseguró que el gobierno optó por violar la Constitución.</h2>
+                        <p>Nuestro periodismo depende de vos.</p>
+                        <p>El presidente de la República fue invitado por el embajador de Estados Unidos en Uruguay.</p>
+                        <p>Según informó el medio, Orsi fue trasladado al USS Nimitz en una aeronave estadounidense.</p>
+                        <p>Temas en este artículo</p>
+                        <p>Texto que no debe aparecer.</p>
+                    </article>
+                </main>
+            </body>
+        </html>
+        """
+
+        class FakeClient:
+            def get_soup(self, url: str):
+                return BeautifulSoup(homepage_html, "html.parser")
+
+            def get_article_soup(self, url: str):
+                return BeautifulSoup(article_html, "html.parser")
+
+        batch = source.fetch(FakeClient())
+
+        self.assertEqual(len(batch.articles), 2)
+        self.assertEqual(
+            batch.articles[0].title,
+            "Orsi se subió a un portaaviones estadounidense junto al embajador Lou Rinaldi.",
+        )
+        self.assertIn("El diputado del PN Federico Casaretto aseguró", batch.articles[0].text)
+        self.assertIn("El presidente de la República fue invitado", batch.articles[0].text)
+        self.assertNotIn("Nuestro periodismo depende de vos", batch.articles[0].text)
+        self.assertNotIn("Temas en este artículo", batch.articles[0].text)
 
 
 if __name__ == "__main__":

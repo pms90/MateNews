@@ -9,6 +9,7 @@ from .cohete import CoheteSource
 from .eldia import ElDiaSource
 from .elobservador import ElObservadorSource
 from .infobae import InfobaeSource
+from .ladiaria import LaDiariaSource
 from .lanacion import LanacionSource
 from .letrap import LetraPSource
 from .lpo import LPOSource
@@ -142,6 +143,16 @@ SOURCE_DEFINITIONS = [
             base_url="https://www.elobservador.com.uy",
         ),
         implementation=ElObservadorSource,
+    ),
+    SourceDefinition(
+        SourceConfig(
+            name="la diaria",
+            slug="la_diaria",
+            homepage_url="https://ladiaria.com.uy/",
+            base_url="https://ladiaria.com.uy",
+            limit=10,
+        ),
+        implementation=LaDiariaSource,
     ),
 ]
 

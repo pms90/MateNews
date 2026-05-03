@@ -39,7 +39,15 @@ def fetch_source_batches(
         if not ignore_schedule and current_day not in source.config.day_codes:
             continue
         logger.info("Recuperando diario %s (%s)", source.config.name, source.config.homepage_url)
-        batch = source.fetch(http_client)
+        try:
+            batch = source.fetch(http_client)
+        except Exception:
+            logger.exception(
+                "Fallo la recuperacion del diario %s (%s)",
+                source.config.name,
+                source.config.homepage_url,
+            )
+            continue
         logger.info(
             "Diario %s: %s articulos recuperados",
             source.config.name,
