@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Miercoles 13 mayo 2026 03:49 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-05-13-Miercoles/1.html">1) Motosierra sin fin: Javier Milei mantendrá el ajuste a pesar de las protestas en su contra.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-05-13-Miercoles/2.html">2) Masivo reclamo universitario contra el Gobierno: &quot;Cumplan con la ley, no hipotequen el futuro&quot;.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-05-13-Miercoles/3.html">3) Mariano Martínez en &quot;Lo de Pampita&quot;: &quot;Quiero cuidar mi relación de lo mediático&quot;.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-05-13-Miercoles/4.html">4) A pesar de la baja en el humor social, el Gobierno cree que la marcha universitaria no afecta su imagen.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-05-13-Miercoles/5.html">5) Cómo se vivió la Marcha Federal Universitaria en el interior del país.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-05-13-Miercoles/6.html">6) Milei siguió la marcha desde la Quinta de Olivos y el Gobierno criticó la politización del reclamo.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-05-13-Miercoles/7.html">7) La Marcha en fotos: la comunidad educativa se movilizó y pidió por el financiamiento.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-05-13-Miercoles/8.html">8) Fuertes críticas al Gobierno y un pedido a la Corte: qué dice el documento que leyeron en la Marcha Federal Universitaria.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-05-13-Miercoles/9.html">9) Por qué la nueva suba del precio del petróleo no pondría en riesgo el proceso de desinflación en mayo.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-05-13-Miercoles/10.html">10) Donald Trump publicó en su red social una imagen de Venezuela como el estado número 51 de Estados Unidos.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-05-13-Miercoles/11.html">11) Mo Yan, el premio Nobel que se enamoró de la Feria del Libro: &quot;He llegado tarde, voy a tener que volver&quot;.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-05-13-Miercoles/12.html">12) El Senado comenzará a debatir la reforma electoral y los aliados demandarán Ficha Limpia por separado.</a></li>
+<li class="nota" id="infobae_12"><a href="infobae/2026-05-13-Miercoles/13.html">13) Así son las camisetas de las 48 selecciones que participarán del Mundial 2026.</a></li>
+<li class="nota" id="infobae_13"><a href="infobae/2026-05-13-Miercoles/14.html">14) Caputo se prepara para un 2027 desafiante: cuánta deuda vence y cómo siguen las negociaciones con el Banco Mundial.</a></li>
+<li class="nota" id="infobae_14"><a href="infobae/2026-05-13-Miercoles/15.html">15) Se llevará a cabo la tercera edición de los premios Ana Frank por la lucha contra la discriminación.</a></li>
+<li class="nota" id="infobae_15"><a href="infobae/2026-05-13-Miercoles/16.html">16) En medio de la turbulencia, el Gobierno se aferra a un repunte de la economía para encarar la carrera electoral.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-05-13-Miercoles/1.html">1) Una multitud se movilizó en el país por la Cuarta Marcha Federal Universitaria. Argentinazo. Un millón y medio de personas salieron a las calles en todo el país en reclamo por la Ley de Financiamiento Universitario, que Milei se niega a aplicar, condenando a muerte al sistema que enorgullece desde hace décadas a los argentinos. La Plaza de Mayo y todo el centro porteño se vieron desbordados por la multitud, una escena que se repitió en las principales ciudades del país. Por. Celeste del Bianco.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-05-13-Miercoles/2.html">2) Las voces e imágenes de la histórica movilización. Marcha universitaria: las calles fueron un solo grito. Por. Karina Micheletto.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-05-13-Miercoles/3.html">3) Córdoba, Mendoza, Salta y Rosario fueron epicentros de movilizaciones masivas. El grito más federal que nunca.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-05-13-Miercoles/4.html">4) Los gastos suman casi un millón de dólares. Las criptomonedas que Adorni olvidó declarar. Por. Irina Hauser.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-05-13-Miercoles/5.html">5) Las mejores imágenes de la lucha por la educación universitaria.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-05-13-Miercoles/6.html">6) El reclamo universitario como vía para expresar un descontento general. Por. Pablo Esteban.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-05-13-Miercoles/7.html">7) El enojo tuitero del Presidente. Marcha universitaria y furia presidencial: Milei volvió con el discurso de “la caja”.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-05-13-Miercoles/8.html">8) Convocan a una sesión especial para este jueves. Diputados: la oposición buscará interpelar a Manuel Adorni. Por. Eva Moreira.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-05-13-Miercoles/9.html">9) Ni el horror de La Perla pudo separarlos: la historia de tres parejas identificadas por el EAAF. Por. Luciana Bertoia.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-05-13-Miercoles/10.html">10) Las nuevas identificaciones del EAAF. Córdoba gritó: “Compañeros aparecidos: ¡Presentes!”. Por. Gregorio Tatián.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-05-13-Miercoles/11.html">11) El caso Nisman. El vergonzoso procesamiento de la fiscal Fein. Por. Raúl Kollmann.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-05-13-Miercoles/12.html">12) Hubo reunión de mesa política sin Milei. “Estamos encerrados”: la queja que se escuchó en la Rosada por la marcha universitaria. Por. Melisa Molina.</a></li>
+<li class="nota" id="pagina_12_12"><a href="pagina_12/2026-05-13-Miercoles/13.html">13) A contramano del impacto negativo que sufre la sociedad. Sturzenegger dijo que el ajuste lo paga la casta.</a></li>
+<li class="nota" id="pagina_12_13"><a href="pagina_12/2026-05-13-Miercoles/14.html">14) Caputo recibió al magnate de Palantir a la par de la protesta. Escuchar a Thiel y no a la calle. Por. Mara Pedrazzoli.</a></li>
+<li class="nota" id="pagina_12_14"><a href="pagina_12/2026-05-13-Miercoles/15.html">15) Milei la usó para cerrar la Sala de Periodistas de la Casa Rosada. La denuncia de espionaje del Gobierno no pasó el filtro de Comodoro Py. Por. Luciana Bertoia.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-05-13-Miercoles/1.html">1) Con otra marcha multitudinaria, las universidades le reclamaron financiamiento al gobierno</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-05-13-Miercoles/2.html">2) Macri convocó a una cumbre en provincia para acelerar la ruptura con Milei</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-05-13-Miercoles/3.html">3) Loma Negra apaga su horno principal hasta noviembre por la baja actividad y los costos del gas</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-05-13-Miercoles/4.html">4) Las obras en el estadio de Mar del Plata no arrancan y crecen las sospechas sobre la empresa que eligió Montenegro</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-05-13-Miercoles/5.html">5) Argentina y Uruguay avanzan en las negociaciones para evitar un nuevo Botnia en Payasandú</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-05-13-Miercoles/6.html">6) El avance de Bolivia amenaza el predominio paraguayo en la hidrovía y preocupa a los empresarios</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-05-13-Miercoles/7.html">7) Patricia confirmó que Milei le gritó en la reunión de gabinete: &quot;tiene una emocionalidad importante&quot;</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-05-13-Miercoles/8.html">8) El mercado teme una derrota de Milei y se disparan los seguros contra default</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-05-13-Miercoles/1.html">1) Javier Milei y sus medidas, en vivo: las repercusiones de la marcha universitaria y los nuevos pliegos judiciales.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-05-13-Miercoles/2.html">2) Guerra de Estados Unidos e Israel contra Irán, en vivo: tensión en Medio Oriente hoy, miércoles 13 de mayo.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-05-13-Miercoles/3.html">3) El Gobierno no se mueve de su postura tras la marcha universitaria y espera que la Corte resuelva el financiamiento.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-05-13-Miercoles/4.html">4) La marcha fue multitudinaria y potenció el reclamo al Gobierno para que cumpla el financiamiento universitario.</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-05-13-Miercoles/5.html">5) Cuarta marcha universitaria Cuántas personas participaron del reclamo en Plaza de Mayo.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-05-13-Miercoles/6.html">6) Marcha universitaria: las columnas políticas y sindicales marcaron una fuerte presencia en la Plaza de Mayo.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-05-13-Miercoles/7.html">7) Sin foto: Adorni volvió a reunir a la mesa política con la intención de reactivar la agenda legislativa.</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-05-13-Miercoles/8.html">8) “Más fácil que un videojuego”. La innovadora arma usada en Ucrania con la que Hezbollah está logrando golpear a Israel.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-05-13-Miercoles/9.html">9) La Segunda Guerra en Buenos Aires. La increíble historia del espía soviético que vino a la Argentina para sabotear a Hitler.</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-05-13-Miercoles/10.html">10) El Gobierno avanza con mecanismos para contener aumentos en el gas y la nafta.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-05-13-Miercoles/1.html">1) Universidades: radiografía del regreso de la política a la protesta social, con Adorni en el centro de la bronca.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-05-13-Miercoles/2.html">2) Universidades: la marcha dejó al Gobierno sin aliados, que busca alternativas para no aplicar la ley.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-05-13-Miercoles/3.html">3) Las universidades pegaron un grito federal que pone a prueba al poder.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-05-13-Miercoles/4.html">4) Milei cumple, las universidades agonizan.</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-05-13-Miercoles/5.html">5) Marcha universitaria: una multitud copó Plaza de Mayo.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-05-13-Miercoles/6.html">6) Universidades: las mejores fotos de la marcha a Plaza de Mayo.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-05-13-Miercoles/7.html">7) La inflación encuentra un nuevo piso difícil de perforar para Milei y Caputo.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-05-13-Miercoles/8.html">8) La economía de doble mano de Caputo.</a></li>
+<li class="nota" id="letra_p_8"><a href="letra_p/2026-05-13-Miercoles/9.html">9) Para no abrir otro frente de batalla, Milei le perdona a Bullrich su autonomía.</a></li>
+<li class="nota" id="letra_p_9"><a href="letra_p/2026-05-13-Miercoles/10.html">10) Bullrich perdió la interna con Karina Milei y habilitó el debate de la reforma política.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-05-13-Miercoles/1.html">1) NODALrumbo a Palestina | Paula Giménez y Lucas Aguilera desde Libia en el convoy internacional: “la inacción frente al genocidio no es una opción”</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-05-13-Miercoles/2.html">2) Argentina| El Gobierno de Javier Milei oficializa un recorte presupuestario de casi 3 billones de pesos</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-05-13-Miercoles/3.html">3) La Confederación Sindical de las Américas señala queEcuadorfigura como el país con mayor número de denuncias ante la Organización Internacional del Trabajo (OIT)</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-05-13-Miercoles/4.html">4) Brasil| Lula fortalece el apoyo a la candidatura de Michelle Bachelet para la Secretaría General de las Naciones Unidas</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-05-13-Miercoles/5.html">5) Haití| Ocho muertos y cientos de desplazados se registraron en un nuevo enfrentamientos entre las bandas Pyè 6, Chen Mechan y Canaan</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-05-13-Miercoles/6.html">6) Cuba| Viceministro de Relaciones Exteriores acusa de “cómplices” a quienes apoyan intervención de Estados Unidos en Cuba</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-05-13-Miercoles/7.html">7) Al menos 70 diputados laboristas han pedido la dimisión del primer ministro de Reino Unido</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-05-13-Miercoles/8.html">8) Israel libera a Thiago Ávila y Saif Abukeshek tras el secuestro de la Flotilla Sumud en aguas internacionales</a></li>
+<li class="nota" id="nodal_8"><a href="nodal/2026-05-13-Miercoles/9.html">9) Peter Thiel y su vínculo con el boom de las AgTech en la región – Por Carolina Sturniolo y Bruno Ceschín</a></li>
+<li class="nota" id="nodal_9"><a href="nodal/2026-05-13-Miercoles/10.html">10) Argentina| Puerto Quequén en Buenos Aires: la disputa por el control estatal del comercio de granos – Por Santiago Burrone</a></li>
+<li class="nota" id="nodal_10"><a href="nodal/2026-05-13-Miercoles/11.html">11) Argentina| Marcha Federal Universitaria: Argentina vuelve a marchar en contra del ajuste – Por Emilia Trabucco</a></li>
+<li class="nota" id="nodal_11"><a href="nodal/2026-05-13-Miercoles/12.html">12) La patria se defiende – Por Rosa Miriam Elizalde</a></li>
+<li class="nota" id="nodal_12"><a href="nodal/2026-05-13-Miercoles/13.html">13) América Latina: reconfiguración geopolítica y soberanía popular – Por Manuel  Bertoldi</a></li>
+<li class="nota" id="nodal_13"><a href="nodal/2026-05-13-Miercoles/14.html">14) NODALrumbo a Palestina | Paula Giménez y Lucas Aguilera desde Libia en el convoy internacional: “la inacción frente al genocidio no es una opción”</a></li>
+<li class="nota" id="nodal_14"><a href="nodal/2026-05-13-Miercoles/15.html">15) Ecuador| Daniel Noboa afirma que el país está en un “conflicto armado interno, no en una crisis de seguridad”</a></li>
+<li class="nota" id="nodal_15"><a href="nodal/2026-05-13-Miercoles/16.html">16) Perú| López Aliaga convoca a una nueva marcha el 9 de mayo y exige “peritaje internacional” advirtiendo que no reconocerá resultados</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/seccion/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="https://www.eldia.com/nota/2026-5-13-3-34-7-armas-para-la-guardia-urbana-municiones-plasticas-con-poder-quimico-la-ciudad">1) Armas para la guardia urbana: municiones plásticas, con poder químico</a></li>
+<li class="nota" id="el_dia_1"><a href="https://www.eldia.com/nota/2026-5-13-3-33-7-tenencia-responsable-las-normas-que-muchos-duenos-desconocen-la-ciudad">2) Tenencia responsable: las normas que muchos dueños desconocen</a></li>
+<li class="nota" id="el_dia_2"><a href="https://www.eldia.com/nota/2026-5-13-3-32-7-crece-el-malestar-por-los-vuelcos-de-basura-y-hasta-denunciaron-a-absa-la-ciudad">3) Crece el malestar por los vuelcos de basura y hasta denunciaron a ABSA</a></li>
+<li class="nota" id="el_dia_3"><a href="https://www.eldia.com/nota/2026-5-13-3-31-7-una-historia-del-museo-para-chicos-y-adolescentes-la-ciudad">4) Una historia del Museo para chicos y adolescentes</a></li>
+<li class="nota" id="el_dia_4"><a href="https://www.eldia.com/nota/2026-5-13-3-29-7-calles-intransitables-en-villa-elisa-barro-y-pozos-la-ciudad">5) Calles intransitables en Villa Elisa: barro y pozos</a></li>
+<li class="nota" id="el_dia_5"><a href="https://www.eldia.com/nota/2026-5-13-3-28-7-mas-de-1-800-infracciones-decenas-de-vehiculos-secuestrados-y-acarreos-a-full-la-ciudad">6) Más de 1.800 infracciones, decenas de vehículos secuestrados y acarreos a full</a></li>
+<li class="nota" id="el_dia_6"><a href="https://www.eldia.com/nota/2026-5-13-3-27-7-vecinos-de-barrio-jardin-desde-hace-mas-de-un-dia-con-poca-o-sin-agua-la-ciudad">7) Vecinos de Barrio Jardín desde hace más de un día con poca o sin agua</a></li>
+<li class="nota" id="el_dia_7"><a href="https://www.eldia.com/nota/2026-5-13-3-26-7-un-paro-bancario-parcial-afectaria-solo-en-el-hipotecario-y-el-central-la-ciudad">8) Un paro bancario parcial afectaría solo en el Hipotecario y el Central</a></li>
+<li class="nota" id="el_dia_8"><a href="https://www.eldia.com/nota/2026-5-13-3-25-7-se-quejo-a-traves-de-el-dia-por-un-bache-que-rompia-autos-en-520-y-llego-la-reparacion-de-la-calle-la-ciudad">9) Se quejó a través de EL DIA por un bache que rompía autos en 520 y llegó la reparación de la calle</a></li>
+<li class="nota" id="el_dia_9"><a href="https://www.eldia.com/nota/2026-5-13-3-24-7-actividades-convocatoria-a-artistas-plasticos-caminata-y-festejos-la-ciudad">10) Actividades: convocatoria a artistas plásticos, caminata y festejos</a></li>
+<li class="nota" id="el_dia_10"><a href="https://www.eldia.com/nota/2026-5-12-21-11-0-villa-elisa-cayo-una-luminaria-arriba-de-un-auto-quedo-en-medio-de-la-calle-y-ocurrio-otro-accidente-la-ciudad-policiales">11) Villa Elisa: cayó una luminaria arriba de un auto, quedó en medio de la calle y ocurrió otro accidente</a></li>
+<li class="nota" id="el_dia_11"><a href="https://www.eldia.com/nota/2026-5-12-20-28-0-vecinos-desesperados-en-colonia-urquiza-no-hay-recoleccion-ni-contenedores-de-basura-hace-un-mes-la-ciudad">12) Vecinos desesperados: en Colonia Urquiza no hay recolección ni contenedores de basura hace un mes</a></li>
+<li class="nota" id="el_dia_12"><a href="https://www.eldia.com/nota/2026-5-12-19-39-0-manana-habra-cortes-de-luz-programados-en-diferentes-sectores-de-la-plata-cuales-son-las-zonas-afectadas-la-ciudad">13) Mañana habrá cortes de luz programados en diferentes sectores de La Plata: cuáles son las zonas afectadas</a></li>
+<li class="nota" id="el_dia_13"><a href="https://www.eldia.com/nota/2026-5-12-18-58-0-fans-de-bts-impulsan-un-proyecto-para-declarar-a-la-banda-huespedes-de-honor-de-la-plata-espectaculos-la-ciudad">14) Fans de BTS impulsan un proyecto para declarar a la banda “Huéspedes de Honor” de La Plata</a></li>
+<li class="nota" id="el_dia_14"><a href="https://www.eldia.com/nota/2026-5-12-18-55-0-marcha-universitaria-en-la-plata-docentes-y-estudiantes-se-concentraron-en-el-rectorado-de-la-unlp-la-ciudad">15) VIDEO. Marcha universitaria en La Plata: docentes y estudiantes se concentraron en el Rectorado de la UNLP</a></li>
+<li class="nota" id="el_dia_15"><a href="https://www.eldia.com/nota/2026-5-12-18-1-0-un-peligro-en-los-hornos-por-un-arbol-en-contacto-con-cables-hace-seis-meses-la-ciudad">16) Un peligro en Los Hornos por un árbol en contacto con cables hace seis meses</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-05-13-Miercoles/1.html">1) Qué se sabe de Sarmat, el novedoso misil balístico ruso sin parangón en Occidente</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-05-13-Miercoles/2.html">2) Lavrov: &quot;EE.UU. está sumiendo a Europa en una crisis profunda&quot;</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-05-13-Miercoles/3.html">3) CNN: La CIA lleva meses operando secretamente en México con ataques a los cárteles</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-05-13-Miercoles/4.html">4) Este aliado de EE.UU. en Oriente Medio habría lanzado ataques encubiertos contra Irán</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-05-13-Miercoles/5.html">5) Díaz-Canel: &quot;Cuba no amenaza, ni desafía, pero tampoco teme&quot;</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-05-13-Miercoles/6.html">6) Lavrov: &quot;EE.UU. busca hacerse con todas las rutas energéticas que tengan la más mínima importancia&quot;</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-05-13-Miercoles/7.html">7) Trump revela la primera solicitud que le hará a Xi en su reunión</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-05-13-Miercoles/8.html">8) &quot;Estado 51&quot;: Trump publica un mapa de Venezuela con la bandera de EE.UU.</a></li>
+<li class="nota" id="rt_8"><a href="rt/2026-05-13-Miercoles/9.html">9) México reacciona a reporte sobre operativos anticárteles de la CIA en su territorio</a></li>
+<li class="nota" id="rt_9"><a href="rt/2026-05-13-Miercoles/10.html">10) Lavrov nombra el deseo de EE.UU. del que se aprovechó Netanyahu</a></li>
+<li class="nota" id="rt_10"><a href="rt/2026-05-13-Miercoles/11.html">11) VIDEOS: Aviones de transporte C-17 aterrizan en China en vísperas de la visita de Trump</a></li>
+<li class="nota" id="rt_11"><a href="rt/2026-05-13-Miercoles/12.html">12) La advertencia generacional de Irán sobre la guerra con EE.UU.</a></li>
+<li class="nota" id="rt_12"><a href="rt/2026-05-13-Miercoles/13.html">13) País de la UE intercepta aviones militares de EE.UU. en su espacio aéreo</a></li>
+<li class="nota" id="rt_13"><a href="rt/2026-05-13-Miercoles/14.html">14) Vertiginoso VIDEO de ejercicios militares de Irán &quot;para enfrentar al enemigo en cualquier terreno&quot;</a></li>
+<li class="nota" id="rt_14"><a href="rt/2026-05-13-Miercoles/15.html">15) Díaz-Canel: &quot;Señalar a Cuba como amenaza es cínico, incoherente y fantasioso&quot;</a></li>
+<li class="nota" id="rt_15"><a href="rt/2026-05-13-Miercoles/16.html">16) UE lanza &#x27;disparo&#x27; comercial contra un gigante latinoamericano y este responde</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/1.html">1) Aguas Abajo. La exacerbación del Presidente Javier Milei y el matiz depresivo que se insinúa en su hermana corren paralelos a la dificultad del jefe de gabinete Manuel Adorni por dejar en reposo la máquina de empeorarlo todo, sin por ello perder el tono de superioridad que vuelca contra quienes suponía que acudirían en su rescate.
+
+
+
+ …. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/2.html">2) Lluvia que no moja. Dólares imaginarios: el capital no entra, pero la renta sale. Por Lucka Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/3.html">3) Amorfo. El gobierno concesionó la generación, el transporte y la distribución de energía eléctrica a precio vil y la población pagará una tarifa mucho mayor que su costo. Por Horacio Rovelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/4.html">4) El Estado mafioso. La suma de ilegalidades en la “causa de los cuadernos” queda al desnudo en la parodia de juicio oral y público. Por Leopoldo Moreau.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/5.html">5) Volver mujeres. A 40 años de la película Betty Blue, que me ayudó a pensar cómo es eso de ser de otro género. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/6.html">6) La Argentina indefensa. Presupuesto y mentiras libertarias a los militares. El desastre de la gestión Milei en el Sistema de Defensa Nacional. Por Sergio Eissa.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/7.html">7) Milei y la Danza de Shiva. Tal vez nuestro nirvana consista en eludir la devastación cíclica, rechazando por fin la toxina neoliberal. Por Sebastián Fernández.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/8.html">8) Saludarán en el atrio. Suspensión judicial al rector de la Universidad Nacional de Formosa, afín al gobierno de Milei. Por Diego Kenis.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/9.html">9) Mucho más que ajuste. Estados Unidos en el corazón de la CNEA, una cesión de soberanía energética sin antecedentes. Por Susana Lara.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/10.html">10) Mileísmo con buenos modales. El panorama electoral no es auspicioso para el establishment industrial. Razones estructurales de las “dos Argentinas”. Por Enrique Hidalgo.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/11.html">11) No me dejen solo. El gendarme Guerrero, a juicio por el disparo contra Pablo Grillo. Piden que se lo impute por tentativa de homicidio y se avance con sus superiores. Por Juan Manuel Mannarino.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/12.html">12) La fábrica de objetivos. La llegada a Casa Rosada de Peter Thiel, uno de los nombres más influyentes del capitalismo tecnológico global, abre preguntas y reflexiones sobre un nuevo modo de concebir el poder. Por Silvina Pachelo.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/13.html">13) A seguro se lo llevaron preso. El superintendente de Seguridad Vial fue detenido tras manejar borracho, violento y con millones en un bolso; también cayeron un jefe de la división Científica, dos comisarios y varios oficiales. Por Alberto Moya.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/14.html">14) Derechas mesiánicas. Las profecías del sionismo evangélico. Por Aleardo Laría Rajneri.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/15.html">15) Batalla naval. Irán mantiene el control del estrecho de Ormuz, mientras un imprevisible Trump anuncia que la salida del conflicto será diplomática y el resto del mundo reordena alianzas. Por Marcelo Caracoche.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_15"><a href="el_cohete_a_la_luna/2026-05-11-Lunes/16.html">16) Desentrañar China. Nuevo libro sobre el camino de desarrollo y transformación del gigante asiático. Por Néstor Restivo.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-ambito" aria-labelledby="source-ambito-heading">
+<h3 class="source-heading" id="source-ambito-heading"><a href="https://r.jina.ai/https://www.ambito.com/economia">Ámbito</a></h3>
+<ol class="source-notes">
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-05-13-Miercoles/1.html">1) Cardama inició un arbitraje internacional contra Uruguay tras la rescisión del contrato por la compra de dos OPV</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-05-13-Miercoles/2.html">2) Estamos muy conformes con el nivel de avances, dijo el canciller argentino tras reunirse con Lubetkin por planta de hidrógeno verde</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-05-13-Miercoles/3.html">3) Demanda millonaria a Uruguay por Ruta 1: quedó integrado tribunal arbitral en el Ciadi</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-05-13-Miercoles/4.html">4) Justicia dispuso que Moisés Martínez siga en prisión domiciliaria pese a constatar incumplimientos</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-05-13-Miercoles/5.html">5) Lucas Torreira fue agredido a golpes de puño por un aficionado en un centro comercial de Estambul y está fuera de peligro</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-05-13-Miercoles/6.html">6) Imputaron a un hombre por encubrimiento del asesinato de un bebé de 1 año en Colón</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-05-13-Miercoles/7.html">7) El picudo rojo llegó a la palmera en homenaje a Juana de Ibarbouru en la Rambla: le quitarán las partes afectadas</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-05-13-Miercoles/8.html">8) Legnani no acepta la renuncia de jerarca de la Intendencia de Canelones que visitó el portaaviones de EE.UU</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-05-13-Miercoles/9.html">9) Cuánto se te extraña: Orsi participó en el lanzamiento de un sello conmemorativo del Correo Uruguayo a un año de la muerte de José Mujica</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-05-13-Miercoles/10.html">10) Caja de Profesionales: perdió más de US$ 30 millones en 2025 pese a asistencia financiera del Estado y mayor aporte de jubilados</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-05-13-Miercoles/11.html">11) El Ministerio de Defensa dio de baja a la anestesista condenada por un caso de mala praxis a la que Lustemberg le redujo sanción</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-05-13-Miercoles/12.html">12) Ciberdelincuentes filtran accesos a servidores de una empresa de Antel</a></li>
+<li class="nota" id="el_observador_12"><a href="el_observador/2026-05-13-Miercoles/13.html">13) La eterna discusión del fútbol uruguayo tuvo un veredicto estadístico: ¿quién tiene más hinchas, Nacional o Peñarol?</a></li>
+<li class="nota" id="el_observador_13"><a href="el_observador/2026-05-13-Miercoles/14.html">14) Conmoción en la NBA por la sorpresiva muerte de un jugador de 29 años: Estamos devastados</a></li>
+<li class="nota" id="el_observador_14"><a href="el_observador/2026-05-13-Miercoles/15.html">15) Ignacio Ruglio le confirmó a su entorno que no se presentará a las próximas elecciones de Peñarol</a></li>
+<li class="nota" id="el_observador_15"><a href="el_observador/2026-05-13-Miercoles/16.html">16) Nueva alianza entre CASMU y ORT: ¿qué beneficios traerá para estudiantes y funcionarios?</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">la diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-05-13-Miercoles/1.html">1) Cardama resolvió iniciar un arbitraje internacional contra el Estado uruguayo.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-05-13-Miercoles/2.html">2) Perrone pone como condición para votar la comisión investigadora de ASSE que se trate el proyecto de prisión domiciliaria.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-05-13-Miercoles/3.html">3) Canciller argentino expresó su “satisfacción” por posible relocalización de la planta de hidrógeno verde en Paysandú.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-05-13-Miercoles/4.html">4) Una multitud le reclamó a Milei que cumpla con la Ley de Financiamiento Universitario.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-05-13-Miercoles/5.html">5) Situación de calle: Sánchez dijo que actualmente “hay 12.400 personas que están siendo asistidas por el Estado”.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-05-13-Miercoles/6.html">6) La fiscal Mónica Ferrero advirtió sobre falta de presupuesto para implementar reforma del Código del Proceso Penal.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-05-13-Miercoles/7.html">7) La Justicia resolvió mantener la prisión domiciliaria para Moisés Martínez.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-05-13-Miercoles/8.html">8) “Estamos revisando todo el proceso”, dijo Lustemberg sobre la reducción de la sanción a la anestesista condenada por mala praxis.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-05-13-Miercoles/9.html">9) Cámara de Diputados aprobó el proyecto de ley de la oposición que reduce la mayoría de las multas por exceso de velocidad.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-05-13-Miercoles/10.html">10) Trump se reúne en Pekín con Xi Jinping, con la guerra en Irán como uno de los temas centrales de la agenda.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-05-12-Martes.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>

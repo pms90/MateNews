@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>El avance de Bolivia amenaza el predominio paraguayo en la hidrovía y preocupa a los empresarios</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: auto;
+                padding: 5%;
+            }
+            .btnL {
+                background: #d1d1d1;
+                border-radius: 7px;
+                padding: 18px;
+                min-width: 100%;
+                color: #000000;
+                font-size: medium;
+                min-height: 70px;
+            }
+            button {
+                background-color: #d1d1d1;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:disabled {
+                background-color: #d1d1d1;
+                cursor: not-allowed;
+            }
+            button:hover:not(:disabled) {
+                background-color: #d1d1d1;
+            }
+            #voiceSelect {
+                margin: 10px 0;
+                padding: 5px;
+            }
+            .controls {
+                margin: 10px 0;
+            }
+
+            #fullscreenButton {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px;
+                background-color: transparent;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+            #fullscreenIcon {
+                width: 24px;
+                height: 24px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <button id="fullscreenButton">
+        <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+        </svg>
+        </button>
+
+        <div id="texto">
+            <h1>El avance de Bolivia amenaza el predominio paraguayo en la hidrovía y preocupa a los empresarios</h1>
+            <p>Rodrigo Paz aprovecha el dragado del río Paraguay para conseguir una salida al mar. Bolivia ya tiene la segunda flota y acaba de eliminar barreras arancelarias para atraer barcazas y disputar el tráfico.</p><p>Los gobiernos de Santiago Peña y Lula da Silva avanzan en una nota reversal para abrirle camino a Bolivia hacia el Océano Atlántico.</p><p>Aunque las conversaciones son aún incipientes, y la medida deberá pasar antes por los parlamentos de ambos países, Peña y Lula llegaron a un acuerdo para apurar los trabajos de dragado en el río Paraguay, específicamente en el tramo comprendido entre Ladário-Río Apa (Brasil) y Bahía Negra (Paraguay).</p><p>La maniobra potenciaría el tráfico boliviano y empujaría además la búsqueda de &quot;salidas alternativas&quot; a las que ofrece Argentina por la hidrovía Paraguay-Paraná.</p><p>Santi Peña se aleja de Milei y negocia con Uruguay el acceso al mar de Paraguay por el puerto de Montevideo</p><p>&quot;Tuvimos una reunión en Cancillería la semana pasada y otra en Brasilia. En consenso hicimos llegar una contrapropuesta a Brasil. Esto está planteado por Brasil porque ellos están llamando a licitación para el dragado del río Paraguay. Analizamos una nota reversal y también se le está dando participación a Bolivia&quot;, dijo a LPO Julio César Vera Cáceres, titular de la Administración Nacional de Navegación y Puertos (ANNP).</p><p>Por su parte, el gobierno boliviano decidió aprovechar la ocasión y ya pisa el acelerador en su objetivo histórico de concretar una salida al Atlántico por medio de la hidrovía. Para ello, el presidente Rodrigo Paz puso en vigencia diferentes herramientas que eliminan trabas burocráticas para que los empresarios de otros países accedan a pabellones bolivianos.</p><p>Paradójicamente, el escenario desafía de manera directa la posición de Paraguay como la tercera flota fluvial más grande del mundo y su liderazgo regional, ante la incapacidad de eliminar barreras arancelarias y burocráticas que hoy empujan la migración de capitales.</p><p>Las instituciones deben salirse del camino. Hoy no tenemos eficiencia. Para emitir una matrícula y un embanderamiento el pedido debe pasar por cuatro ministerios. Bolivia ya tiene su propia autoridad creada</p><p>&quot;Bolivia va a tomar protagonismo sobre Paraguay porque los empresarios quieren trabajar libremente. Las instituciones deben salirse del camino. Hoy no tenemos eficiencia. Para emitir una matrícula y un embanderamiento el pedido debe pasar por cuatro ministerios. Bolivia ya tiene su propia autoridad creada&quot;, indicó a este medio un alto referente de la Marina Mercante paraguaya.</p><p>En ese sentido, desde hace dos años que el presidente Peña sigue dilatando la creación de la Dirección Nacional de Marina Mercante (DINAMER), una instancia que podría poner orden y reducir la burocracia que hoy pone en riesgo la posición de predominio fluvial del país.</p><p>El Gobierno relanza la zona franca en Rosario, pero los sojeros se inclinan por Uruguay</p><p>&quot;Paraguay hoy no tiene decisión propia porque todo debe pasar por autoridades superiores como Obras Públicas. No se ve como prioridad el dragado de los ríos y tampoco existe presupuesto. En el tema impositivo quieren avanzar violando vía decretos reglamentarios como el leasing , y no debe ser así&quot;, señaló otro experto de la Marina Mercante.</p><p>En la institución a cargo de las embarcaciones advierten que Bolivia ya emerge como competencia directa para Paraguay en materia logística y de mano de obra especializada.</p>
+        </div>
+        <br><br><br>
+            <div style="display: none;">
+                <label for="voiceSelect">Seleccionar voz:</label>
+                <select id="voiceSelect"></select>
+            </div>
+            <div class="controls">
+                <button onclick="startReading()" id="playButton">
+                    🔊 Leer
+                </button>
+                <button onclick="pauseReading()" id="pauseButton" disabled style="display: none;">
+                    ⏸️ Pausar
+                </button>
+                <button onclick="resumeReading()" id="resumeButton" disabled style="display: none;">
+                    ▶️ Continuar
+                </button>
+                <button onclick="stopReading()" id="stopButton" disabled>
+                    ⏹️ Detener
+                </button>
+            </div>
+            <div id="progress" style="display: none;"></div>
+        <br><br><br>
+        <button class="btnL" onclick="compartir()">Compartir</button>
+        <br><br><br>
+        <button class="btnL" onclick="window.location.href='https://www.lapoliticaonline.com/paraguay/hidrovia-py/pena-negocia-con-lula-el-dragado-del-rio-paraguay-y-empresarios-alertan-por-el-avance-boliviano-9733/'">Ver en web original</button>
+        <br><br><br>
+        <!-- <button class="btnL" onclick="window.location.href='https://matenews.github.io/MateNews/'">Volver a la página principal</button>
+        <br><br><br> -->
+
+
+        <script>
+            function compartir() {
+            if (navigator.share) {
+                navigator.share({
+                title: 'El avance de Bolivia amenaza el predominio paraguayo en la hidrovía y preocupa a los empresarios',
+                text: 'El avance de Bolivia amenaza el predominio paraguayo en la hidrovía y preocupa a los empresarios',
+                url: 'https://www.lapoliticaonline.com/paraguay/hidrovia-py/pena-negocia-con-lula-el-dragado-del-rio-paraguay-y-empresarios-alertan-por-el-avance-boliviano-9733/'
+                })
+                .then(() => console.log('Contenido compartido exitosamente'))
+                .catch((error) => console.error('Error al compartir:', error));
+            } else {
+                console.log("Web Share API no soportada");
+            }
+            }
+        </script>
+
+
+        <script>
+            let speechSynthesis = window.speechSynthesis;
+            let currentUtterance = null;
+            let isPaused = false;
+            let isReading = false;
+            let textBlocks = [];
+            let currentBlockIndex = 0;
+            let lastSpokenIndex = 0;
+            const BLOCK_SIZE = 800;
+
+            function updateButtons(speaking) {
+                document.getElementById('playButton').disabled = speaking;
+                document.getElementById('pauseButton').disabled = !speaking;
+                document.getElementById('resumeButton').disabled = !isPaused;
+                document.getElementById('stopButton').disabled = !speaking;
+            }
+
+            function updateProgress() {
+                const progressDiv = document.getElementById('progress');
+                if (isReading) {
+                    progressDiv.textContent = `Leyendo bloque ${currentBlockIndex + 1} de ${textBlocks.length}`;
+                } else {
+                    progressDiv.textContent = '';
+                }
+            }
+
+            function splitIntoBlocks(text) {
+                const sentences = text.replace(/([.!?])\s+/g, "$1|").split("|");
+
+                let blocks = [];
+                let currentBlock = '';
+
+                sentences.forEach(sentence => {
+                    if (sentence.length > BLOCK_SIZE) {
+                        let subSentences = sentence.replace(/,\s+/g, ",|").split("|");
+                        subSentences.forEach(subSentence => {
+                            if (currentBlock.length + subSentence.length > BLOCK_SIZE) {
+                                if (currentBlock) blocks.push(currentBlock.trim());
+                                currentBlock = subSentence;
+                            } else {
+                                currentBlock += (currentBlock ? ' ' : '') + subSentence;
+                            }
+                        });
+                    } else {
+                        if (currentBlock.length + sentence.length > BLOCK_SIZE) {
+                            blocks.push(currentBlock.trim());
+                            currentBlock = sentence;
+                        } else {
+                            currentBlock += (currentBlock ? ' ' : '') + sentence;
+                        }
+                    }
+                });
+
+                if (currentBlock) blocks.push(currentBlock.trim());
+                return blocks;
+            }
+
+            function speakBlock(index) {
+                if (index >= textBlocks.length) {
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                    return;
+                }
+
+                currentUtterance = new SpeechSynthesisUtterance(textBlocks[index]);
+                currentUtterance.rate = parseFloat(1.3);
+                lastSpokenIndex = index;
+
+
+                currentUtterance.onend = function() {
+                    if (isReading && !isPaused) {
+                        currentBlockIndex++;
+                        updateProgress();
+                        speakBlock(currentBlockIndex);
+                    }
+                };
+
+                currentUtterance.onerror = function(event) {
+                    console.error('Error en la lectura:', event);
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }
+
+            function startReading() {
+                const text = document.getElementById('texto').innerText;
+                if (!text) return;
+
+                stop();
+
+                textBlocks = splitIntoBlocks(text);
+                currentBlockIndex = 0;
+                isReading = true;
+                isPaused = false;
+
+                updateButtons(true);
+                updateProgress();
+                speakBlock(currentBlockIndex);
+            }
+
+            function pause() {
+                speechSynthesis.pause();
+                isPaused = true;
+                updateButtons(true);
+            }
+
+            function resume() {
+                speechSynthesis.resume();
+                isPaused = false;
+                updateButtons(true);
+            }
+
+            function stop() {
+                speechSynthesis.cancel();
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                updateButtons(false);
+                updateProgress();
+            }
+
+            function pauseReading() {
+                if (!isReading) return;
+
+                speechSynthesis.pause();
+                isPaused = true;
+                isReading = false;
+                updateButtons(true);
+                updateProgress();
+            }
+
+            function resumeReading() {
+                if (!isPaused) return;
+
+                isPaused = false;
+                isReading = true;
+
+                if (lastSpokenIndex === currentBlockIndex) {
+                    currentBlockIndex++;
+                }
+
+                updateButtons(true);
+                updateProgress();
+
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    speakBlock(currentBlockIndex);
+                }
+            }
+
+            function stopReading() {
+                speechSynthesis.cancel();
+                finishReading();
+            }
+
+            function finishReading() {
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                lastSpokenIndex = -1;
+                currentUtterance = null;
+                updateButtons(false);
+                updateProgress();
+            }
+
+        </script>
+
+        <script>
+
+            var elem = document.documentElement;
+            var fullscreenButton = document.getElementById("fullscreenButton");
+            var fullscreenIcon = document.getElementById("fullscreenIcon");
+
+            fullscreenButton.addEventListener("click", function() {
+            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+                }
+            } else {
+                if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+                }
+            }
+            });
+
+            document.addEventListener('fullscreenchange', (event) => {
+            if (!document.fullscreenElement) {
+                fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+            } else {
+                fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+            }
+            });
+        </script>
+
+    </body>
+    </html>

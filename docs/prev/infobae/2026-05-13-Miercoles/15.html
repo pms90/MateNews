@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Se llevará a cabo la tercera edición de los premios Ana Frank por la lucha contra la discriminación.</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: auto;
+                padding: 5%;
+            }
+            .btnL {
+                background: #d1d1d1;
+                border-radius: 7px;
+                padding: 18px;
+                min-width: 100%;
+                color: #000000;
+                font-size: medium;
+                min-height: 70px;
+            }
+            button {
+                background-color: #d1d1d1;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:disabled {
+                background-color: #d1d1d1;
+                cursor: not-allowed;
+            }
+            button:hover:not(:disabled) {
+                background-color: #d1d1d1;
+            }
+            #voiceSelect {
+                margin: 10px 0;
+                padding: 5px;
+            }
+            .controls {
+                margin: 10px 0;
+            }
+
+            #fullscreenButton {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px;
+                background-color: transparent;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+            #fullscreenIcon {
+                width: 24px;
+                height: 24px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <button id="fullscreenButton">
+        <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+        </svg>
+        </button>
+
+        <div id="texto">
+            <h1>Se llevará a cabo la tercera edición de los premios Ana Frank por la lucha contra la discriminación.</h1>
+            <p>Latercera edición de los Premios Ana Frankvolverá a reunir a referentes de la cultura, los derechos humanos y la vida pública en una ceremonia organizada por elCentro Ana Frank Argentina para América Latina(CAFA) prevista para el8 de junio a las 18en elTeatro Presidente Alvear, en la Ciudad de Buenos Aires. El galardón distingue a personas e instituciones cuyo trabajo promueve la convivencia pacífica, la inclusión y la lucha contra toda forma de discriminación y violencia.</p><p>La celebración llega tras dos ediciones anteriores que consolidaron al premio como un espacio de reconocimiento para iniciativas latinoamericanas comprometidas con los valores que encarnó Ana Frank. La entrega del año pasado, realizada el 9 de junio de 2025 en el Teatro San Martín, reunió a figuras políticas, artistas y activistas de distintos países de la región bajo el mismo propósito: visibilizar el trabajo colectivo por una sociedad más justa.</p><p>La convocatoria de CAFA para esta nueva edición reitera el espíritu que guía al premio desde su primera entrega: reconocer a quienes, desde distintos ámbitos, construyen condiciones para la coexistencia en la diversidad. La ceremonia del 8 de junio se enmarca, además, en la conmemoración del natalicio de Ana Frank, fecha que la Ley 26.809 declaró como el Día de los Adolescentes y Jóvenes por la Inclusión Social y la Convivencia.</p><p>La edición anterior ofreció un panorama amplio de las categorías que el galardón abarca. Entre los premiados de 2025 figuraron los ex presidentes uruguayosLuis Lacalle PouyJulio Sanguinetti, junto al entonces presidente electoYamandú Orsi, reconocidos por su trayectoria en la continuidad democrática y el respeto institucional. Eljefe de Gobierno de la Ciudad de Buenos Aires,Jorge Macri, también recibió un galardón por su labor vinculada al Parque de la Memoria, espacio dedicado a las víctimas del terrorismo de Estado.</p><p>Esa misma noche, el músicoLeón Giecoy la artistaLali Espósitofueron distinguidos por sus aportes desde la cultura: el primero, por su trayectoria asociada a mensajes de paz; la segunda, por su influencia en la juventud y su posicionamiento público en torno a la igualdad de género. El evento también incluyó la presencia de integrantes deMujeres Activan por la Paz, un movimiento de mujeres y madres israelíes y palestinas que trabajan de manera conjunta por la paz en Medio Oriente.</p><p>También el documentalTraslados, fue reconocido aquella oportunidad. “Celebrar la democracia y la tolerancia resulta esencial”, expresóZoe Hochbaum, quien tuvo la idea original del film, al tiempo que advirtió que también es necesario “pasar a la acción para defenderla”. Este planteo buscó conectar el valor del recuerdo histórico con la responsabilidad ciudadana actual.</p><p>Otro de los momentos de la gala de 2024 fue la entrega delPremio Ana Frank de Jóvenes para Jóvenes, destinado a proyectos juveniles que fomentan la inclusión y la convivencia en sus comunidades. Esta categoría refleja el énfasis del CAFA en las nuevas generaciones como agentes activos en la construcción de una cultura de paz, en línea directa con el legado de la joven que dio nombre al galardón.</p><p>Para la edición de este año, el Centro Ana Frank ya difundió las invitaciones formales y confirmó la fecha y el lugar del evento. Más allá de los nombres que se conozcan en las próximas semanas, la estructura del premio mantiene su orientación hacia instituciones, medios de comunicación, gobiernos y personalidades de los ámbitos de la cultura, los derechos humanos, la justicia y el sector empresario, categorías que han definido el alcance regional de la distinción desde su origen.</p><p>Temas Relacionados</p>
+        </div>
+        <br><br><br>
+            <div style="display: none;">
+                <label for="voiceSelect">Seleccionar voz:</label>
+                <select id="voiceSelect"></select>
+            </div>
+            <div class="controls">
+                <button onclick="startReading()" id="playButton">
+                    🔊 Leer
+                </button>
+                <button onclick="pauseReading()" id="pauseButton" disabled style="display: none;">
+                    ⏸️ Pausar
+                </button>
+                <button onclick="resumeReading()" id="resumeButton" disabled style="display: none;">
+                    ▶️ Continuar
+                </button>
+                <button onclick="stopReading()" id="stopButton" disabled>
+                    ⏹️ Detener
+                </button>
+            </div>
+            <div id="progress" style="display: none;"></div>
+        <br><br><br>
+        <button class="btnL" onclick="compartir()">Compartir</button>
+        <br><br><br>
+        <button class="btnL" onclick="window.location.href='https://www.infobae.com/sociedad/2026/05/13/se-llevara-a-cabo-la-tercera-edicion-de-los-premios-ana-frank-por-la-lucha-contra-la-discriminacion/'">Ver en web original</button>
+        <br><br><br>
+        <!-- <button class="btnL" onclick="window.location.href='https://matenews.github.io/MateNews/'">Volver a la página principal</button>
+        <br><br><br> -->
+
+
+        <script>
+            function compartir() {
+            if (navigator.share) {
+                navigator.share({
+                title: 'Se llevará a cabo la tercera edición de los premios Ana Frank por la lucha contra la discriminación.',
+                text: 'Se llevará a cabo la tercera edición de los premios Ana Frank por la lucha contra la discriminación.',
+                url: 'https://www.infobae.com/sociedad/2026/05/13/se-llevara-a-cabo-la-tercera-edicion-de-los-premios-ana-frank-por-la-lucha-contra-la-discriminacion/'
+                })
+                .then(() => console.log('Contenido compartido exitosamente'))
+                .catch((error) => console.error('Error al compartir:', error));
+            } else {
+                console.log("Web Share API no soportada");
+            }
+            }
+        </script>
+
+
+        <script>
+            let speechSynthesis = window.speechSynthesis;
+            let currentUtterance = null;
+            let isPaused = false;
+            let isReading = false;
+            let textBlocks = [];
+            let currentBlockIndex = 0;
+            let lastSpokenIndex = 0;
+            const BLOCK_SIZE = 800;
+
+            function updateButtons(speaking) {
+                document.getElementById('playButton').disabled = speaking;
+                document.getElementById('pauseButton').disabled = !speaking;
+                document.getElementById('resumeButton').disabled = !isPaused;
+                document.getElementById('stopButton').disabled = !speaking;
+            }
+
+            function updateProgress() {
+                const progressDiv = document.getElementById('progress');
+                if (isReading) {
+                    progressDiv.textContent = `Leyendo bloque ${currentBlockIndex + 1} de ${textBlocks.length}`;
+                } else {
+                    progressDiv.textContent = '';
+                }
+            }
+
+            function splitIntoBlocks(text) {
+                const sentences = text.replace(/([.!?])\s+/g, "$1|").split("|");
+
+                let blocks = [];
+                let currentBlock = '';
+
+                sentences.forEach(sentence => {
+                    if (sentence.length > BLOCK_SIZE) {
+                        let subSentences = sentence.replace(/,\s+/g, ",|").split("|");
+                        subSentences.forEach(subSentence => {
+                            if (currentBlock.length + subSentence.length > BLOCK_SIZE) {
+                                if (currentBlock) blocks.push(currentBlock.trim());
+                                currentBlock = subSentence;
+                            } else {
+                                currentBlock += (currentBlock ? ' ' : '') + subSentence;
+                            }
+                        });
+                    } else {
+                        if (currentBlock.length + sentence.length > BLOCK_SIZE) {
+                            blocks.push(currentBlock.trim());
+                            currentBlock = sentence;
+                        } else {
+                            currentBlock += (currentBlock ? ' ' : '') + sentence;
+                        }
+                    }
+                });
+
+                if (currentBlock) blocks.push(currentBlock.trim());
+                return blocks;
+            }
+
+            function speakBlock(index) {
+                if (index >= textBlocks.length) {
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                    return;
+                }
+
+                currentUtterance = new SpeechSynthesisUtterance(textBlocks[index]);
+                currentUtterance.rate = parseFloat(1.3);
+                lastSpokenIndex = index;
+
+
+                currentUtterance.onend = function() {
+                    if (isReading && !isPaused) {
+                        currentBlockIndex++;
+                        updateProgress();
+                        speakBlock(currentBlockIndex);
+                    }
+                };
+
+                currentUtterance.onerror = function(event) {
+                    console.error('Error en la lectura:', event);
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }
+
+            function startReading() {
+                const text = document.getElementById('texto').innerText;
+                if (!text) return;
+
+                stop();
+
+                textBlocks = splitIntoBlocks(text);
+                currentBlockIndex = 0;
+                isReading = true;
+                isPaused = false;
+
+                updateButtons(true);
+                updateProgress();
+                speakBlock(currentBlockIndex);
+            }
+
+            function pause() {
+                speechSynthesis.pause();
+                isPaused = true;
+                updateButtons(true);
+            }
+
+            function resume() {
+                speechSynthesis.resume();
+                isPaused = false;
+                updateButtons(true);
+            }
+
+            function stop() {
+                speechSynthesis.cancel();
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                updateButtons(false);
+                updateProgress();
+            }
+
+            function pauseReading() {
+                if (!isReading) return;
+
+                speechSynthesis.pause();
+                isPaused = true;
+                isReading = false;
+                updateButtons(true);
+                updateProgress();
+            }
+
+            function resumeReading() {
+                if (!isPaused) return;
+
+                isPaused = false;
+                isReading = true;
+
+                if (lastSpokenIndex === currentBlockIndex) {
+                    currentBlockIndex++;
+                }
+
+                updateButtons(true);
+                updateProgress();
+
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    speakBlock(currentBlockIndex);
+                }
+            }
+
+            function stopReading() {
+                speechSynthesis.cancel();
+                finishReading();
+            }
+
+            function finishReading() {
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                lastSpokenIndex = -1;
+                currentUtterance = null;
+                updateButtons(false);
+                updateProgress();
+            }
+
+        </script>
+
+        <script>
+
+            var elem = document.documentElement;
+            var fullscreenButton = document.getElementById("fullscreenButton");
+            var fullscreenIcon = document.getElementById("fullscreenIcon");
+
+            fullscreenButton.addEventListener("click", function() {
+            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+                }
+            } else {
+                if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+                }
+            }
+            });
+
+            document.addEventListener('fullscreenchange', (event) => {
+            if (!document.fullscreenElement) {
+                fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+            } else {
+                fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+            }
+            });
+        </script>
+
+    </body>
+    </html>
