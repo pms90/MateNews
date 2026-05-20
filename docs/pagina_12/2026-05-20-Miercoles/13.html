@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Se le puede pedir reservar una mesa en un restaurante. El nuevo Google ya hace cosas por nosotros.</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: auto;
+                padding: 5%;
+            }
+            .btnL {
+                background: #d1d1d1;
+                border-radius: 7px;
+                padding: 18px;
+                min-width: 100%;
+                color: #000000;
+                font-size: medium;
+                min-height: 70px;
+            }
+            button {
+                background-color: #d1d1d1;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:disabled {
+                background-color: #d1d1d1;
+                cursor: not-allowed;
+            }
+            button:hover:not(:disabled) {
+                background-color: #d1d1d1;
+            }
+            #voiceSelect {
+                margin: 10px 0;
+                padding: 5px;
+            }
+            .controls {
+                margin: 10px 0;
+            }
+
+            #fullscreenButton {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px;
+                background-color: transparent;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+            #fullscreenIcon {
+                width: 24px;
+                height: 24px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <button id="fullscreenButton">
+        <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+        </svg>
+        </button>
+
+        <div id="texto">
+            <h1>Se le puede pedir reservar una mesa en un restaurante. El nuevo Google ya hace cosas por nosotros.</h1>
+            <p>Google presentó su plan para convertir su famosa barra de búsqueda en un asistente de inteligencia artificial (IA) capaz de reservar un restaurante, seguir las noticias o contactar a un profesional, con solo hacer una pregunta. Después de tres años de dificultades para competir con el ChatGPT de OpenAI, el equivalente de Google, Gemini, cuenta ahora con 900 millones de usuarios mensuales, el doble que el año pasado. Y la función de búsqueda por IA de Google, AI Mode, ya tiene 1.000 millones de usuarios mensuales declarados en el mundo.</p><p>El martes, en la conferencia anual de Google, cerca de su sede en Mountain View, California, su CEO Sundar Pichai presentó el siguiente paso: Gemini Spark, un agente de IA personal disponible a partir de la próxima semana para los suscriptores de gama alta en EE. UU. “Me gusta cómo la búsqueda se parece cada vez menos a una serie de consultas individuales y cada vez más a una conversación continua, que ofrece a los usuarios una comprensión más profunda y los conecta con la inmensidad de la web”, declaró Pichai a periodistas.</p><p>El motor de búsqueda de Google también se actualizará este verano boreal con agentes de IA permanentente activos para alertar sobre noticias, reservar en un restaurante o contactar a un profesional. El grupo también desveló un proyecto de “cesta de compra universal” concebido para reunir las compras del internauta en todas sus plataformas -la de búsqueda, Gemini, YouTube o Gmail- mediante un sistema que detecta automáticamente las mejores ofertas.</p><p>Estas funcionalidades se inscriben en la ola de la llamada “IA agéntica”, que se ha adueñado de Silicon Valley desde que el desarrollador austríaco Peter Steinberger lanzó a finales de 2025 OpenClaw, una plataforma que permite a la IA reservar vuelos, gestionar correos electrónicos y crear aplicaciones con una simple petición. OpenAI contrató a Steinberger y los gigantes tecnológicos compiten ahora por ofrecer estas funcionalidades al público, pese a las preocupaciones sobre la seguridad y los crecientes costos de computación que conllevan.</p><p>Para mantenerse por delante de sus rivales, Google lanzó la última versión de su modelo de IA, Gemini 3.5 Flash. Afirma que funciona “cuatro veces más rápido” que los modelos competidores de gama alta —incluidos Claude Opus, de Anthropic, y ChatGPT 5.5, de OpenAI— con un rendimiento similar.</p><p>Este modelo es ahora el predeterminado en la aplicación Gemini, en la búsqueda con AI Mode y en otros servicios de Google. Se espera que el mes que viene salga la versión más potente, Gemini 3.5 Pro.</p><p>Google, que invirtió en su competidor Anthropic, anunció una asociación con OpenAI en un tema específico: combatir la difusión de contenido falso o manipulado. Para ello, OpenAI adoptó SynthID, una herramienta de Google que añade marcas de agua invisibles a las imágenes creadas por IA.</p><p>Estas nuevas capacidades del número uno de la búsqueda en internet, que limitan aún más la navegación de los internautas fuera del ecosistema de Google, corren sin embargo el riesgo de alimentar los temores de los medios en línea, que ven disminuir su audiencia y sus ingresos publicitarios.</p><p>El 58% de las búsquedas en Google terminan ahora sin que el internauta haga clic y visite un sitio, según una demanda presentada contra Google por Penske Media, editor de The Hollywood Reporter y Rolling Stone.</p><p>En Europa, el Consejo Europeo de Editores (EPC) ha recurrido a la Comisión Europea y acusa a Google de utilizar contenidos periodísticos para alimentar sus resúmenes por IA sin compensación. Francia es el único gran país europeo en el que AI Mode sigue sin estar disponible y continúa en el centro de una agria disputa entre Google y los editores.</p><p>Pero los problemas legales de Google no se limitan a Europa. Un tribunal estadounidense la declaró culpable en 2024 de monopolizar ilegalmente la búsqueda en línea y la empresa podría verse obligada a desmantelar partes de su negocio.</p><p>En febrero, el Departamento de Justicia recurrió un fallo que se había quedado corto a la hora de obligar a Google a vender su navegador Chrome. Pero la audiencia no debería tener lugar antes de finales de año, o incluso en 2027.</p>
+        </div>
+        <br><br><br>
+            <div style="display: none;">
+                <label for="voiceSelect">Seleccionar voz:</label>
+                <select id="voiceSelect"></select>
+            </div>
+            <div class="controls">
+                <button onclick="startReading()" id="playButton">
+                    🔊 Leer
+                </button>
+                <button onclick="pauseReading()" id="pauseButton" disabled style="display: none;">
+                    ⏸️ Pausar
+                </button>
+                <button onclick="resumeReading()" id="resumeButton" disabled style="display: none;">
+                    ▶️ Continuar
+                </button>
+                <button onclick="stopReading()" id="stopButton" disabled>
+                    ⏹️ Detener
+                </button>
+            </div>
+            <div id="progress" style="display: none;"></div>
+        <br><br><br>
+        <button class="btnL" onclick="compartir()">Compartir</button>
+        <br><br><br>
+        <button class="btnL" onclick="window.location.href='https://www.pagina12.com.ar/2026/05/19/el-nuevo-google-ya-hace-cosas-por-nosotros/'">Ver en web original</button>
+        <br><br><br>
+        <!-- <button class="btnL" onclick="window.location.href='https://matenews.github.io/MateNews/'">Volver a la página principal</button>
+        <br><br><br> -->
+
+
+        <script>
+            function compartir() {
+            if (navigator.share) {
+                navigator.share({
+                title: 'Se le puede pedir reservar una mesa en un restaurante. El nuevo Google ya hace cosas por nosotros.',
+                text: 'Se le puede pedir reservar una mesa en un restaurante. El nuevo Google ya hace cosas por nosotros.',
+                url: 'https://www.pagina12.com.ar/2026/05/19/el-nuevo-google-ya-hace-cosas-por-nosotros/'
+                })
+                .then(() => console.log('Contenido compartido exitosamente'))
+                .catch((error) => console.error('Error al compartir:', error));
+            } else {
+                console.log("Web Share API no soportada");
+            }
+            }
+        </script>
+
+
+        <script>
+            let speechSynthesis = window.speechSynthesis;
+            let currentUtterance = null;
+            let isPaused = false;
+            let isReading = false;
+            let textBlocks = [];
+            let currentBlockIndex = 0;
+            let lastSpokenIndex = 0;
+            const BLOCK_SIZE = 800;
+
+            function updateButtons(speaking) {
+                document.getElementById('playButton').disabled = speaking;
+                document.getElementById('pauseButton').disabled = !speaking;
+                document.getElementById('resumeButton').disabled = !isPaused;
+                document.getElementById('stopButton').disabled = !speaking;
+            }
+
+            function updateProgress() {
+                const progressDiv = document.getElementById('progress');
+                if (isReading) {
+                    progressDiv.textContent = `Leyendo bloque ${currentBlockIndex + 1} de ${textBlocks.length}`;
+                } else {
+                    progressDiv.textContent = '';
+                }
+            }
+
+            function splitIntoBlocks(text) {
+                const sentences = text.replace(/([.!?])\s+/g, "$1|").split("|");
+
+                let blocks = [];
+                let currentBlock = '';
+
+                sentences.forEach(sentence => {
+                    if (sentence.length > BLOCK_SIZE) {
+                        let subSentences = sentence.replace(/,\s+/g, ",|").split("|");
+                        subSentences.forEach(subSentence => {
+                            if (currentBlock.length + subSentence.length > BLOCK_SIZE) {
+                                if (currentBlock) blocks.push(currentBlock.trim());
+                                currentBlock = subSentence;
+                            } else {
+                                currentBlock += (currentBlock ? ' ' : '') + subSentence;
+                            }
+                        });
+                    } else {
+                        if (currentBlock.length + sentence.length > BLOCK_SIZE) {
+                            blocks.push(currentBlock.trim());
+                            currentBlock = sentence;
+                        } else {
+                            currentBlock += (currentBlock ? ' ' : '') + sentence;
+                        }
+                    }
+                });
+
+                if (currentBlock) blocks.push(currentBlock.trim());
+                return blocks;
+            }
+
+            function speakBlock(index) {
+                if (index >= textBlocks.length) {
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                    return;
+                }
+
+                currentUtterance = new SpeechSynthesisUtterance(textBlocks[index]);
+                currentUtterance.rate = parseFloat(1.3);
+                lastSpokenIndex = index;
+
+
+                currentUtterance.onend = function() {
+                    if (isReading && !isPaused) {
+                        currentBlockIndex++;
+                        updateProgress();
+                        speakBlock(currentBlockIndex);
+                    }
+                };
+
+                currentUtterance.onerror = function(event) {
+                    console.error('Error en la lectura:', event);
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }
+
+            function startReading() {
+                const text = document.getElementById('texto').innerText;
+                if (!text) return;
+
+                stop();
+
+                textBlocks = splitIntoBlocks(text);
+                currentBlockIndex = 0;
+                isReading = true;
+                isPaused = false;
+
+                updateButtons(true);
+                updateProgress();
+                speakBlock(currentBlockIndex);
+            }
+
+            function pause() {
+                speechSynthesis.pause();
+                isPaused = true;
+                updateButtons(true);
+            }
+
+            function resume() {
+                speechSynthesis.resume();
+                isPaused = false;
+                updateButtons(true);
+            }
+
+            function stop() {
+                speechSynthesis.cancel();
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                updateButtons(false);
+                updateProgress();
+            }
+
+            function pauseReading() {
+                if (!isReading) return;
+
+                speechSynthesis.pause();
+                isPaused = true;
+                isReading = false;
+                updateButtons(true);
+                updateProgress();
+            }
+
+            function resumeReading() {
+                if (!isPaused) return;
+
+                isPaused = false;
+                isReading = true;
+
+                if (lastSpokenIndex === currentBlockIndex) {
+                    currentBlockIndex++;
+                }
+
+                updateButtons(true);
+                updateProgress();
+
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    speakBlock(currentBlockIndex);
+                }
+            }
+
+            function stopReading() {
+                speechSynthesis.cancel();
+                finishReading();
+            }
+
+            function finishReading() {
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                lastSpokenIndex = -1;
+                currentUtterance = null;
+                updateButtons(false);
+                updateProgress();
+            }
+
+        </script>
+
+        <script>
+
+            var elem = document.documentElement;
+            var fullscreenButton = document.getElementById("fullscreenButton");
+            var fullscreenIcon = document.getElementById("fullscreenIcon");
+
+            fullscreenButton.addEventListener("click", function() {
+            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+                }
+            } else {
+                if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+                }
+            }
+            });
+
+            document.addEventListener('fullscreenchange', (event) => {
+            if (!document.fullscreenElement) {
+                fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+            } else {
+                fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+            }
+            });
+        </script>
+
+    </body>
+    </html>
