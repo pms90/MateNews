@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-FAILED_TEXT = "No se puedo obtener texto."
+FAILED_TEXT = "No se pudo obtener texto."
 
 
 def normalize_text_blocks(parts: list[str]) -> str:

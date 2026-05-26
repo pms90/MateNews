@@ -54,4 +54,5 @@ class InfobaeSource(BaseSource):
             return FAILED_TEXT
 
         parts = [element.get_text(strip=True) for element in body.find_all(["p", "h3"])]
+        parts = [part.replace("PUBLICIDAD", "") for part in parts if part]
         return normalize_text_blocks(parts)

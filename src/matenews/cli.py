@@ -34,6 +34,13 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Ignore the daily schedule and fetch every enabled source",
     )
+    build_parser_obj.add_argument(
+        "--from-cache",
+        "--no-fetch",
+        dest="from_cache",
+        action="store_true",
+        help="Rebuild the site using cached section HTML without fetching sources again",
+    )
     build_parser_obj.set_defaults(handler=handle_build)
 
     publish_parser = subparsers.add_parser("publish", help="Publish an already generated site")
@@ -78,6 +85,15 @@ def handle_build(args: argparse.Namespace) -> int:
 
     selected_slugs = set(args.sources) if args.sources else None
     config = RunConfig(output_dir=Path(args.output_dir), site_url=args.site_url)
+    if args.from_cache:
+        batches = []
+        build_site(batches, config=config, selected_slugs=selected_slugs)
+        if selected_slugs:
+            print(f"Rebuilt cached sections for {len(selected_slugs)} selected sources in {config.output_dir}")
+        else:
+            print(f"Rebuilt site index from cached sections in {config.output_dir}")
+        return 0
+
     batches = fetch_source_batches(selected_slugs=selected_slugs, ignore_schedule=args.all_sources)
     build_site(batches, config=config)
     article_count = sum(len(batch.articles) for batch in batches)

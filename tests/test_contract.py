@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 
 from matenews.cli import handle_build
-from matenews.domain.dates import file_date_name, frontend_date
+from matenews.domain.dates import file_date_name, frontend_date, frontend_time
 from matenews.domain.models import Article, RunConfig, SourceBatch, SourceConfig
 from matenews.domain.paths import resolve_previous_edition_url
 from matenews.fetchers.http import HttpClient
@@ -21,6 +21,7 @@ from matenews.render.site import render_article_page, render_index_sections
 from matenews.sources.ladiaria import LaDiariaSource
 from matenews.sources.lanacion import LanacionSource
 from matenews.sources.letrap import LetraPSource
+from matenews.sources.lpo import LPOSource
 from matenews.sources.registry import get_source_definitions
 
 
@@ -42,24 +43,66 @@ class ContractTests(unittest.TestCase):
         sleep_mock.assert_not_called()
         client.session.get.assert_called_once_with("https://example.com", timeout=30.0)
 
+    def test_http_client_get_text_allows_explicit_encoding_override(self) -> None:
+        client = HttpClient()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.content = "cosecha récord y Nación".encode("utf-8")
+        response.encoding = "ISO-8859-1"
+        response.apparent_encoding = "utf-8"
+        client.session.get = MagicMock(return_value=response)
+
+        default_text = client.get_text("https://example.com")
+        forced_text = client.get_text("https://example.com", encoding="utf-8")
+
+        self.assertIn("Ã", default_text)
+        self.assertEqual(forced_text, "cosecha récord y Nación")
+
     def test_http_client_get_article_applies_base_delay_plus_jitter(self) -> None:
         client = HttpClient()
         response = MagicMock()
         response.raise_for_status.return_value = None
         client.session.get = MagicMock(return_value=response)
 
-        with patch("matenews.fetchers.http.random.uniform", return_value=0.07) as uniform_mock:
+        with patch("matenews.fetchers.http.random.uniform", return_value=0.23) as uniform_mock:
             with patch("matenews.fetchers.http.time.sleep") as sleep_mock:
                 client.get_article("https://example.com/nota")
 
-        uniform_mock.assert_called_once_with(0.05, 0.1)
+        uniform_mock.assert_called_once_with(0.2, 0.5)
         sleep_mock.assert_called_once()
-        self.assertAlmostEqual(sleep_mock.call_args.args[0], 0.12)
+        self.assertAlmostEqual(sleep_mock.call_args.args[0], 1.03)
         client.session.get.assert_called_once_with("https://example.com/nota", timeout=30.0)
 
     def test_date_contract_matches_notebook(self) -> None:
         self.assertEqual(file_date_name(FIXED_NOW), "2026-04-21-Martes")
         self.assertEqual(frontend_date(FIXED_NOW), "Martes 21 abril 2026")
+        self.assertEqual(frontend_time(FIXED_NOW), "12:00")
+
+    def test_lpo_source_forces_utf8_for_article_pages(self) -> None:
+        source = LPOSource(
+            SourceConfig(
+                name="La Politica Online",
+                slug="la_politica_online",
+                homepage_url="https://www.lapoliticaonline.com",
+                base_url="https://www.lapoliticaonline.com",
+            )
+        )
+        client = MagicMock()
+        client.get_article_soup.return_value = BeautifulSoup(
+            """
+            <div class="description">Pese a la cosecha récord, la rentabilidad no es buena.</div>
+            <div class="body">
+                <p>El Gobierno de Javier Milei enfrenta una situación incómoda en Córdoba.</p>
+            </div>
+            """,
+            "html.parser",
+        )
+
+        text = source._fetch_text(client, "https://example.com/nota")
+
+        client.get_article_soup.assert_called_once_with("https://example.com/nota", encoding="utf-8")
+        self.assertIn("récord", text)
+        self.assertIn("Córdoba", text)
 
     def test_sections_link_to_local_article_when_text_exists(self) -> None:
         batch = SourceBatch(
@@ -69,6 +112,11 @@ class ContractTests(unittest.TestCase):
 
         rendered = render_index_sections([batch], FIXED_NOW)
 
+        self.assertIn('id="source-infobae"', rendered)
+        self.assertIn('aria-labelledby="source-infobae-heading"', rendered)
+        self.assertIn('class="source-heading"', rendered)
+        self.assertIn('id="source-infobae-heading"', rendered)
+        self.assertIn('class="source-notes"', rendered)
         self.assertIn('href="infobae/2026-04-21-Martes/1.html"', rendered)
         self.assertIn('1) Titulo.', rendered)
 
@@ -107,6 +155,13 @@ class ContractTests(unittest.TestCase):
             self.assertTrue((output_dir / "infobae" / "2026-04-21-Martes" / "1.html").exists())
             self.assertTrue((output_dir / "prev" / "infobae" / "2026-04-21-Martes" / "1.html").exists())
             self.assertTrue((output_dir / "infobae" / "index_section.html").exists())
+
+            index_html = (output_dir / "index.html").read_text(encoding="utf-8")
+            self.assertLess(index_html.index('<main id="mainContent"'), index_html.index('id="tocToggle"'))
+            self.assertIn('id="tocToggle"', index_html)
+            self.assertIn('id="tocSidebar"', index_html)
+            self.assertIn('id="source-infobae"', index_html)
+            self.assertIn("12:00 hs", index_html)
 
     def test_build_removes_source_directories_older_than_seven_days(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -295,6 +350,7 @@ class ContractTests(unittest.TestCase):
             output_dir="site",
             site_url="https://pms90.github.io/MateNews",
             all_sources=False,
+            from_cache=False,
         )
 
         with patch("matenews.pipeline.runner.fetch_source_batches", return_value=[] ) as fetch_mock:
@@ -306,6 +362,46 @@ class ContractTests(unittest.TestCase):
         _, build_kwargs = build_mock.call_args
         self.assertIn("config", build_kwargs)
         self.assertNotIn("selected_slugs", build_kwargs)
+
+    def test_handle_build_from_cache_skips_fetch_and_rebuilds_from_cached_sections(self) -> None:
+        args = argparse.Namespace(
+            sources=None,
+            output_dir="site",
+            site_url="https://pms90.github.io/MateNews",
+            all_sources=False,
+            from_cache=True,
+        )
+
+        with patch("matenews.pipeline.runner.fetch_source_batches") as fetch_mock:
+            with patch("matenews.pipeline.runner.build_site") as build_mock:
+                result = handle_build(args)
+
+        self.assertEqual(result, 0)
+        fetch_mock.assert_not_called()
+        build_mock.assert_called_once()
+        _, build_kwargs = build_mock.call_args
+        self.assertEqual(build_mock.call_args.args[0], [])
+        self.assertIn("config", build_kwargs)
+        self.assertIn("selected_slugs", build_kwargs)
+        self.assertIsNone(build_kwargs["selected_slugs"])
+
+    def test_handle_build_from_cache_can_filter_selected_sources(self) -> None:
+        args = argparse.Namespace(
+            sources=["la_diaria"],
+            output_dir="site",
+            site_url="https://pms90.github.io/MateNews",
+            all_sources=False,
+            from_cache=True,
+        )
+
+        with patch("matenews.pipeline.runner.fetch_source_batches") as fetch_mock:
+            with patch("matenews.pipeline.runner.build_site") as build_mock:
+                result = handle_build(args)
+
+        self.assertEqual(result, 0)
+        fetch_mock.assert_not_called()
+        _, build_kwargs = build_mock.call_args
+        self.assertEqual(build_kwargs["selected_slugs"], {"la_diaria"})
 
     def test_la_nacion_registration_and_url_filter(self) -> None:
         definitions = get_source_definitions()

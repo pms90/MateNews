@@ -28,6 +28,9 @@ if errorlevel 1 (
 
 echo.
 echo Sitio construido y publicado correctamente.
-echo Precione una tecla para continuar
-pause >nul
+@REM Si se quiere actualizar el archivo de última ejecución exitosa:
+@REM powershell -NoProfile -ExecutionPolicy Bypass -Command "[datetime]::Now.ToString('o') | Set-Content -Path '%ROOT_DIR%.state\last_successful_run.txt' -Encoding ascii"
+if defined MATENEWS_NO_PAUSE (
+    exit /b 0
+)
 exit /b 0

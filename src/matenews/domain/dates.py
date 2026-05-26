@@ -70,3 +70,8 @@ def file_date_name(now: datetime | None = None) -> str:
 def frontend_date(now: datetime | None = None) -> str:
     current = argentina_now(now)
     return f"{DAY_NAMES[current.weekday()]} {current:%d} {MONTH_NAMES[current.month]} {current:%Y}"
+
+
+def frontend_time(now: datetime | None = None) -> str:
+    current = argentina_now(now)
+    return current.strftime("%H:%M")

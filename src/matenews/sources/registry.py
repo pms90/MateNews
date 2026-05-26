@@ -54,7 +54,7 @@ SOURCE_DEFINITIONS = [
             slug="la_politica_online",
             homepage_url="https://www.lapoliticaonline.com",
             base_url="https://www.lapoliticaonline.com",
-            limit=6,
+            limit=8,
         ),
         implementation=LPOSource,
     ),
@@ -92,7 +92,7 @@ SOURCE_DEFINITIONS = [
         SourceConfig(
             name="El Día",
             slug="el_dia",
-            homepage_url="https://www.eldia.com/seccion/la-ciudad",
+            homepage_url="https://www.eldia.com/la-ciudad",
             base_url="https://www.eldia.com",
         ),
         implementation=ElDiaSource,

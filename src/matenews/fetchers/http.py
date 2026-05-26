@@ -15,13 +15,17 @@ DEFAULT_HEADERS = {
     )
 }
 
+DEFAULT_ARTICLE_DELAY_SECONDS = 0.25
+DEFAULT_ARTICLE_JITTER_MIN_SECONDS = 0.05
+DEFAULT_ARTICLE_JITTER_MAX_SECONDS = 0.15
+
 
 class HttpClient:
     def __init__(
         self,
-        article_delay_seconds: float = 0.05,
-        article_jitter_min_seconds: float = 0.05,
-        article_jitter_max_seconds: float = 0.1,
+        article_delay_seconds: float = DEFAULT_ARTICLE_DELAY_SECONDS,
+        article_jitter_min_seconds: float = DEFAULT_ARTICLE_JITTER_MIN_SECONDS,
+        article_jitter_max_seconds: float = DEFAULT_ARTICLE_JITTER_MAX_SECONDS,
         timeout_seconds: float = 30.0,
     ) -> None:
         self.article_delay_seconds = article_delay_seconds

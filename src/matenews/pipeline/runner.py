@@ -6,7 +6,7 @@ from pathlib import Path
 import re
 from shutil import copy2, rmtree
 
-from ..domain.dates import argentina_now, file_date_name, frontend_date, short_day_code
+from ..domain.dates import argentina_now, file_date_name, frontend_date, frontend_time, short_day_code
 from ..domain.models import RunConfig, SourceBatch
 from ..domain.paths import (
     archived_article_path,
@@ -83,8 +83,20 @@ def build_site(
         current_prev_name,
         inside_prev_dir=True,
     )
-    index_html = render_index_page(index_template, frontend_date(current_time), sections_html, root_previous_edition_url)
-    prev_index_html = render_index_page(index_template, frontend_date(current_time), sections_html, prev_previous_edition_url)
+    index_html = render_index_page(
+        index_template,
+        frontend_date(current_time),
+        frontend_time(current_time),
+        sections_html,
+        root_previous_edition_url,
+    )
+    prev_index_html = render_index_page(
+        index_template,
+        frontend_date(current_time),
+        frontend_time(current_time),
+        sections_html,
+        prev_previous_edition_url,
+    )
 
     (output_dir / "index.html").write_text(index_html, encoding="utf-8")
     current_prev_index_path(build_config, current_time).write_text(prev_index_html, encoding="utf-8")
