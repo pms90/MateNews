@@ -18,6 +18,7 @@ from matenews.fetchers.http import HttpClient
 from matenews.pipeline.runner import build_site, fetch_source_batches
 from matenews.publish import default_commit_message, sync_site_directory
 from matenews.render.site import render_article_page, render_index_sections
+from matenews.sources.eldia import ElDiaSource
 from matenews.sources.ladiaria import LaDiariaSource
 from matenews.sources.lanacion import LanacionSource
 from matenews.sources.letrap import LetraPSource
@@ -523,6 +524,80 @@ class ContractTests(unittest.TestCase):
         self.assertIn("El presidente de la República fue invitado", batch.articles[0].text)
         self.assertNotIn("Nuestro periodismo depende de vos", batch.articles[0].text)
         self.assertNotIn("Temas en este artículo", batch.articles[0].text)
+
+    def test_el_dia_fetch_extracts_unique_articles_and_body(self) -> None:
+        source = ElDiaSource(
+            SourceConfig(
+                name="El Día",
+                slug="el_dia",
+                homepage_url="https://www.eldia.com/la-ciudad",
+                base_url="https://www.eldia.com",
+                limit=5,
+            )
+        )
+
+        homepage_html = """
+        <html>
+            <body>
+                <article class="nota nota--gral nota--ppal">
+                    <a href="/la-ciudad/titulo-teaser-la-ciudad_1779746760">
+                        <h2>Título teaser desde portada</h2>
+                    </a>
+                </article>
+                <article class="nota nota--gral">
+                    <a href="/la-ciudad/titulo-teaser-la-ciudad_1779746760">
+                        <h2>Título teaser desde portada</h2>
+                    </a>
+                </article>
+                <article class="nota nota--gral">
+                    <a href="/la-ciudad/2">
+                        <h2>Paginación</h2>
+                    </a>
+                </article>
+                <article class="nota nota--gral">
+                    <a href="/la-ciudad/super-cartonazo-la-ciudad_1779705960">
+                        <h2>Súper Cartonazo por $3.000.000</h2>
+                    </a>
+                </article>
+            </body>
+        </html>
+        """
+        article_html = """
+        <html>
+            <head>
+                <meta name="description" content="Bajada principal de la nota." />
+            </head>
+            <body>
+                <article class="articulo">
+                    <header>
+                        <h1>Título definitivo desde la nota</h1>
+                    </header>
+                    <p>Primer párrafo con contenido real y suficiente para publicar localmente.</p>
+                    <p>Segundo párrafo con más contexto de la información publicada por El Día.</p>
+                    <p class="nota__titulo-item">Nota relacionada que no debe aparecer.</p>
+                    <p>Tercer párrafo que no debe leerse porque ya terminó la nota.</p>
+                </article>
+            </body>
+        </html>
+        """
+
+        class FakeClient:
+            def get_soup(self, url: str):
+                return BeautifulSoup(homepage_html, "html.parser")
+
+            def get_article_soup(self, url: str):
+                return BeautifulSoup(article_html, "html.parser")
+
+        batch = source.fetch(FakeClient())
+
+        self.assertEqual(len(batch.articles), 1)
+        self.assertEqual(batch.articles[0].url, "https://www.eldia.com/la-ciudad/titulo-teaser-la-ciudad_1779746760")
+        self.assertEqual(batch.articles[0].title, "Título definitivo desde la nota.")
+        self.assertIn("Bajada principal de la nota.", batch.articles[0].text)
+        self.assertIn("Primer párrafo con contenido real", batch.articles[0].text)
+        self.assertIn("Segundo párrafo con más contexto", batch.articles[0].text)
+        self.assertNotIn("Nota relacionada", batch.articles[0].text)
+        self.assertNotIn("Tercer párrafo", batch.articles[0].text)
 
 
 if __name__ == "__main__":
