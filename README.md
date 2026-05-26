@@ -11,7 +11,7 @@ Desde el punto de vista técnico, el proyecto está organizado como un pipeline 
 - El contrato de salida del sitio está implementado como código Python y genera artefactos estáticos compatibles con la publicación actual en GitHub Pages.
 - La capa de render utiliza templates HTML preservados a partir del sitio publicado y mantiene la estructura pública de índices, páginas de noticia y snapshots históricos.
 - La operación del sistema está expuesta mediante una CLI reproducible para inspección de fuentes, builds completos, builds selectivos por fuente y publicación desacoplada.
-- Las fuentes actualmente implementadas son Infobae, Página 12, La Política Online, Letra P, Nodal, El Día, RT, El Cohete a la Luna, Ámbito y El Observador.
+- Las fuentes actualmente implementadas son Infobae, Página 12, La Política Online, Letra P, Nodal, El Día, RT, China Daily, El Cohete a la Luna, Ámbito y El Observador.
 - El pipeline soporta reutilización de secciones cacheadas para evitar reacquisición innecesaria cuando una fuente no debe o no conviene volver a consultarse.
 - Financial Times permanece deshabilitada por defecto porque el origen responde 403 tanto en acceso directo como a través del mirror textual utilizado para mitigación.
 

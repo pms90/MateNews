@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from ..domain.models import SourceConfig
 from .ambito import AmbitoSource
 from .base import BaseSource
+from .chinadaily import ChinaDailySource
 from .cohete import CoheteSource
 from .eldia import ElDiaSource
 from .elobservador import ElObservadorSource
@@ -109,6 +110,16 @@ SOURCE_DEFINITIONS = [
     ),
     SourceDefinition(
         SourceConfig(
+            name="China Daily",
+            slug="china_daily",
+            homepage_url="https://www.chinadaily.com.cn/rss/china_rss.xml",
+            base_url="https://www.chinadaily.com.cn",
+            limit=4,
+        ),
+        implementation=ChinaDailySource,
+    ),
+    SourceDefinition(
+        SourceConfig(
             name="Financial Times",
             slug="financial_times",
             homepage_url="https://www.ft.com/",
@@ -127,14 +138,14 @@ SOURCE_DEFINITIONS = [
         ,
         implementation=CoheteSource,
     ),
-    SourceDefinition(
-        SourceConfig(
-            name="Ámbito",
-            slug="ambito",
-            homepage_url="https://r.jina.ai/https://www.ambito.com/economia",
-        ),
-        implementation=AmbitoSource,
-    ),
+    # SourceDefinition(
+    #     SourceConfig(
+    #         name="Ámbito",
+    #         slug="ambito",
+    #         homepage_url="https://r.jina.ai/https://www.ambito.com/economia",
+    #     ),
+    #     implementation=AmbitoSource,
+    # ),
     SourceDefinition(
         SourceConfig(
             name="El Observador",

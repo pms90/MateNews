@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 from zoneinfo import ZoneInfo
 
+import requests
 from bs4 import BeautifulSoup
 
 from matenews.cli import handle_build
@@ -15,9 +16,11 @@ from matenews.domain.dates import file_date_name, frontend_date, frontend_time
 from matenews.domain.models import Article, RunConfig, SourceBatch, SourceConfig
 from matenews.domain.paths import resolve_previous_edition_url
 from matenews.fetchers.http import HttpClient
+from matenews.fetchers.translate import TranslationClient, translate_to_spanish
 from matenews.pipeline.runner import build_site, fetch_source_batches
 from matenews.publish import default_commit_message, sync_site_directory
 from matenews.render.site import render_article_page, render_index_sections
+from matenews.sources.chinadaily import ChinaDailySource
 from matenews.sources.eldia import ElDiaSource
 from matenews.sources.ladiaria import LaDiariaSource
 from matenews.sources.lanacion import LanacionSource
@@ -73,6 +76,28 @@ class ContractTests(unittest.TestCase):
         sleep_mock.assert_called_once()
         self.assertAlmostEqual(sleep_mock.call_args.args[0], 1.03)
         client.session.get.assert_called_once_with("https://example.com/nota", timeout=30.0)
+
+    @patch("matenews.fetchers.translate.requests.Session.get")
+    def test_translate_to_spanish_chunks_paragraphs(self, get_mock: MagicMock) -> None:
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.json.side_effect = [
+            [[["Hola uno", "Hello one", None, None]], None, "en"],
+            [[["Hola dos", "Hello two", None, None]], None, "en"],
+        ]
+        get_mock.return_value = response
+
+        translated = translate_to_spanish(
+            "Hello one\n\nHello two",
+            translator=TranslationClient(max_chunk_chars=12),
+        )
+
+        self.assertEqual(translated, "Hola uno\n\nHola dos")
+        self.assertEqual(get_mock.call_count, 2)
+
+    @patch("matenews.fetchers.translate.requests.Session.get", side_effect=requests.RequestException("boom"))
+    def test_translate_to_spanish_returns_original_text_when_service_fails(self, _get_mock: MagicMock) -> None:
+        self.assertEqual(translate_to_spanish("Hello world"), "Hello world")
 
     def test_date_contract_matches_notebook(self) -> None:
         self.assertEqual(file_date_name(FIXED_NOW), "2026-04-21-Martes")
@@ -598,6 +623,74 @@ class ContractTests(unittest.TestCase):
         self.assertIn("Segundo párrafo con más contexto", batch.articles[0].text)
         self.assertNotIn("Nota relacionada", batch.articles[0].text)
         self.assertNotIn("Tercer párrafo", batch.articles[0].text)
+
+    def test_china_daily_registration_and_rss_fetch_translation(self) -> None:
+        definitions = get_source_definitions()
+        self.assertIn("china_daily", {definition.config.slug for definition in definitions})
+
+        source = ChinaDailySource(
+            SourceConfig(
+                name="China Daily",
+                slug="china_daily",
+                homepage_url="https://www.chinadaily.com.cn/rss/china_rss.xml",
+                base_url="https://www.chinadaily.com.cn",
+                limit=2,
+            )
+        )
+
+        rss_text = """
+        <rss version="2.0">
+            <channel>
+                <item>
+                    <title><![CDATA[Education, health fees among key concerns]]></title>
+                    <link><![CDATA[https://www.chinadaily.com.cn/a/202605/26/example-1.html]]></link>
+                    <AuthorName><![CDATA[Zhang Yue]]></AuthorName>
+                    <description><![CDATA[China to legislate on preschool education]]></description>
+                    <content><![CDATA[
+                        <p><strong>China to legislate on preschool education</strong></p>
+                        <p>China will push for legislation on preschool education.</p>
+                        <p>Contact the writer at sample@chinadaily.com.cn</p>
+                    ]]></content>
+                </item>
+                <item>
+                    <title><![CDATA[Education, health fees among key concerns]]></title>
+                    <link><![CDATA[https://www.chinadaily.com.cn/a/202605/26/example-1.html]]></link>
+                    <AuthorName><![CDATA[Zhang Yue]]></AuthorName>
+                    <description><![CDATA[Duplicate item should be ignored]]></description>
+                    <content><![CDATA[
+                        <p>Duplicate item should be ignored.</p>
+                    ]]></content>
+                </item>
+                <item>
+                    <title><![CDATA[Satellite lofted for first Arab country]]></title>
+                    <link><![CDATA[https://www.chinadaily.com.cn/a/202605/26/example-2.html]]></link>
+                    <AuthorName><![CDATA[Zhao Lei]]></AuthorName>
+                    <description><![CDATA[A Chinese-made communications satellite was launched.]]></description>
+                    <content><![CDATA[
+                        <p>A Chinese-made communications satellite was launched.</p>
+                    ]]></content>
+                </item>
+            </channel>
+        </rss>
+        """
+
+        class FakeClient:
+            def get_text(self, url: str, encoding: str | None = None) -> str:
+                return rss_text
+
+        with patch(
+            "matenews.sources.chinadaily.translate_to_spanish",
+            side_effect=lambda text, translator=None: f"ES: {text}" if text else "",
+        ):
+            batch = source.fetch(FakeClient())
+
+        self.assertEqual(len(batch.articles), 2)
+        self.assertEqual(batch.articles[0].title, "ES: Education, health fees among key concerns.")
+        self.assertEqual(batch.articles[0].author, "Zhang Yue")
+        self.assertIn("ES: China to legislate on preschool education", batch.articles[0].description)
+        self.assertIn("ES: China to legislate on preschool education", batch.articles[0].text)
+        self.assertIn("China will push for legislation on preschool education.", batch.articles[0].text)
+        self.assertNotIn("sample@chinadaily.com.cn", batch.articles[0].text)
 
 
 if __name__ == "__main__":
