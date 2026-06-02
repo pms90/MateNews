@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>UNLP: sesiona el Consejo Superior para designar a las nuevas autoridades.</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: auto;
+                padding: 5%;
+            }
+            .btnL {
+                background: #d1d1d1;
+                border-radius: 7px;
+                padding: 18px;
+                min-width: 100%;
+                color: #000000;
+                font-size: medium;
+                min-height: 70px;
+            }
+            button {
+                background-color: #d1d1d1;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:disabled {
+                background-color: #d1d1d1;
+                cursor: not-allowed;
+            }
+            button:hover:not(:disabled) {
+                background-color: #d1d1d1;
+            }
+            #voiceSelect {
+                margin: 10px 0;
+                padding: 5px;
+            }
+            .controls {
+                margin: 10px 0;
+            }
+
+            #fullscreenButton {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px;
+                background-color: transparent;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+            #fullscreenIcon {
+                width: 24px;
+                height: 24px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <button id="fullscreenButton">
+        <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+        </svg>
+        </button>
+
+        <div id="texto">
+            <h1>UNLP: sesiona el Consejo Superior para designar a las nuevas autoridades.</h1>
+            <p>En sesión extraordinaria, el Consejo Superior de la Universidad Nacional de La Plata se reunirá este martes para definir la designación de las nuevas autoridades universitarias del período 2026-2030. Además, durante la misma reunión, tendrá lugar la primera sesión ordinaria del año en curso.A partir de las 8 de la...</p><p>En sesión extraordinaria, el Consejo Superior de la Universidad Nacional de La Plata se reunirá este martes para definir la designación de las nuevas autoridades universitarias del período 2026-2030. Además, durante la misma reunión, tendrá lugar la primera sesión ordinaria del año en curso.</p><p>A partir de las 8 de la mañana, en la Sala de Sesiones del Rectorado de la UNLP, se pondrán a consideración del máximo órgano de gobierno universitario los nombres que integrarán el nuevo gabinete de gestión. Luego, en sesión ordinaria se debatirán los siguientes expedientes incluidos en el Orden del Día:</p><p>Anteproyecto normativo de la “Reforma de la Ordenanza Nº 101”, que constituye el Régimen de Procedimiento Administrativo de la UNLP para ser aplicada a la totalidad de los procedimientos, físicos o electrónicos, que se lleven a cabo en el ámbito de esta Universidad.</p><p>Se aclaró que &quot;el procedimiento administrativo en la UNLP adopta como principios generales aquellos reconocidos por leyes nacionales o instrumentos internacionales, la jurisprudencia o la doctrina especializada; preservando su razonable adaptación a la naturaleza de la institución para lograr una buena administración universitaria, la preservación de la autonomía responsable, la calidad con inclusión, el cogobierno, y la libertad académica&quot;.</p><p>UNLP: propuestas a tratar</p><p>En otro orden, el cuerpo tratará una propuesta presentada de manera conjunta por las secretarías de Derechos Humanos y Políticas de Igualdad y de Extensión de la UNLP, así como por las Facultades de Humanidades, Psicología, Trabajo Social y Periodismo, a partir de una articulación con la subsecretaría de Derechos Humanos del Ministerio de Justicia bonaerense, referente a la creación de la “Diplomatura Universitaria en Gestión en Derechos Humanos. Formación para el diseño y la implementación de políticas públicas en Derechos Humanos”.</p><p>Otro de los expedientes a consideración del Consejo Superior será una propuesta del presidente de la Universidad sobre la nueva Integración del Tribunal Universitario de la UNLP.</p><p>El orden del día también incluye el proyecto de Ordenanza referente al “Régimen de Registro de Obsequios y Viajes Financiados por Terceros en el ámbito de la UNLP, propuesta elevada por la Dirección de Transparencia y Ética Pública UNLP con el aval de la prosecretaria Legal y Técnica UNLP y de la secretaría de Asuntos Jurídico y Legales.</p><p>Además, la prosecretaria de Relaciones Internacionales UNLP, en acuerdo con la prosecretaria de Posgrado de la UNLP, elevarán proyecto de ordenanza titulado “Procedimiento para realización de cotutelas doctorales internacionales”, que cuenta con los dictámenes de las Comisiones de Enseñanza y Posgrado e Interpretación y Reglamento.</p><p>Las mismas áreas también elevan proyecto de ordenanza titulado “Régimen de celebración de convenios de reconocimiento de trayectos formativos de posgrado” con dictámenes de las comisiones de Enseñanza y Posgrado e Interpretación y Reglamento.</p><p>Los consejeros también analizarán el anteproyecto anteproyecto modificatorio de la Ordenanza sobre “Régimen de Contrataciones de la Universidad Nacional de La Plata”, elevada por la dirección de Compras y Contrataciones de la Presidencia de la UNLP</p><p>Por último, se analizará la propuesta del del Complejo de Viviendas Estudiantiles de la UNLP, elevada por la prosecretaría de Bienestar Universitario.</p>
+        </div>
+        <br><br><br>
+            <div style="display: none;">
+                <label for="voiceSelect">Seleccionar voz:</label>
+                <select id="voiceSelect"></select>
+            </div>
+            <div class="controls">
+                <button onclick="startReading()" id="playButton">
+                    🔊 Leer
+                </button>
+                <button onclick="pauseReading()" id="pauseButton" disabled style="display: none;">
+                    ⏸️ Pausar
+                </button>
+                <button onclick="resumeReading()" id="resumeButton" disabled style="display: none;">
+                    ▶️ Continuar
+                </button>
+                <button onclick="stopReading()" id="stopButton" disabled>
+                    ⏹️ Detener
+                </button>
+            </div>
+            <div id="progress" style="display: none;"></div>
+        <br><br><br>
+        <button class="btnL" onclick="compartir()">Compartir</button>
+        <br><br><br>
+        <button class="btnL" onclick="window.location.href='https://www.eldia.com/la-ciudad/unlp-sesiona-el-consejo-superior-para-designar-a-las-nuevas-autoridades-la-ciudad_1780327560'">Ver en web original</button>
+        <br><br><br>
+        <!-- <button class="btnL" onclick="window.location.href='https://matenews.github.io/MateNews/'">Volver a la página principal</button>
+        <br><br><br> -->
+
+
+        <script>
+            function compartir() {
+            if (navigator.share) {
+                navigator.share({
+                title: 'UNLP: sesiona el Consejo Superior para designar a las nuevas autoridades.',
+                text: 'UNLP: sesiona el Consejo Superior para designar a las nuevas autoridades.',
+                url: 'https://www.eldia.com/la-ciudad/unlp-sesiona-el-consejo-superior-para-designar-a-las-nuevas-autoridades-la-ciudad_1780327560'
+                })
+                .then(() => console.log('Contenido compartido exitosamente'))
+                .catch((error) => console.error('Error al compartir:', error));
+            } else {
+                console.log("Web Share API no soportada");
+            }
+            }
+        </script>
+
+
+        <script>
+            let speechSynthesis = window.speechSynthesis;
+            let currentUtterance = null;
+            let isPaused = false;
+            let isReading = false;
+            let textBlocks = [];
+            let currentBlockIndex = 0;
+            let lastSpokenIndex = 0;
+            const BLOCK_SIZE = 800;
+
+            function updateButtons(speaking) {
+                document.getElementById('playButton').disabled = speaking;
+                document.getElementById('pauseButton').disabled = !speaking;
+                document.getElementById('resumeButton').disabled = !isPaused;
+                document.getElementById('stopButton').disabled = !speaking;
+            }
+
+            function updateProgress() {
+                const progressDiv = document.getElementById('progress');
+                if (isReading) {
+                    progressDiv.textContent = `Leyendo bloque ${currentBlockIndex + 1} de ${textBlocks.length}`;
+                } else {
+                    progressDiv.textContent = '';
+                }
+            }
+
+            function splitIntoBlocks(text) {
+                const sentences = text.replace(/([.!?])\s+/g, "$1|").split("|");
+
+                let blocks = [];
+                let currentBlock = '';
+
+                sentences.forEach(sentence => {
+                    if (sentence.length > BLOCK_SIZE) {
+                        let subSentences = sentence.replace(/,\s+/g, ",|").split("|");
+                        subSentences.forEach(subSentence => {
+                            if (currentBlock.length + subSentence.length > BLOCK_SIZE) {
+                                if (currentBlock) blocks.push(currentBlock.trim());
+                                currentBlock = subSentence;
+                            } else {
+                                currentBlock += (currentBlock ? ' ' : '') + subSentence;
+                            }
+                        });
+                    } else {
+                        if (currentBlock.length + sentence.length > BLOCK_SIZE) {
+                            blocks.push(currentBlock.trim());
+                            currentBlock = sentence;
+                        } else {
+                            currentBlock += (currentBlock ? ' ' : '') + sentence;
+                        }
+                    }
+                });
+
+                if (currentBlock) blocks.push(currentBlock.trim());
+                return blocks;
+            }
+
+            function speakBlock(index) {
+                if (index >= textBlocks.length) {
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                    return;
+                }
+
+                currentUtterance = new SpeechSynthesisUtterance(textBlocks[index]);
+                currentUtterance.rate = parseFloat(1.3);
+                lastSpokenIndex = index;
+
+
+                currentUtterance.onend = function() {
+                    if (isReading && !isPaused) {
+                        currentBlockIndex++;
+                        updateProgress();
+                        speakBlock(currentBlockIndex);
+                    }
+                };
+
+                currentUtterance.onerror = function(event) {
+                    console.error('Error en la lectura:', event);
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }
+
+            function startReading() {
+                const text = document.getElementById('texto').innerText;
+                if (!text) return;
+
+                stop();
+
+                textBlocks = splitIntoBlocks(text);
+                currentBlockIndex = 0;
+                isReading = true;
+                isPaused = false;
+
+                updateButtons(true);
+                updateProgress();
+                speakBlock(currentBlockIndex);
+            }
+
+            function pause() {
+                speechSynthesis.pause();
+                isPaused = true;
+                updateButtons(true);
+            }
+
+            function resume() {
+                speechSynthesis.resume();
+                isPaused = false;
+                updateButtons(true);
+            }
+
+            function stop() {
+                speechSynthesis.cancel();
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                updateButtons(false);
+                updateProgress();
+            }
+
+            function pauseReading() {
+                if (!isReading) return;
+
+                speechSynthesis.pause();
+                isPaused = true;
+                isReading = false;
+                updateButtons(true);
+                updateProgress();
+            }
+
+            function resumeReading() {
+                if (!isPaused) return;
+
+                isPaused = false;
+                isReading = true;
+
+                if (lastSpokenIndex === currentBlockIndex) {
+                    currentBlockIndex++;
+                }
+
+                updateButtons(true);
+                updateProgress();
+
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    speakBlock(currentBlockIndex);
+                }
+            }
+
+            function stopReading() {
+                speechSynthesis.cancel();
+                finishReading();
+            }
+
+            function finishReading() {
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                lastSpokenIndex = -1;
+                currentUtterance = null;
+                updateButtons(false);
+                updateProgress();
+            }
+
+        </script>
+
+        <script>
+
+            var elem = document.documentElement;
+            var fullscreenButton = document.getElementById("fullscreenButton");
+            var fullscreenIcon = document.getElementById("fullscreenIcon");
+
+            fullscreenButton.addEventListener("click", function() {
+            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+                }
+            } else {
+                if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+                }
+            }
+            });
+
+            document.addEventListener('fullscreenchange', (event) => {
+            if (!document.fullscreenElement) {
+                fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+            } else {
+                fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+            }
+            });
+        </script>
+
+    </body>
+    </html>
