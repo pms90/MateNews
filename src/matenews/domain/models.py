@@ -16,6 +16,7 @@ class SourceConfig:
     limit: int = 16
     day_codes: tuple[str, ...] = DEFAULT_DAY_CODES
     enabled: bool = True
+    fail_fast: bool = False
 
 
 @dataclass(slots=True)

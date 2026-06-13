@@ -17,10 +17,15 @@ from ..domain.paths import (
 from ..fetchers.http import HttpClient
 from ..render.site import render_article_page, render_index_page, render_index_section
 from ..sources.registry import get_source_definitions, get_source_instances
+from ..sources.shared import FAILED_TEXT
 
 
 logger = logging.getLogger(__name__)
 _DATED_DIRECTORY_PATTERN = re.compile(r"^(\d{4})-(\d{2})-(\d{2})-[^.]+$")
+
+
+class SourceFetchError(RuntimeError):
+    pass
 
 
 def fetch_source_batches(
@@ -42,21 +47,44 @@ def fetch_source_batches(
         try:
             batch = source.fetch(http_client)
         except Exception:
+            if source.config.fail_fast:
+                raise SourceFetchError(
+                    f"Fallo la recuperacion de la fuente obligatoria {source.config.name} ({source.config.homepage_url})"
+                )
             logger.exception(
                 "Fallo la recuperacion del diario %s (%s)",
                 source.config.name,
                 source.config.homepage_url,
             )
             continue
+        _validate_batch(batch)
         logger.info(
             "Diario %s: %s articulos recuperados",
             source.config.name,
             len(batch.articles),
         )
         for article in batch.articles:
+            if article.url and http_client.was_article_retrieved_from_cache(article.url):
+                logger.info("Articulo recuperado de cache [%s] %s", source.config.name, article.title)
+                continue
             logger.info("Articulo recuperado [%s] %s", source.config.name, article.title)
         batches.append(batch)
     return batches
+
+
+def _validate_batch(batch: SourceBatch) -> None:
+    if not batch.source.fail_fast:
+        return
+
+    if not batch.articles:
+        raise SourceFetchError(
+            f"La fuente obligatoria {batch.source.name} no devolvio articulos y se cancela la ejecucion."
+        )
+
+    if all(article.text.strip() == FAILED_TEXT for article in batch.articles):
+        raise SourceFetchError(
+            f"La fuente obligatoria {batch.source.name} solo devolvio articulos sin texto y se cancela la ejecucion."
+        )
 
 
 def build_site(

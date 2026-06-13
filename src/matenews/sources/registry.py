@@ -37,6 +37,8 @@ SOURCE_DEFINITIONS = [
             slug="infobae",
             homepage_url="https://www.infobae.com/?noredirect",
             base_url="https://www.infobae.com",
+            limit=12,
+            fail_fast=True,
         ),
         implementation=InfobaeSource,
     ),
@@ -46,18 +48,9 @@ SOURCE_DEFINITIONS = [
             slug="pagina_12",
             homepage_url="https://www.pagina12.com.ar/?noredirect",
             base_url="https://www.pagina12.com.ar",
+            limit=12,
         ),
         implementation=Pagina12Source,
-    ),
-    SourceDefinition(
-        SourceConfig(
-            name="La Politica Online",
-            slug="la_politica_online",
-            homepage_url="https://www.lapoliticaonline.com",
-            base_url="https://www.lapoliticaonline.com",
-            limit=8,
-        ),
-        implementation=LPOSource,
     ),
     SourceDefinition(
         SourceConfig(
@@ -71,23 +64,33 @@ SOURCE_DEFINITIONS = [
     ),
     SourceDefinition(
         SourceConfig(
+            name="La Politica Online",
+            slug="la_politica_online",
+            homepage_url="https://www.lapoliticaonline.com",
+            base_url="https://www.lapoliticaonline.com",
+            limit=8,
+        ),
+        implementation=LPOSource,
+    ),
+    SourceDefinition(
+        SourceConfig(
             name="Letra P",
             slug="letra_p",
             homepage_url="https://www.letrap.com.ar/",
             base_url="https://www.letrap.com.ar",
-            limit=10,
+            limit=8,
         ),
         implementation=LetraPSource,
     ),
     SourceDefinition(
         SourceConfig(
-            name="Nodal",
-            slug="nodal",
-            homepage_url="https://www.nodal.am/",
-            base_url="https://www.nodal.am/",
-        )
-        ,
-        implementation=NodalSource,
+            name="China Daily",
+            slug="china_daily",
+            homepage_url="https://www.chinadaily.com.cn/china",
+            base_url="https://www.chinadaily.com.cn",
+            limit=8,
+        ),
+        implementation=ChinaDailySource,
     ),
     SourceDefinition(
         SourceConfig(
@@ -95,6 +98,7 @@ SOURCE_DEFINITIONS = [
             slug="el_dia",
             homepage_url="https://www.eldia.com/la-ciudad",
             base_url="https://www.eldia.com",
+            limit=10,
         ),
         implementation=ElDiaSource,
     ),
@@ -104,19 +108,10 @@ SOURCE_DEFINITIONS = [
             slug="rt",
             homepage_url="https://actualidad.rt.com",
             base_url="https://actualidad.rt.com",
+            limit=8,
         )
         ,
         implementation=RTSource,
-    ),
-    SourceDefinition(
-        SourceConfig(
-            name="China Daily",
-            slug="china_daily",
-            homepage_url="https://www.chinadaily.com.cn/rss/china_rss.xml",
-            base_url="https://www.chinadaily.com.cn",
-            limit=4,
-        ),
-        implementation=ChinaDailySource,
     ),
     SourceDefinition(
         SourceConfig(
@@ -126,17 +121,6 @@ SOURCE_DEFINITIONS = [
             limit=8,
             enabled=False,
         )
-    ),
-    SourceDefinition(
-        SourceConfig(
-            name="El Cohete a la Luna",
-            slug="el_cohete_a_la_luna",
-            homepage_url="https://www.elcohetealaluna.com",
-            base_url="https://www.elcohetealaluna.com",
-            day_codes=("Do", "Lu"),
-        )
-        ,
-        implementation=CoheteSource,
     ),
     # SourceDefinition(
     #     SourceConfig(
@@ -152,18 +136,41 @@ SOURCE_DEFINITIONS = [
             slug="el_observador",
             homepage_url="https://www.elobservador.com.uy/?nogeoredirect",
             base_url="https://www.elobservador.com.uy",
+            limit=12,
         ),
         implementation=ElObservadorSource,
     ),
     SourceDefinition(
         SourceConfig(
-            name="la diaria",
+            name="La Diaria",
             slug="la_diaria",
             homepage_url="https://ladiaria.com.uy/",
             base_url="https://ladiaria.com.uy",
             limit=10,
         ),
         implementation=LaDiariaSource,
+    ),
+    SourceDefinition(
+        SourceConfig(
+            name="Nodal",
+            slug="nodal",
+            homepage_url="https://www.nodal.am/",
+            base_url="https://www.nodal.am/",
+            limit=8,
+        )
+        ,
+        implementation=NodalSource,
+    ),
+    SourceDefinition(
+        SourceConfig(
+            name="El Cohete a la Luna",
+            slug="el_cohete_a_la_luna",
+            homepage_url="https://www.elcohetealaluna.com",
+            base_url="https://www.elcohetealaluna.com",
+            day_codes=("Do", "Lu"),
+        )
+        ,
+        implementation=CoheteSource,
     ),
 ]
 

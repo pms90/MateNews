@@ -13,6 +13,7 @@ Desde el punto de vista técnico, el proyecto está organizado como un pipeline 
 - La operación del sistema está expuesta mediante una CLI reproducible para inspección de fuentes, builds completos, builds selectivos por fuente y publicación desacoplada.
 - Las fuentes actualmente implementadas son Infobae, Página 12, La Política Online, Letra P, Nodal, El Día, RT, China Daily, El Cohete a la Luna, Ámbito y El Observador.
 - El pipeline soporta reutilización de secciones cacheadas para evitar reacquisición innecesaria cuando una fuente no debe o no conviene volver a consultarse.
+- Las páginas de detalle de artículos quedan cacheadas localmente por URL en .cache/matenews/articles, por lo que una nota ya recuperada no vuelve a descargarse en builds posteriores.
 - Financial Times permanece deshabilitada por defecto porque el origen responde 403 tanto en acceso directo como a través del mirror textual utilizado para mitigación.
 
 ## Instalacion
