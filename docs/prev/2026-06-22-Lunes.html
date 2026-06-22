@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Lunes 22 junio 2026 07:05 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-06-22-Lunes/1.html">1) El debut de Adrián Ravier: una reunión clave, el perfil de la nueva Vocería y las expectativas del Gobierno.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-06-22-Lunes/2.html">2) Los desafíos de Abelardo de la Espriella tras ganar las elecciones en Colombia: déficit fiscal y reformas.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-06-22-Lunes/3.html">3) Las sorpresas que obligan a la Selección a no descuidarse y qué se puede esperar de Austria.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-06-22-Lunes/4.html">4) El peronismo volvió a la interna descarnada: de la precaria tregua por el Indio Solari, a la guerra abierta por el 2027.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-06-22-Lunes/5.html">5) Allanaron a Jesica Cirio y a Elías Piccirillo tras la difusión de videos de la modelo con miles de dólares en efectivo.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-06-22-Lunes/6.html">6) EEUU e Irán pactaron en Suiza una hoja de ruta para alcanzar en 60 días un acuerdo que ponga fin al conflicto en Medio Oriente.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-06-22-Lunes/7.html">7) Las sensuales fotos de Pampita: bikini con estampado de serpiente, playa y mar en Miami.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-06-22-Lunes/8.html">8) Keir Starmer renunció como primer ministro de Reino Unido en medio de una crisis interna en el Partido Laborista.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-06-22-Lunes/9.html">9) La macabra historia del hotel de lujo de la selección argentina en Dallas: muertes en el piso 19 y una Dama de Blanco.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-06-22-Lunes/10.html">10) Rodolfo D’Onofrio: &quot;El proyecto técnico del Gobierno es maravilloso, pero me cuesta ver cómo va a derramar en los que hoy no tienen&quot;.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-06-22-Lunes/11.html">11) Adorni prepara su defensa en el Congreso y el Gobierno encuentra un respiro a la presión opositora.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-06-22-Lunes/12.html">12) Cerúndolo hizo historia: se consagró campeón del ATP 500 de Queen’s tras vencer a Tommy Paul.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-06-22-Lunes/1.html">1) El oficialismo pidió esperar el escrutinio definitivo en unos comicios muy reñidos. Colombia partida. Por menos del uno por ciento de los votos, el ultraderechista Abelardo de la Espriella se impuso en el preconteo del balotaje colombiano, aunque el progresista Iván Cepeda destacó que su fuerza impugnó 33 mil mesas y que esperará el escrutinio definitivo, que demora varios días. Milei se apuró en salir a festejar. Por. Mercedes López San Miguel.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-06-22-Lunes/2.html">2) Elecciones en Colombia. Las dos Bogotá: la capital colombiana define el balotaje en clave de contraste. Por. Mercedes López San Miguel.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-06-22-Lunes/3.html">3) El triunfo del cualquiercosismo. Un mundial de falsedades. Por. Eduardo Aliverti.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-06-22-Lunes/4.html">4) Radiografía de una epidemia de salud mental en Argentina. Por. Dolores Curia.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-06-22-Lunes/5.html">5) La Selección sale a la cancha con la cima del grupo en juego. Rodeada de aura maradoniana, Argentina enfrenta a Austria en la ruidosa Dallas. Por. Cristian Dellocchio.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-06-22-Lunes/6.html">6) Busca blindarse en el Congreso. Desesperado, Adorni citó en Casa Rosada a los senadores libertarios. Por. Melisa Molina.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-06-22-Lunes/7.html">7) Idas y vueltas sobre la interpelación al jefe de Gabinete. El cordobesismo le ladró a Manuel Adorni, pero ahora duda en morder. Por. Gregorio Tatián.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-06-22-Lunes/8.html">8) Presión a la Rosada. Macri espera la jugada de Milei y cierra la trampa de oso sobre el cuello de Adorni. Por. Werner Pertot.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-06-22-Lunes/9.html">9) Una de Salta, y en familia. Por. Mempo Giardinelli.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-06-22-Lunes/10.html">10) Mientras se desploman el mercado interno y el empleo. Récord de compras al exterior. Por. Bernarda Tinetti.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-06-22-Lunes/11.html">11) Los riesgos que genera el Gobierno por relajar los préstamos en dólares. El fantasma del 2001 y una decisión apurada. Por. Mara Pedrazzoli.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-06-22-Lunes/12.html">12) Los dólares eran de Fred Machado. A José Luis Espert se le cayó la coartada del contrato trucho con la minera guatemalteca.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-06-22-Lunes/1.html">1) Mundial 2026, EN VIVO: Uruguay empató con Cabo Verde y la Argentina enfrenta a Austria en Dallas.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-06-22-Lunes/2.html">2) Javier Milei y sus medidas, en vivo: el viaje del Presidente a España y las repercusiones de la elección en Colombia.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-06-22-Lunes/3.html">3) De la Espriella será el próximo presidente de Colombia y pone fin al ciclo de Petro.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-06-22-Lunes/4.html">4) Argentina, ante Austria: el primer examen europeo, con el liderazgo del grupo en juego.</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-06-22-Lunes/5.html">5) Los libertarios ponen en pausa su agenda en Diputados para evitar que el caso Adorni llegue al recinto.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-06-22-Lunes/6.html">6) Renunció el primer ministro del Reino Unido, Keir Starmer.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-06-22-Lunes/7.html">7) El patrimonio de Insaurralde: allanaron dos domicilios de Cirio y Piccirillo tras la difusión de los videos de los dólares.</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-06-22-Lunes/8.html">8) Scaloni habló sobre la semana de Messi: “El grupo es el que saca adelante las situaciones, buenas o malas”.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-06-22-Lunes/9.html">9) Estados Unidos e Irán acordaron una hoja de ruta para alcanzar en 60 días un acuerdo que ponga fin al conflicto.</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-06-22-Lunes/10.html">10) Un asado en Dallas con Marc Stanley, exembajador de EE.UU.: cómo ve a Milei, su fanatismo por Messi y el optimismo por Argentina.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-06-22-Lunes/1.html">1) El alquiler del country de la madre de Adorni se pagó un año por adelantado y en dólares</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-06-22-Lunes/2.html">2) Bronca de los senadores libertarios porque Adorni los cito a la Casa Rosada</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-06-22-Lunes/3.html">3) El kirchnerismo quiere que Cristina sea candidata para vaciarle a Kicillof el armado nacional</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-06-22-Lunes/4.html">4) Juez le advirtió a De Loredo que no se meta en la pelea por Córdoba Capital: &quot;Ahí voy yo&quot;</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-06-22-Lunes/5.html">5) Caputo apeló a la contabilidad creativa para dibujar una baja de USD 20.000 millones de la deuda externa</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-06-22-Lunes/6.html">6) Alerta entre cerealeros porque Brasil amenaza con desbancar a Argentina en los derivados de soja</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-06-22-Lunes/7.html">7) De la Espriella alista a su equipo económico y busca llevar calma a los inversores</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-06-22-Lunes/8.html">8) Ajustadísimo triunfo del libertario De la Espriella en Colombia</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-06-22-Lunes/1.html">1) Qué trama Cristina.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-06-22-Lunes/2.html">2) Milei prolonga la agonía de Adorni.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-06-22-Lunes/3.html">3) El plan anabólico para hacer crecer a Kicillof.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-06-22-Lunes/4.html">4) Tras los aumentos de tarifas, Edenor mejoró la calidad del servicio y Edesur se sacó reprobado.</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-06-22-Lunes/5.html">5) El peronismo y el debate incómodo sobre las retenciones.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-06-22-Lunes/6.html">6) Kirchner activó el modo campaña en una puesta en escena que lo insinúa como plan B.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-06-22-Lunes/7.html">7) Industria de la música: Live Nation, el pulpo del espectáculo que suma tentáculos en Argentina.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-06-22-Lunes/8.html">8) León XIV y la gira sudamericana.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-axios" aria-labelledby="source-axios-heading">
+<h3 class="source-heading" id="source-axios-heading"><a href="https://www.axios.com">Axios</a></h3>
+<ol class="source-notes">
+<li class="nota" id="axios_0"><a href="axios/2026-06-22-Lunes/1.html">1) El complicado camino de Trump hacia la paz.</a></li>
+<li class="nota" id="axios_1"><a href="axios/2026-06-22-Lunes/2.html">2) Encuesta Axios-Ipsos: la asequibilidad de la salud está dando forma a las elecciones intermedias.</a></li>
+<li class="nota" id="axios_2"><a href="axios/2026-06-22-Lunes/3.html">3) Dimite el primer ministro del Reino Unido, Keir Starmer.</a></li>
+<li class="nota" id="axios_3"><a href="axios/2026-06-22-Lunes/4.html">4) Los centros de datos se convierten en la cara de la reacción de la IA.</a></li>
+<li class="nota" id="axios_4"><a href="axios/2026-06-22-Lunes/5.html">5) Nvidia dice que el desafío del agua de la IA está en gran medida resuelto.</a></li>
+<li class="nota" id="axios_5"><a href="axios/2026-06-22-Lunes/6.html">6) Dentro de las conversaciones entre Estados Unidos e Irán en Suiza.</a></li>
+<li class="nota" id="axios_6"><a href="axios/2026-06-22-Lunes/7.html">7) Cumbre del lago de Lucerna.</a></li>
+<li class="nota" id="axios_7"><a href="axios/2026-06-22-Lunes/8.html">8) Las reparaciones de la piscina reflectante se vuelven personales para Trump.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-china_daily" aria-labelledby="source-china_daily-heading">
+<h3 class="source-heading" id="source-china_daily-heading"><a href="https://www.chinadaily.com.cn/china">China Daily</a></h3>
+<ol class="source-notes">
+<li class="nota" id="china_daily_0"><a href="china_daily/2026-06-22-Lunes/1.html">1) Turbina eólica instalada a gran altura en Xizang.</a></li>
+<li class="nota" id="china_daily_1"><a href="china_daily/2026-06-22-Lunes/2.html">2) El vínculo de un líder de un grupo de aldea con las carreras de botes dragón en Xinjiang.</a></li>
+<li class="nota" id="china_daily_2"><a href="china_daily/2026-06-22-Lunes/3.html">3) Miles de personas participan en el maratón transfronterizo chino-ruso.</a></li>
+<li class="nota" id="china_daily_3"><a href="china_daily/2026-06-22-Lunes/4.html">4) Festival Duanwu se celebra con actividades festivas en toda China.</a></li>
+<li class="nota" id="china_daily_4"><a href="china_daily/2026-06-22-Lunes/5.html">5) Los barcos dragón hechos a mano regresan a Zigui con una antigua tradición festiva.</a></li>
+<li class="nota" id="china_daily_5"><a href="china_daily/2026-06-22-Lunes/6.html">6) Los microdramas remodelan la economía cinematográfica de China.</a></li>
+<li class="nota" id="china_daily_6"><a href="china_daily/2026-06-22-Lunes/7.html">7) La tradición cobra protagonismo durante las vacaciones.</a></li>
+<li class="nota" id="china_daily_7"><a href="china_daily/2026-06-22-Lunes/8.html">8) China publica libro blanco sobre gobernanza global.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="el_dia/2026-06-22-Lunes/1.html">1) La crisis del GNC ya dejó numerosos taxis parados.</a></li>
+<li class="nota" id="el_dia_1"><a href="el_dia/2026-06-22-Lunes/2.html">2) Billeteras moderadas: un Día del Padre sin envión.</a></li>
+<li class="nota" id="el_dia_2"><a href="el_dia/2026-06-22-Lunes/3.html">3) Sin carnet, los bajan: la pesadilla de pasajeros con discapacidad para viajar en micro en La Plata.</a></li>
+<li class="nota" id="el_dia_3"><a href="el_dia/2026-06-22-Lunes/4.html">4) La gastronomía espera otro impulso del Mundial.</a></li>
+<li class="nota" id="el_dia_4"><a href="el_dia/2026-06-22-Lunes/5.html">5) El arranque del invierno, sin lluvia y con frío en la Región.</a></li>
+<li class="nota" id="el_dia_5"><a href="el_dia/2026-06-22-Lunes/6.html">6) En Ingeniería dicen que llevan más de 20 años con suba en la tasa de egresos.</a></li>
+<li class="nota" id="el_dia_6"><a href="el_dia/2026-06-22-Lunes/7.html">7) Alentá a la Selección con EL DIA.</a></li>
+<li class="nota" id="el_dia_7"><a href="el_dia/2026-06-22-Lunes/8.html">8) Ajustes de alquileres en La Plata: el próximo mes será más barato por IPC.</a></li>
+<li class="nota" id="el_dia_8"><a href="el_dia/2026-06-22-Lunes/9.html">9) Convocan a vacunar a las mascotas contra la rabia.</a></li>
+<li class="nota" id="el_dia_9"><a href="el_dia/2026-06-22-Lunes/10.html">10) Una zona de San Carlos sin agua desde el sábado.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-06-22-Lunes/1.html">1) VIDEO: Putin deposita flores en la Tumba del Soldado Desconocido en Moscú</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-06-22-Lunes/2.html">2) Keir Starmer dimite como primer ministro del Reino Unido. Fue el sexto en el cargo en 10 años</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-06-22-Lunes/3.html">3) &quot;Se apresuran hoy a darse por ganadores&quot;: Petro llama a dar una &quot;nueva batalla por la democracia&quot;</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-06-22-Lunes/4.html">4) Irán informa de un &quot;importante avance&quot; en las negociaciones con EE.UU.</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-06-22-Lunes/5.html">5) Aviso de comandante iraní a Israel: Si no se van del Líbano, serán expulsados a patadas con derrota y deshonra</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-06-22-Lunes/6.html">6) Taiwán inicia simulacro de preparación bélica de cinco días</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-06-22-Lunes/7.html">7) Abelardo de la Espriella: &quot;El pueblo me ha confiado el honor supremo de servirle como presidente&quot;</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-06-22-Lunes/8.html">8) &quot;Respeten la voluntad del pueblo colombiano&quot;: Abelardo de la Espriella se dirige a Petro y Cepeda</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-06-22-Lunes/1.html">1) Transporte de carga: empresas agremiadas, dueños autoconvocados y un conflicto que escala con el MTOP</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-06-22-Lunes/2.html">2) María Julia Acosta, socióloga: El trabajo nos tomó la cabeza, el conocimiento y hasta las horas de sueño</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-06-22-Lunes/3.html">3) Suprema Corte de Justicia falló que es constitucional reclamar daños al Estado sin recurrir antes en la via administrativa</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-06-22-Lunes/4.html">4) Magnate griego y empresario argentino desarrollan un barrio marítimo de alta gama sobre la playa de Punta Ballena</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-06-22-Lunes/5.html">5) Uruguay fue la sucursal del infierno, el desmoronamiento de una ilusión falsa y el imperio de lo efímero en el 2-2 ante Cabo Verde por el Mundial 2026</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-06-22-Lunes/6.html">6) El partido de Federico Valverde en el empate entre Uruguay y Cabo Verde por el Mundial 2026: cambios constantes de rol, el lamento por el gol anulado y otra actuación irregular</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-06-22-Lunes/7.html">7) Abelardo de la Espriella gana la Presidencia de Colombia, según conteo preliminar</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-06-22-Lunes/8.html">8) Federico Viñas, de un gesto de Fair Play a pelear la pelota que terminó en el empate de Uruguay ante Cabo Verde</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-06-22-Lunes/9.html">9) El uno por uno de Uruguay contra Cabo Verde por el Mundial 2026: Agustín Canobbio y Rodrigo Bentancur los únicos que dieron la talla</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-06-22-Lunes/10.html">10) Cómo Nacional usa inteligencia artificial para vender más camisetas: ¿reemplaza empleados?</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-06-22-Lunes/11.html">11) El precio de los fertilizantes, un respiro que Uruguay precisaba y la verdad sobre su impacto</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-06-22-Lunes/12.html">12) Encontraron el cuerpo de una mujer de 44 años desmembrado en el asentamiento Nueva Esperanza</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">La Diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-06-22-Lunes/1.html">1) En un apretadísimo balotaje en Colombia, De la Espriella se impuso en el preconteo sobre Iván Cepeda.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-06-22-Lunes/2.html">2) Botana interpela a Oddone este lunes: “No va a ser una guerra, la idea es que surjan algunas verdades”, afirmó el senador del PN.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-06-22-Lunes/3.html">3) Ferreri anunció que el pliego licitatorio de la represa de Casupá se aprobará “probablemente” esta semana.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-06-22-Lunes/4.html">4) 45% está de acuerdo con las movilizaciones de los transportistas, según encuesta de la Usina.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-06-22-Lunes/5.html">5) Durante el primer cuatrimestre del año, el Antel Arena obtuvo ganancias 197% superiores a las del mismo período de 2025.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-06-22-Lunes/6.html">6) El BCU presentó anteproyecto de ley para crear un sistema de finanzas abiertas.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-06-22-Lunes/7.html">7) Proyecto sobre monoambientes: “Achicar el tamaño de las viviendas no fue una solución”, afirmó la arquitecta Alicia Artigas.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-06-22-Lunes/8.html">8) La Unidad 9 para mujeres presas con hijos tendrá guardia de enfermería 24 horas, pero sigue sin tener pediatra.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-06-22-Lunes/9.html">9) Vandalizaron la placa de memoria instalada hace menos de un mes frente al Batallón de Infantería 11 de Lavalleja.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-06-22-Lunes/10.html">10) Los brasileños Gilsons en Montevideo: un sonido luminoso.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-06-22-Lunes/1.html">1) 26 días secuestrados en Libia: una nueva comunicación mantiene la preocupación por la falta de información sobre su situación jurídica</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-06-22-Lunes/2.html">2) Argentina| Organizaciones convocan a “banderazo” para exigir la libertad de Cristina Fernández</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-06-22-Lunes/3.html">3) Colombia| Congresistas de EEUU solicitan a Trump no intervenir en las elecciones colombianas y exigen investigar a Abelardo de la Espriella</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-06-22-Lunes/4.html">4) Colombia| Gustavo Petro denuncia que partidos políticos recurren a estrategias de intimidación para influir en el electorado</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-06-22-Lunes/5.html">5) El Comando Sur de Estados Unidos asesina a tres personas tras atacar una embarcación</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-06-22-Lunes/6.html">6) México| Claudia Sheinbaum señala que “el Estado mexicano existe”, tras declaraciones de Donald Trump</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-06-22-Lunes/7.html">7) La delegación de Irán suspende su viaje a Suiza para la primera ronda de negociaciones debido a la escalada de las agresiones israelíes contra el sur del Líbano</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-06-22-Lunes/8.html">8) ¿Qué hay detrás del escándalo Adorni? Guerras por la conducción de una nueva etapa en laArgentina– Por Emilia Trabucco</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/1.html">1) Tres Patitos. Una vez más, el Poder Ejecutivo contempla la posibilidad de completar la Corte Suprema de Justicia, que quedó reducida a sólo tres miembros, por la jubilación de Raúl Zaffaroni y Elena Highton de Nolasco y la muerte de Carmen Argibay y Carlos Fayt. También se interesa en llenar el 35% de vacantes que hay en la justicia federal, cubiertas…. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/2.html">2) Una sola conducción. El banderazo por Cristina en Parque Lezama.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/3.html">3) El dogma fiscal y su amante. El ajuste del gasto no alcanza para domar la deuda. La deuda se come el ajuste y se queda con hambre. Por Lucka Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/4.html">4) ¿Nuestra tierra?. El documental de Lucrecia Martel ilumina un episodio puntual y, a la vez, el dilema que está en la raíz de nuestra nación. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/5.html">5) La caja rota. El Estado garantiza renta extraordinaria a costa de la población y de su patrimonio. Por Horacio Rovelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/6.html">6) Los límites de lo posible. Ejemplos de militancia demuestran cómo la lucha expande el horizonte y conquista derechos. Por Sebastián Fernández.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/7.html">7) La voluntad del arquero. ¿De qué hablamos cuando hablamos de Fuerzas Armadas?. Por Sergio Eissa.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/8.html">8) Sociedad sin humanos. Sobre el proyecto de Ley de Sociedades de Milei. Si el Estado no sabe a qué le abre la puerta, la afectación de la soberanía es una posibilidad cierta. Por Enrique Hidalgo.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/9.html">9) A desenchufar. El problema de la inteligencia artificial, una herramienta creada y utilizada por humanos, es político y debe enfrentarse con un férreo control mundial. Por José Massoni.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/10.html">10) Del padrón al gemelo digital. Nueva era política: radiografías sociales, mensajes a medida y opacidad. Por Emmanuel Jaffrot.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/11.html">11) Si te he visto, no me acuerdo. El acuerdo del sector universitario y el gobierno confirmó la persistencia del conflicto. Será la Corte quien devele qué tan buena fue la decisión. Por Diego Kenis.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/12.html">12) La tierra tiembla. Tres películas para pensar el territorio, la soberanía y la acumulación de poder. Por Antolín Magallanes.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/13.html">13) Excusa imperial. Trump deja en evidencia que el uranio enriquecido era una justificación falsa para la guerra con Irán. Por Julia Conley.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/14.html">14) Punteros de la resistencia. El poder imperial encuentra sus límites en dos frentes. El acuerdo con Irán debilita su posición. Lula confrontó a Trump durante la cumbre del G7. Por Ariela Ruiz Caro.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/15.html">15) Halcones en retirada. Los sectores belicistas se pronunciaron con relación a la buena noticia de que se haya producido un cese de las hostilidades para dar paso a la diplomacia entre Irán y Estados Unidos. Por Aleardo Laría Rajneri.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_15"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/16.html">16) La libertad usurpa. Legisladores de La Libertad Avanza propusieron una ley para hacer operaciones inmobiliarias sin martilleros. Entre ellos, un usurpador de terrenos. Por Alberto Moya.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-06-21-Domingo.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>
