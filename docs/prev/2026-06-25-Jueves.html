@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Jueves 25 junio 2026 16:55 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-06-25-Jueves/1.html">1) La Corte dejó firme la cautelar que obliga al Estado a aplicar dos artículos de la ley de financiamiento universitario.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-06-25-Jueves/2.html">2) Venezuela elevó la cifra de víctimas de los terremotos: 188 muertos, 1.520 heridos y 157 desaparecidos.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-06-25-Jueves/3.html">3) En medio del Mundial, Real Madrid activó la cláusula de recompra de Nico Paz: los detalles de la operación.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-06-25-Jueves/4.html">4) Con Manu Jove, Maia Jastreblansky, Paula Guardia Bourdin y Tomás Trapé.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-06-25-Jueves/5.html">5) Facundo Manes: “La vulnerabilidad de tener una amenaza como la inteligencia artificial es una fortaleza”.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-06-25-Jueves/6.html">6) Sexo, tabúes y prejuicios: por qué la ESI sigue generando resistencias a 20 años de su creación.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-06-25-Jueves/7.html">7) El FMI destacó la mejora de las condiciones para que la Argentina vuelva a emitir deuda en el mercado internacional.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-06-25-Jueves/8.html">8) La ONU exigió a Reino Unido que acepte negociar la soberanía de las Islas Malvinas con Argentina.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-06-25-Jueves/9.html">9) Por falta de competitividad, cerró una fábrica en PBA: hace 3 meses había exportado por primera vez a Brasil.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-06-25-Jueves/10.html">10) Intentó robar en un local, quedó semidesnuda tras un forcejeo y volvió para exigir que borren las cámaras.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-06-25-Jueves/11.html">11) Quién es el líder de la banda de hackers que le creó antecedentes delictivos a Patricia Bullrich.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-06-25-Jueves/12.html">12) El oficialismo hizo caer la sesión del Senado para evitar la interpelación a Manuel Adorni.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-06-25-Jueves/1.html">1) Fallo del máximo tribunal. La Corte Suprema le ordena al Gobierno aplicar la ley de financiamiento universitario. Tras meses de incumplimiento, los cortesanos fallaron a favor del Consejo Interuniversitario Nacional y dejaron firme la cautelar que obliga al Poder Ejecutivo a actualizar las partidas presupuestarias. Por. Vardan Bleyan.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-06-25-Jueves/2.html">2) Dejó afuera a María Verónica Michelli. Milei nombró nuevos jueces y empezó a moldear el sistema de justicia. Por. Luciana Bertoia.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-06-25-Jueves/3.html">3) Declararon el estado de emergencia nacional. Sismo en Venezuela: hay 188 muertos confirmados y siguen las tareas de rescate.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-06-25-Jueves/4.html">4) Entre negociaciones y discusiones reglamentarias. Se cayó la sesión en el Senado y Adorni gana más tiempo.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-06-25-Jueves/5.html">5) En una carta a Mauricio Macri. Esteban Bullrich renunció al PRO por “la protección brindada a Manuel Adorni”.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-06-25-Jueves/6.html">6) La comunicación oficial de LLA, fuera de control. La interna libertaria no da tregua. Por. Melisa Molina.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-06-25-Jueves/7.html">7) Un futbolista argentino busca desesperadamente a su familia tras el derrumbe de su edificio.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-06-25-Jueves/8.html">8) Los videos de los terremotos  que sacudieron Venezuela.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-06-25-Jueves/9.html">9) Imágenes de la devastación por los sismos en Venezuela.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-06-25-Jueves/10.html">10) “Disposición a colaborar”. Los mensajes del gobierno de Milei tras los sismos en Venezuela.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-06-25-Jueves/11.html">11) Aún con favores a empresas, los desembolsos no aparecen. Inversión a la inversa. Por. Leandro Renou.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-06-25-Jueves/12.html">12) A cuánto opera. La cotización del dólar este jueves.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-06-25-Jueves/1.html">1) Qué se sabe del terremoto en Venezuela hoy: daños, heridos y últimas noticias de los temblores.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-06-25-Jueves/2.html">2) Mundial 2026, en vivo: la clasificación de Brasil a 16vos y cómo formaría Argentina ante Jordania.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-06-25-Jueves/3.html">3) La Corte Suprema dejó firme el fallo que obligó a aumentar salarios y becas por la ley de financiamiento universitario.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-06-25-Jueves/4.html">4) Terremotos en Venezuela Así fue la catástrofe que dejó al país bajo los escombros.</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-06-25-Jueves/5.html">5) Los relatos del terror que desataron los terremotos en Venezuela: “Todo volaba por los aires”.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-06-25-Jueves/6.html">6) Alemania vs. Ecuador, EN VIVO por el Mundial 2026: hora, TV y las formaciones.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-06-25-Jueves/7.html">7) Mundial 2026: Stockyards, un pueblo del lejano oeste entre toros, vaqueros y botas texanas a 7000 dólares.</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-06-25-Jueves/8.html">8) Leandro Lozano a Boca: el lateral derecho de Argentinos llegó para darle un salto de calidad a un puesto sin dueño.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-06-25-Jueves/9.html">9) Sin nombrar a Adorni, Karina Milei fue a Diputados, agradeció al bloque y pidió “aguantar”.</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-06-25-Jueves/10.html">10) Río Cuarto: la aparición de un bloque de uranio obligó a evacuar una planta de reciclaje y a aislar a ocho personas.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-06-25-Jueves/1.html">1) En el Senado dicen que Adorni se jactó de no haber declarado sus dólares: &quot;Fue lo mejor que hice en 25 años&quot;</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-06-25-Jueves/2.html">2) En un duro mensaje al Gobierno, la Corte falló en favor de las universidades</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-06-25-Jueves/3.html">3) No hubo quórum para votar la interpelación pero Bullrich dice que &quot;Adorni no ganó&quot;</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-06-25-Jueves/4.html">4) Karina le interviene a Patricia la conducción del bloque de senadores</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-06-25-Jueves/5.html">5) Estalló la interna peronista en el Senado: Ishii y Berni cruzaron a Kicillof y chocaron con Magario</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-06-25-Jueves/6.html">6) Tensión en el PRO: Macri quiere enfrentar a Milei y Jorge prefiere acordar</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-06-25-Jueves/7.html">7) Llaryora apuesta a una visita del Papa a Córdoba en noviembre</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-06-25-Jueves/8.html">8) El gobierno aprobó el pago a los buitres y el Super RIGI con el apoyo de los gobernadores aliados</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-06-25-Jueves/1.html">1) La vocería de Ravier en construcción: cumbre para pedir silencio, off vedado y presentación formal.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-06-25-Jueves/2.html">2) La Corte dejó firme la cautelar que obliga a Milei a aplicar la ley de financiamiento universitario.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-06-25-Jueves/3.html">3) Bullrich bloqueó la sesión para no defender a Adorni y la interpelación se debatirá en comisiones.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-06-25-Jueves/4.html">4) Messi, el ídolo popular que la política tampoco puede marcar y cierra la grieta.</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-06-25-Jueves/5.html">5) Hidroeléctricas: Weretilneck promulgó la ley que fija un canon por el uso del agua en Río Negro.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-06-25-Jueves/6.html">6) Escándalo en el Senado bonaerense: fuerte embestida del kirchnerismo contra Magario.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-06-25-Jueves/7.html">7) Diputados: Milei logró aprobar el Súper-RIGI y tiene los votos en el Senado para que sea ley.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-06-25-Jueves/8.html">8) Massa arma agenda para después del Mundial y alienta versiones de candidatura.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-axios" aria-labelledby="source-axios-heading">
+<h3 class="source-heading" id="source-axios-heading"><a href="https://www.axios.com">Axios</a></h3>
+<ol class="source-notes">
+<li class="nota" id="axios_0"><a href="axios/2026-06-25-Jueves/1.html">1) 1. Inflación caliente, economía fuerte: la nueva prueba de la Reserva Federal.</a></li>
+<li class="nota" id="axios_1"><a href="axios/2026-06-25-Jueves/2.html">2) 2. La ONU suspende las evacuaciones de marineros de Ormuz tras un &quot;ataque&quot; en el estrecho.</a></li>
+<li class="nota" id="axios_2"><a href="axios/2026-06-25-Jueves/3.html">3) 3. Un juez federal bloquea la orden de votación por correo de Trump.</a></li>
+<li class="nota" id="axios_3"><a href="axios/2026-06-25-Jueves/4.html">4) 4. Los demócratas presionan para eludir a Mike Johnson y prohibir el fondo de armamento.</a></li>
+<li class="nota" id="axios_4"><a href="axios/2026-06-25-Jueves/5.html">5) 5. ¿Por qué los precios en los surtidores tardan en seguir la caída del petróleo?</a></li>
+<li class="nota" id="axios_5"><a href="axios/2026-06-25-Jueves/6.html">6) La Corte Suprema respalda a Trump sobre reglas de asilo más estrictas.</a></li>
+<li class="nota" id="axios_6"><a href="axios/2026-06-25-Jueves/7.html">7) solicitantes de asilo.</a></li>
+<li class="nota" id="axios_7"><a href="axios/2026-06-25-Jueves/8.html">8) El nuevo modelo de código abierto de China acelera la amenaza de piratería de IA.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-china_daily" aria-labelledby="source-china_daily-heading">
+<h3 class="source-heading" id="source-china_daily-heading"><a href="https://www.chinadaily.com.cn/china">China Daily</a></h3>
+<ol class="source-notes">
+<li class="nota" id="china_daily_0"><a href="china_daily/2026-06-25-Jueves/1.html">1) Las garcetas protegidas nacionales señalan un ambiente saludable en Hunan.</a></li>
+<li class="nota" id="china_daily_1"><a href="china_daily/2026-06-25-Jueves/2.html">2) Los niños de Xizang regresan a casa después de cirugías cardíacas que les cambiaron la vida.</a></li>
+<li class="nota" id="china_daily_2"><a href="china_daily/2026-06-25-Jueves/3.html">3) Superar la trampa de la &#x27;familia paralizada&#x27;.</a></li>
+<li class="nota" id="china_daily_3"><a href="china_daily/2026-06-25-Jueves/4.html">4) Grupos étnicos utilizan &#x27;línea exprés&#x27; para llegar a legisladores nacionales.</a></li>
+<li class="nota" id="china_daily_4"><a href="china_daily/2026-06-25-Jueves/5.html">5) Árbol en peligro crítico descubierto en Yunnan.</a></li>
+<li class="nota" id="china_daily_5"><a href="china_daily/2026-06-25-Jueves/6.html">6) Campaña fortalece la alfabetización jurídica.</a></li>
+<li class="nota" id="china_daily_6"><a href="china_daily/2026-06-25-Jueves/7.html">7) Costas contaminadas convertidas en activos ecológicos.</a></li>
+<li class="nota" id="china_daily_7"><a href="china_daily/2026-06-25-Jueves/8.html">8) Instan a legisladores chinos a desempeñar un papel más importante en la publicidad legal y la educación.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="el_dia/2026-06-25-Jueves/1.html">1) El comunicado de la Unión Industrial del Gran La Plata por la escasez de GNC: &quot;Es indispensable para producir&quot;.</a></li>
+<li class="nota" id="el_dia_1"><a href="el_dia/2026-06-25-Jueves/2.html">2) Provincia autorizó un nuevo incremento en las tarifas de luz: cómo impacta en La Plata.</a></li>
+<li class="nota" id="el_dia_2"><a href="el_dia/2026-06-25-Jueves/3.html">3) VIDEO. En la misma semana y en la misma cuadra, dos locales de La Plata anunciaron que cierran.</a></li>
+<li class="nota" id="el_dia_3"><a href="el_dia/2026-06-25-Jueves/4.html">4) Cómo se viaja en La Plata: caída en el uso del transporte público y fuerte expansión de viajes por aplicación.</a></li>
+<li class="nota" id="el_dia_4"><a href="el_dia/2026-06-25-Jueves/5.html">5) “Queda marrón”: vecinos denunciaron la preocupante situación del agua corriente en 48 y 22.</a></li>
+<li class="nota" id="el_dia_5"><a href="el_dia/2026-06-25-Jueves/6.html">6) Confirmaron la fecha de inauguración de la plaza España en La Plata.</a></li>
+<li class="nota" id="el_dia_6"><a href="el_dia/2026-06-25-Jueves/7.html">7) Siguen los reclamos por cortes de luz y baja tensión en barrios de La Plata.</a></li>
+<li class="nota" id="el_dia_7"><a href="el_dia/2026-06-25-Jueves/8.html">8) Desesperado reclamo a IOMA en La Plata por una mujer de 75 años que necesita internación domiciliaria.</a></li>
+<li class="nota" id="el_dia_8"><a href="el_dia/2026-06-25-Jueves/9.html">9) Operativo &quot;caza Uber y Didi&quot; a pasos de 7 y 50.</a></li>
+<li class="nota" id="el_dia_9"><a href="el_dia/2026-06-25-Jueves/10.html">10) Corte, desvíos y caos de tránsito en el Centro por la caída de un cable.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-06-25-Jueves/1.html">1) VIDEO: Impactante vista aérea de La Guaira, zona de desastre tras el doblete sísmico en Venezuela</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-06-25-Jueves/2.html">2) ¿Qué es un doblete sísmico como el que sacudió a Venezuela?</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-06-25-Jueves/3.html">3) Rostros y escombros: el impacto humano de los potentes terremotos en Venezuela (FOTOS)</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-06-25-Jueves/4.html">4) &quot;Mi hija está atrapada&quot;: Hablan testigos de los terremotos mortales en Venezuela</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-06-25-Jueves/5.html">5) Potentes terremotos provocan destrozos y estado de emergencia en Venezuela</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-06-25-Jueves/6.html">6) Casi 200 muertos y más de 1.500 heridos por el doble terremoto en Venezuela</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-06-25-Jueves/7.html">7) VIDEO: Pareja de ancianos se apoya mutuamente mientras el sismo sacude su casa en Venezuela</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-06-25-Jueves/8.html">8) Alarma de Google avisó de sismos en Venezuela instantes antes del desastre: cómo activarla</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-06-25-Jueves/1.html">1) OSE aprobó pliegos de Casupá: semana que viene lanzarán la licitación de la represa</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-06-25-Jueves/2.html">2) Ecuador vs Alemania EN VIVO por el Mundial 2026: el equipo de Beccacece va por la hazaña</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-06-25-Jueves/3.html">3) Curazao vs Costa de Marfil EN VIVO por el Mundial 2026: ambos equipos sueñan con la clasificación</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-06-25-Jueves/4.html">4) Incendio en un centro Mides del Prado: Bomberos evacuaron el lugar y cinco personas resultaron lesionadas</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-06-25-Jueves/5.html">5) Antel reportó una caída de su servicio de telefonía fija</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-06-25-Jueves/6.html">6) ¿Uruguay clasifica o queda afuera del Mundial 2026? La calculadora de El Observador para saberlo en vivo</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-06-25-Jueves/7.html">7) Fuerza Aérea avisa a la población que hará vuelos nocturnos con lanzamiento de bengalas este jueves y pide evitar alarmas</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-06-25-Jueves/8.html">8) La selección uruguaya mostró a todo el plantel en el entrenamiento abierto por primera vez en el Mundial 2026: Marcelo Bielsa mantendría el equipo ante España</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-06-25-Jueves/9.html">9) Cayó en Madrid el ciberdelincuente que atacó a Buquebus e insultó a Orsi</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-06-25-Jueves/10.html">10) Terremotos en Venezuela: EEUU promete ayuda rápida y eficaz ante la tragedia, que dejó más de 180 muertos y unos 1.500 heridos</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-06-25-Jueves/11.html">11) La empresa uruguaya Marvik abre una nueva etapa y suma a los inversores Sergio Fogel y Pablo Garfinkel como socios del negocio</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-06-25-Jueves/12.html">12) Castillo tras polémica por blindados del Ejército: Ya dimos nuestra opinión y públicamente no conviene mas debatir eso</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">La Diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-06-25-Jueves/1.html">1) Bordaberry dijo que el plan de patrullar con blindados es “buena idea”, pero que el gobierno debió “estudiarlo antes de lanzarlo”.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-06-25-Jueves/2.html">2) Ancap ofreció a las intendencias “mejorar las condiciones de precio” de venta del pórtland, señaló Nicolás Olivera.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-06-25-Jueves/3.html">3) Uruguay ofreció ayuda a Venezuela tras los terremotos: se han registrado 188 muertes y 1.520 heridos.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-06-25-Jueves/4.html">4) Sacapunta y compás: color, movimiento y una mirada diferente sobre la escuela.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-06-25-Jueves/5.html">5) La demanda laboral continúa disminuyendo, según el monitor laboral de Advice.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-06-25-Jueves/6.html">6) Traslados no médicos de ASSE: empresa que trabaja para el prestador desde 2021 pasó de cobrar más de 12.000 a 500 pesos por viaje.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-06-25-Jueves/7.html">7) Según experto, involucrar militares en la seguridad pública “abre una rendija de una puerta que en principio estaba cerrada”.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-06-25-Jueves/8.html">8) Jorge Díaz sobre la baja aprobación: “Hay una cuestión que tiene que ver con comunicar aquellas cosas que hacemos bien”.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-06-25-Jueves/9.html">9) Bielsa repetirá el equipo que empató con Cabo Verde.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-06-25-Jueves/10.html">10) La economía de costos de la inteligencia artificial.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-06-25-Jueves/1.html">1) Urgente| Los 10 del Magreb fueron liberados: Paula Giménez y Lucas Aguilera llegaron a Estambul</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-06-25-Jueves/2.html">2) Venezuela| Delcy Rodríguez declara estado de emergencia tras dos sismos seguidos de magnitud 7.5 que afectaron a gran parte del territorio nacional</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-06-25-Jueves/3.html">3) Colombia| El CNE concluye el escrutinio de los comicios y confirma el triunfo de De la Espriella en la elección presidencial</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-06-25-Jueves/4.html">4) Bolivia| Luego de 53 días de protestas, finalizan los enfrentamientos y los bloqueos en el territorio nacional</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-06-25-Jueves/5.html">5) Argentina| La Justicia llama a declaración indagatoria al exdiputado José Espert, acusado de lavado de dinero y vínculos con el narcotráfico</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-06-25-Jueves/6.html">6) Cuba| El canciller Bruno Rodríguez condena las sanciones impuestas por el Gobierno de Estados Unidos contra empresas cubanas</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-06-25-Jueves/7.html">7) Trump pide al Congreso la aprobación de 88 mil millones de dólares para la guerra con Irán en medio de tensiones entre los republicanos por su gestión del conflicto</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-06-25-Jueves/8.html">8) PONETE LA 10| La ayuda humanitaria y la solidaridad no son delito</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/1.html">1) Tres Patitos. Una vez más, el Poder Ejecutivo contempla la posibilidad de completar la Corte Suprema de Justicia, que quedó reducida a sólo tres miembros, por la jubilación de Raúl Zaffaroni y Elena Highton de Nolasco y la muerte de Carmen Argibay y Carlos Fayt. También se interesa en llenar el 35% de vacantes que hay en la justicia federal, cubiertas…. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/2.html">2) Una sola conducción. El banderazo por Cristina en Parque Lezama.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/3.html">3) El dogma fiscal y su amante. El ajuste del gasto no alcanza para domar la deuda. La deuda se come el ajuste y se queda con hambre. Por Lucka Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/4.html">4) ¿Nuestra tierra?. El documental de Lucrecia Martel ilumina un episodio puntual y, a la vez, el dilema que está en la raíz de nuestra nación. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/5.html">5) La caja rota. El Estado garantiza renta extraordinaria a costa de la población y de su patrimonio. Por Horacio Rovelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/6.html">6) Los límites de lo posible. Ejemplos de militancia demuestran cómo la lucha expande el horizonte y conquista derechos. Por Sebastián Fernández.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/7.html">7) La voluntad del arquero. ¿De qué hablamos cuando hablamos de Fuerzas Armadas?. Por Sergio Eissa.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/8.html">8) Sociedad sin humanos. Sobre el proyecto de Ley de Sociedades de Milei. Si el Estado no sabe a qué le abre la puerta, la afectación de la soberanía es una posibilidad cierta. Por Enrique Hidalgo.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/9.html">9) A desenchufar. El problema de la inteligencia artificial, una herramienta creada y utilizada por humanos, es político y debe enfrentarse con un férreo control mundial. Por José Massoni.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/10.html">10) Del padrón al gemelo digital. Nueva era política: radiografías sociales, mensajes a medida y opacidad. Por Emmanuel Jaffrot.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/11.html">11) Si te he visto, no me acuerdo. El acuerdo del sector universitario y el gobierno confirmó la persistencia del conflicto. Será la Corte quien devele qué tan buena fue la decisión. Por Diego Kenis.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/12.html">12) La tierra tiembla. Tres películas para pensar el territorio, la soberanía y la acumulación de poder. Por Antolín Magallanes.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/13.html">13) Excusa imperial. Trump deja en evidencia que el uranio enriquecido era una justificación falsa para la guerra con Irán. Por Julia Conley.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/14.html">14) Punteros de la resistencia. El poder imperial encuentra sus límites en dos frentes. El acuerdo con Irán debilita su posición. Lula confrontó a Trump durante la cumbre del G7. Por Ariela Ruiz Caro.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/15.html">15) Halcones en retirada. Los sectores belicistas se pronunciaron con relación a la buena noticia de que se haya producido un cese de las hostilidades para dar paso a la diplomacia entre Irán y Estados Unidos. Por Aleardo Laría Rajneri.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_15"><a href="el_cohete_a_la_luna/2026-06-22-Lunes/16.html">16) La libertad usurpa. Legisladores de La Libertad Avanza propusieron una ley para hacer operaciones inmobiliarias sin martilleros. Entre ellos, un usurpador de terrenos. Por Alberto Moya.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-06-24-Miercoles.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>
