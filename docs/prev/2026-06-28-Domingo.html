@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Domingo 28 junio 2026 10:54 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-06-28-Domingo/1.html">1) El “efecto dominó” que aceleró la caída de Adorni y las batallas que se vienen dentro del Gobierno.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-06-28-Domingo/2.html">2) Se completó el cuadro de los 16avos de final del Mundial: la llave de Argentina y el cronograma de todos los partidos.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-06-28-Domingo/3.html">3) La conmovedora despedida a Ernestina Pais: el dolor de familiares, colegas y amigos.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-06-28-Domingo/4.html">4) Tras una floja largada, Colapinto escala posiciones y marcha 15° en el GP de Austria.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-06-28-Domingo/5.html">5) Un problema mucho más grave que Manuel Adorni.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-06-28-Domingo/6.html">6) Milei se sacó de encima a Adorni y apuesta todas las fichas a la economía para impulsar sus chances electorales.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-06-28-Domingo/7.html">7) Terremotos en Venezuela: hallaron sin vida a la familia del futbolista argentino Lucas Trejo.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-06-28-Domingo/8.html">8) Franco Yan: “Nunca hay que perder la oportunidad de decirle a alguien cuánto lo querés”.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-06-28-Domingo/9.html">9) Carla Peterson: “Yo no le miro el teléfono, por ahora… ”.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-06-28-Domingo/10.html">10) Fingió ser rico para conquistar a una joven escandinava y quedó atrapado en una espiral de deudas, mentiras y desesperación.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-06-28-Domingo/11.html">11) El abrazo de Lionel Messi que dejó a Maxi López al borde de las lágrimas: “Estoy emocionado”.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-06-28-Domingo/12.html">12) La divertida respuesta de Scaloni ante la consulta sobre las indicaciones que le dio a Messi.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-06-28-Domingo/1.html">1) Trastienda de una crisis eterna y la salida caótica de Manuel Adorni. Fin ado. Acorralado por las sobradas evidencias de enriquecimiento ilícito y ante la amenaza de su remoción por el Congreso, Milei se desprendió de Adorni con la esperanza de diluir la atención sobre los sucesivos actos de corrupción que marcan su gobierno. Fiel a su estilo, en la carta de renuncia el jefe de Gabinete intenta victimizarse y presentar su salida como una decisión personal. Por. Sebastián Cazón.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-06-28-Domingo/2.html">2) El fiscal espera los resultados de un informe contable sobre sus gastos e ingresos. En la justicia, Adorni también está knock out. Por. Raúl Kollmann.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-06-28-Domingo/3.html">3) El ministro de Interior es el señalado para reemplazar a Adorni. Las miradas puestas en Santilli. Por. Paula Marussich.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-06-28-Domingo/4.html">4) Victoria 3 a 1 sobre Jordania con goles de Lo Celso, Lautaro y Messi. La Selección no decepcionó y se le abrió el cuadro del Mundial. Por. Cristian Dellocchio.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-06-28-Domingo/5.html">5) El sueño futbolístico de un pueblo cansado. Por. José Luis Lanao.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-06-28-Domingo/6.html">6) El argentino tuvo varias complicaciones. Colapinto corre el GP de Austria de Fórmula 1: la carrera, minuto a minuto.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-06-28-Domingo/7.html">7) Messi frotó la lámpara en un tiro libre y metió el tercero de Argentina.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-06-28-Domingo/8.html">8) Lautaro Martínez cambió el penal por gol y amplió la ventaja.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-06-28-Domingo/9.html">9) El golazo de tiro libre de Lo Celso para abrir el marcador ante Jordania.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-06-28-Domingo/10.html">10) Luego de tres días de búsqueda en Venezuela. Hallaron sin vida a la esposa y los hijos del futbolista Lucas Trejo.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-06-28-Domingo/11.html">11) Lautaro Martínez prevaleció en medio de un plantel alternativo. El uno por uno de la Selección Argentina. Por. Adrián De Benedictis.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-06-28-Domingo/12.html">12) Los mensajes evidenciaron las internas dentro de LLA. Las repercusiones de la renuncia de Adorni.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-06-28-Domingo/1.html">1) Mundial 2026, EN VIVO: la Argentina le ganó a Jordania y empiezan los cruces de 16avos.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-06-28-Domingo/2.html">2) Al final, era apenas un jefe de Gabinete.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-06-28-Domingo/3.html">3) Federica Pais, José María Muscari y Romina Gaetani y María Carámbula, en el velatorio de Ernestina Pais.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-06-28-Domingo/4.html">4) El sacrificio de Milei para poner a salvo el plan de reelección.</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-06-28-Domingo/5.html">5) Argentina venció a Jordania, ganó con otro gol de Lionel Messi, cuidó figuras y mejora en el Mundial.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-06-28-Domingo/6.html">6) Mundial 2026: Argentina es feliz con Messi y viaja a Miami para jugar de local contra Cabo Verde.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-06-28-Domingo/7.html">7) La revancha de Gio Lo Celso: debutó a los 30 con un gol en el Mundial.</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-06-28-Domingo/8.html">8) Los planes de un magnate americano-iraní en la Argentina desnudan torpezas que cuestan millones.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-06-28-Domingo/9.html">9) Franco Colapinto en el Gran Premio de Austria, en vivo.</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-06-28-Domingo/10.html">10) Solos frente a la tragedia, los venezolanos remueven los escombros con pico y pala en busca de sobrevivientes.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-06-28-Domingo/1.html">1) Milei culpa a Macri por la caída de Adorni y promete venganza</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-06-28-Domingo/2.html">2) Adorni incluyó en su renuncia una larga lista de delitos que nadie le había atribuido</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-06-28-Domingo/3.html">3) Diego Santilli es el nuevo jefe de gabinete</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-06-28-Domingo/4.html">4) En plena crisis de nervios, Adorni se atrincheró y amenaza: &quot;Es peligroso que termine en la Justicia&quot;</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-06-28-Domingo/5.html">5) Crisis total en el PRO por la renuncia de Esteban Bullrich: &quot;Con Adorni bajamos la última bandera&quot;</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-06-28-Domingo/6.html">6) Santilli analiza ofrecer colectoras a los gobernadores para que apoyen la eliminación de las PASO</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-06-28-Domingo/7.html">7) Ahora que Adorni está en la lona, Macri anuncia que &quot;el PRO va a votar por la interpelación&quot;</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-06-28-Domingo/8.html">8) Adorni también se gastó 6 millones en equipos para los jueguitos</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-06-28-Domingo/1.html">1) FIN Santilli se prueba el traje de jefe de Gabinete: vuelve la política.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-06-28-Domingo/2.html">2) La rendición de Milei.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-06-28-Domingo/3.html">3) El Congreso echó a Adorni.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-06-28-Domingo/4.html">4) Fenómeno Mundial.</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-06-28-Domingo/5.html">5) El Mundial de la pobreza.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-06-28-Domingo/6.html">6) FIN.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-06-28-Domingo/7.html">7) Adorni greatest hits.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-06-28-Domingo/8.html">8) Apenas un meme.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-axios" aria-labelledby="source-axios-heading">
+<h3 class="source-heading" id="source-axios-heading"><a href="https://www.axios.com">Axios</a></h3>
+<ol class="source-notes">
+<li class="nota" id="axios_0"><a href="axios/2026-06-28-Domingo/1.html">1) Cómo AI ayudó al FBI a investigar el ataque a la cena de corresponsales de la Casa Blanca.</a></li>
+<li class="nota" id="axios_1"><a href="axios/2026-06-28-Domingo/2.html">2) La exitosa semana de la Corte Suprema pondrá a prueba el poder de Trump.</a></li>
+<li class="nota" id="axios_2"><a href="axios/2026-06-28-Domingo/3.html">3) Estados Unidos lanza nuevos ataques contra Irán mientras Trump amenaza con &quot;completar el trabajo&quot;.</a></li>
+<li class="nota" id="axios_3"><a href="axios/2026-06-28-Domingo/4.html">4) Scoop: El poderoso modelo antrópico, Fable 5, en camino de regresar pronto.</a></li>
+<li class="nota" id="axios_4"><a href="axios/2026-06-28-Domingo/5.html">5) El mensaje &quot;comunista&quot; de Trump a mitad de mandato.</a></li>
+<li class="nota" id="axios_5"><a href="axios/2026-06-28-Domingo/6.html">6) Los drones de Ucrania llevan la guerra a Rusia.</a></li>
+<li class="nota" id="axios_6"><a href="axios/2026-06-28-Domingo/7.html">7) guerra con drones.</a></li>
+<li class="nota" id="axios_7"><a href="axios/2026-06-28-Domingo/8.html">8) Estados Unidos ataca objetivos iraníes cerca del estrecho después de que Irán disparara contra barcos.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-china_daily" aria-labelledby="source-china_daily-heading">
+<h3 class="source-heading" id="source-china_daily-heading"><a href="https://www.chinadaily.com.cn/china">China Daily</a></h3>
+<ol class="source-notes">
+<li class="nota" id="china_daily_0"><a href="china_daily/2026-06-28-Domingo/1.html">1) El tejido centenario de sauces emplea a casi 100.000 personas en el condado de Shandong.</a></li>
+<li class="nota" id="china_daily_1"><a href="china_daily/2026-06-28-Domingo/2.html">2) Las garcetas protegidas nacionales señalan un ambiente saludable en Hunan.</a></li>
+<li class="nota" id="china_daily_2"><a href="china_daily/2026-06-28-Domingo/3.html">3) Los niños de Xizang regresan a casa después de cirugías cardíacas que les cambiaron la vida.</a></li>
+<li class="nota" id="china_daily_3"><a href="china_daily/2026-06-28-Domingo/4.html">4) Superar la trampa de la &#x27;familia paralizada&#x27;.</a></li>
+<li class="nota" id="china_daily_4"><a href="china_daily/2026-06-28-Domingo/5.html">5) Delitos de drogas que involucran a menores para sentir el calor.</a></li>
+<li class="nota" id="china_daily_5"><a href="china_daily/2026-06-28-Domingo/6.html">6) Una bola pequeña construye grandes vínculos globales.</a></li>
+<li class="nota" id="china_daily_6"><a href="china_daily/2026-06-28-Domingo/7.html">7) Árbol en peligro crítico descubierto en Yunnan.</a></li>
+<li class="nota" id="china_daily_7"><a href="china_daily/2026-06-28-Domingo/8.html">8) Una auditoría expone un enorme abuso de los fondos de asistencia social.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="el_dia/2026-06-28-Domingo/1.html">1) Otro domingo de filas y espera: persiste el calvario por conseguir GNC en La Plata.</a></li>
+<li class="nota" id="el_dia_1"><a href="el_dia/2026-06-28-Domingo/2.html">2) Entre hilos y emociones: una platense homenajeó a René Favaloro con una obra única.</a></li>
+<li class="nota" id="el_dia_2"><a href="el_dia/2026-06-28-Domingo/3.html">3) Domingo con probabilidad de lluvias en La Plata: cómo empezará la semana.</a></li>
+<li class="nota" id="el_dia_3"><a href="el_dia/2026-06-28-Domingo/4.html">4) El drama de los productores hortícolas de La Plata que alimentan a la región y hoy trabajan a pérdida.</a></li>
+<li class="nota" id="el_dia_4"><a href="el_dia/2026-06-28-Domingo/5.html">5) En invierno vuelve la colonia: las opciones no bajan de los $75 mil.</a></li>
+<li class="nota" id="el_dia_5"><a href="el_dia/2026-06-28-Domingo/6.html">6) El fútbol también es ciencia y los chicos lo pudieron comprobar.</a></li>
+<li class="nota" id="el_dia_6"><a href="el_dia/2026-06-28-Domingo/7.html">7) Vivimos más años, nacen menos chicos y el sistema de salud cruje.</a></li>
+<li class="nota" id="el_dia_7"><a href="el_dia/2026-06-28-Domingo/8.html">8) Guía para comprar: qué mirar y cómo elegir una propiedad.</a></li>
+<li class="nota" id="el_dia_8"><a href="el_dia/2026-06-28-Domingo/9.html">9) Los bancos plantean una tendencia a la baja en las tasas de los créditos.</a></li>
+<li class="nota" id="el_dia_9"><a href="el_dia/2026-06-28-Domingo/10.html">10) Según el Municipio, el ataque al Palacio dejó daños por $43 millones.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-06-28-Domingo/1.html">1) El antes y el después: imágenes desoladoras de la destrucción tras los terremotos en Venezuela</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-06-28-Domingo/2.html">2) MINUTO A MINUTO: Venezuela mantiene viva la esperanza en incansable búsqueda de supervivientes</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-06-28-Domingo/3.html">3) La reacción enérgica de Irán tras los bombardeos estadounidenses</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-06-28-Domingo/4.html">4) Irán contraataca con misiles balísticos y drones tras nuevo bombardeo de EE.UU.</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-06-28-Domingo/5.html">5) Bombardeos y amenazas del &quot;infierno&quot;: Alto el fuego entre EE.UU. e Irán, bajo prueba tras nueva ronda de ataques</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-06-28-Domingo/6.html">6) DESGARRADOR VIDEO: Hombre sepultado entre ruinas en Venezuela le ruega a su rescatista que huya para salvarse</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-06-28-Domingo/7.html">7) &quot;¡Irán dejará de existir!&quot;: Fuerte amenaza de Trump tras nueva escalada militar</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-06-28-Domingo/8.html">8) EE.UU. lanza nuevo bombardeo contra Irán por segundo día consecutivo</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-06-28-Domingo/1.html">1) Crece la producción de maquinaria agrícola en Uruguay, qué se fabrica, dónde y lo que se exporta</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-06-28-Domingo/2.html">2) Alfredo Clavijo: Lo que importa para un policía no es ganarse la confianza del ministro, sino de la sociedad</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-06-28-Domingo/3.html">3) Estos son los mejores libros de 2026 (hasta ahora)</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-06-28-Domingo/4.html">4) Las hermanas que se fijaron en un nicho y convirtieron su negocio en ícono de la alimentación natural: la historia de La Molienda y su expansión hacia el este</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-06-28-Domingo/5.html">5) Manuel Ugarte se realizó una resonancia tras lesionarse ante España en la eliminación de Uruguay del Mundial 2026, y temen una posible rotura de ligamentos</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-06-28-Domingo/6.html">6) Mundial 2026: Lionel Messi volvió a marcar, consiguió otro récord y se consolida como el máximo goleador en la historia</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-06-28-Domingo/7.html">7) Un fotógrafo uruguayo, su esposa y su hija mayor murieron por el terremoto en Venezuela</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-06-28-Domingo/8.html">8) Dolor en Venezuela: tras días de búsqueda tras el terremoto, encontraron muertos a la esposa e hijos del futbolista argentino Lucas Trejo</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-06-28-Domingo/9.html">9) Fiscalía de Maldonado pretendía condena de cinco escribanos por venta ilícita de terrenos pero fueron absueltos en caso que marca antes y después de la profesión</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-06-28-Domingo/10.html">10) Las estadísticas de la selección uruguaya en el Mundial 2026: Olivera, Cáceres y Bentancur lideran las cifras técnicas y físicas, y Valverde presenta datos preocupantes</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-06-28-Domingo/11.html">11) Un vestuario jodido y una situación durísima: la desazón de la selección uruguaya tras su eliminación del Mundial 2026 en palabras de Mathías Olivera y Josema Giménez</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-06-28-Domingo/12.html">12) Javier Milei le aceptó la renuncia a Manuel Adorni y el Gobierno busca dejar atrás el escándalo</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">La Diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-06-28-Domingo/1.html">1) Gobierno recortará viáticos para viajes y servicios de catering de todos los ministerios en la Rendición de Cuentas.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-06-28-Domingo/2.html">2) Renunció Manuel Adorni, jefe de gabinete del gobierno de Milei.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-06-28-Domingo/3.html">3) A 53 años del golpe de Estado, Orsi valoró el compromiso con el Nunca Más para construir “un clima de tolerancia y respeto”.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-06-28-Domingo/4.html">4) Lubetkin se contactó con el canciller venezolano tras los terremotos que ya han ocasionado la muerte de 1.430 personas.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-06-28-Domingo/5.html">5) Qué fracaso: Uruguay fuera del Mundial.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-06-28-Domingo/6.html">6) “Tragedia anunciada”: comerciantes de Rivera piden que se revisen los cambios anunciados para 2027 de la Tarjeta Uruguay Social.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-06-28-Domingo/7.html">7) 66,7% de la población de la zona de Casavalle cree que la droga es el principal problema del territorio.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-06-28-Domingo/8.html">8) Consejo de Ministros con “nada de paz y amor”: de la “aclaración” de los blindados al respaldo a la “última palabra” de Orsi.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-06-28-Domingo/9.html">9) Rendición de Cuentas: el Poder Ejecutivo definió a la educación como uno de los ejes prioritarios.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-06-28-Domingo/10.html">10) Guía para las vacaciones de julio 2026.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-06-28-Domingo/1.html">1) Urgente| Los 10 del Magreb fueron liberados: Paula Giménez y Lucas Aguilera llegaron a Estambul</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-06-28-Domingo/2.html">2) Cuba| La Asamblea Nacional aprueba paquete de medidas económicas que permiten la apertura a la inversión extranjera y la flexibilización del comercio exterior</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-06-28-Domingo/3.html">3) Argentina| A pesar del fallo de la Corte, el Gobierno seguirá sin aplicar la Ley de Financiamiento Universitario,</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-06-28-Domingo/4.html">4) Venezuela| Gobiernos de América Latina se solidarizan con la situación en el país tras el terremoto</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-06-28-Domingo/5.html">5) México| Sheinbaum adelantó que buscará una conversación con Abelardo de la Espriella para felicitarlo por su triunfo en las elecciones</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-06-28-Domingo/6.html">6) El Salvador| El índice de la Organización Mundial Contra la Tortura ubica al país entre los ocho países con mayor riesgo</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-06-28-Domingo/7.html">7) Irán asegura que la retirada de las fuerzas israelíes del Líbano constituye una condición fundamental para alcanzar un acuerdo final con EEUU</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-06-28-Domingo/8.html">8) PONETE LA 10| La ayuda humanitaria y la solidaridad no son delito</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/1.html">1) La cuerda floja. Desde España, el Presidente Javier Milei reiteró que las explicaciones de su jefe de gabinete le parecieron plausibles, que su única falta fue no declarar sus ingresos anteriores a su designación en el cargo, pero que si la Justicia lo considerara culpable, volaría a Manuel Adorni de una patada. Pintoresca manera de anticipar la renuncia…. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/2.html">2) El goleador en contra. El cuerpo legislativo que promueve el gobierno no deja dudas: sólo trabaja para el capital concentrado, local y norteamericano. Por Ricardo Aronskind.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/3.html">3) Pinchó la bicicleta. Caputo dijo que hay dólares para todos, pero el segundo semestre llega con presión cambiaria, tasas más altas y un barril de petróleo que dejó de soplar a favor. Por Lucka Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/4.html">4) Hay luces que nunca se apagan. Ciertas músicas y ciertas ideas —por ejemplo, la de poner el corazón en todo lo que uno hace— desafían al tiempo. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/5.html">5) Detrás del número. No sólo las personas desocupadas buscan trabajo sin encontrarlo. Por Diego Kenis.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/6.html">6) Ocio, derechos y desarrollo. El capitalismo de rapiña y la ceguera antiperonista de nuestras elites empresarias. Por Sebastián Fernández.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/7.html">7) Difamar para deslegitimar. Referentes de la derecha regional buscan desacreditar a defensoras de derechos humanos, a la Comisión Interamericana y al CELS. Por CELS.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/8.html">8) La nueva colonia. Se consolida un modelo extractivista, agropecuario, financiero, exportador y subordinado al capital extranjero, que empobrece al pueblo. Por Horacio Rovelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/9.html">9) El fin de la ultraactividad. La Secretaría de Trabajo convocó a 446 gremios a renegociar convenios colectivos tras la reforma que eliminó su vigencia automática. Por Jorge Elizondo.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/10.html">10) Verdad jurídica. Un fallo histórico para la memoria: el del juicio por la masacre de peronistas en 1956. Por Alberto Moya.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/11.html">11) 70 años después. Los crímenes de la Operación Masacre fueron delitos de lesa humanidad. Por Facundo Lo Duca.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/12.html">12) Impunidad artificial. El Súper RIGI provocaría una masiva renuncia fiscal y beneficios impositivos excepcionales que podrían tener impactos en los ecosistemas y la biodiversidad. Por Luciana Ghiotto y Micaela Sánchez Malcolm.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/13.html">13) La obra fantasma. La paralización de una obra para la Brigada Sur del Servicio Nacional del Manejo del Fuego, en Chubut, reveló una cadena de responsabilidades que llega hasta Estados Unidos. Por Susana Lara.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/14.html">14) ¿Qué estamos construyendo?. Lectura crítica de Magnifica Humanitas, la encíclica del papa León XIV sobre la custodia de la persona humana en el tiempo de la inteligencia artificial. Por Marcelo Ciaramella.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/15.html">15) Derrota estratégica. La aventura bélica de Trump fortaleció la posición estratégica de Irán y debilitó la autoridad moral de Occidente. Por Luciano Anzelini.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_15"><a href="el_cohete_a_la_luna/2026-06-28-Domingo/16.html">16) Guerras interminables. Trump corrigió el error de haber iniciado la guerra ilegal contra Irán y rompió el patrón de Irak y Afganistán, que provocaron miles de muertos sólo para volver al punto de partida. Por Aleardo Laría Rajneri.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-06-27-Sabado.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>
