@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Martes 07 julio 2026 06:24 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-07-07-Martes/1.html">1) La Casa Rosada quiere reunir a los gobernadores para aceitar el diálogo y negociar las próximas reformas.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-07-07-Martes/2.html">2) El programa financiero 2027 quedó demasiado ajustado si el Gobierno no consigue acceso al mercado internacional.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-07-07-Martes/3.html">3) Con tres cambios: el probable once de Argentina para enfrentar a Egipto por los octavos del Mundial 2026.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-07-07-Martes/4.html">4) Karina Milei concentra el manejo del poder, Santilli opera y la reelección domina la política oficialista.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-07-07-Martes/5.html">5) El riesgo país tocó el nivel más bajo en la era Milei tras la presentación del programa financiero.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-07-07-Martes/6.html">6) Bélgica le ganó 4-1 a EEUU y enfrentará a España en cuartos de final del Mundial.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-07-07-Martes/7.html">7) El enojo de Muscari por el precio que le cobraron en una fiambrería: &quot;El robo del siglo&quot;.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-07-07-Martes/8.html">8) José Luis Espert declarará hoy ante la Justicia en la causa por presunto lavado de activos.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-07-07-Martes/9.html">9) El ritual de la &quot;banda del palo santo&quot; que terminó con el título en Qatar: la revelación sobre Messi de uno de sus fundadores.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-07-07-Martes/10.html">10) Yanina Latorre contó cuál es el nuevo trabajo de Mauro Icardi fuera del fútbol: &quot;Entiendo tus nervios&quot;.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-07-07-Martes/11.html">11) El jefe del Comando Sur de EEUU supervisó en Venezuela la asistencia humanitaria tras los terremotos.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-07-07-Martes/12.html">12) Juicio por Loan, octava audiencia: declaran un primo, un tío y un testigo que participó de la búsqueda y encontró huellas.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-07-07-Martes/1.html">1) CFK y una discusión que cruzó el Atlántico. El espejo español del lawfare: una encuesta confirma que la mayoría cree que la Justicia actúa políticamente. Por. Natalia López Gómez.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-07-07-Martes/2.html">2) Lo que Milei y Caputo no lograron en dos años y medio, lo hizo la Selección. El consumo crece sólo cuando juega Messi. Por. Leandro Renou.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-07-07-Martes/3.html">3) El míercoles se reúne la mesa política. Sin Adorni, con caras nuevas y las internas de siempre. Por. Melisa Molina.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-07-07-Martes/4.html">4) Las especulaciones sobre 2027. Las colectoras, una “bola de humo” incompatible con la Boleta Única de Papel. Por. Eva Moreira.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-07-07-Martes/5.html">5) Religión y política: lo “no matable”. Por. Jorge Alemán.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-07-07-Martes/6.html">6) El presupuesto cayó casi a la mitad en los últimos dos años. Motosierra y licuadora, el combo letal para la educación. Por. Karina Micheletto.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-07-07-Martes/7.html">7) Manifestación, abrazo simbólico y olla popular en defensa del CNEA. “El Gobierno nacional quiere rifar al sistema científico”.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-07-07-Martes/8.html">8) El Gobierno recortó 34 por ciento del gasto en relación a 2023. Fuerte restricción en las partidas públicas.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-07-07-Martes/9.html">9) Tenía 27 años. El youtuber “Chaterbox” murió en un trágico accidente junto a su padre.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-07-07-Martes/10.html">10) Casi sin vuelos. La crisis de Flybondi no se detiene. Por. Santiago Brunetto.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-07-07-Martes/11.html">11) Qué implica atacar la ESI. Clara Muzzio cambió de bando. Por. Flor de la V.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-07-07-Martes/12.html">12) Homo Horrorizado. Por. Rodrigo Fresán.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-07-07-Martes/1.html">1) Javier Milei y sus medidas, en vivo: en cuánto se proyecta la inflación de junio y los avances de la reforma electoral.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-07-07-Martes/2.html">2) Argentina vs. Egipto EN VIVO por el Mundial 2026: hora, TV y las formaciones.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-07-07-Martes/3.html">3) Mundial 2026, en vivo: la previa del partido contra Egipto y el cruce entre Colombia y Suiza.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-07-07-Martes/4.html">4) Agentes del FBI y fiscales federales toman testimonios para investigar operaciones financieras de la AFA en Estados Unidos.</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-07-07-Martes/5.html">5) El triunfo de la política.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-07-07-Martes/6.html">6) Banderazo argentino en Atlanta: miles de hinchas palpitan el decisivo partido de mañana contra Egipto.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-07-07-Martes/7.html">7) La revancha de Leandro Paredes: de perder el lugar en Qatar, a volver contra Egipto para ordenar a Argentina.</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-07-07-Martes/8.html">8) Bélgica jugó a lo grande, aplastó a Estados Unidos y limpió la pelota tras la mancha de la FIFA.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-07-07-Martes/9.html">9) La última lágrima de Cristiano Ronaldo en un Mundial: ahora sí, se terminó la obsesión de alcanzar a Messi.</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-07-07-Martes/10.html">10) El puente aéreo de la ONG de Enrique Piñeyro para llevar ayuda a Venezuela.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-07-07-Martes/1.html">1) Renunció el viceministro de Salud presionado por la crisis del Pami</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-07-07-Martes/2.html">2) Un socio de Martín Menem embargado y a indagatoria por corrupción en la obra social de los peones rurales</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-07-07-Martes/3.html">3) El gobierno le pisa el pliego a Bertuzzi para que ratifique el fallo que frena la causa Libra</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-07-07-Martes/4.html">4) El juez Armella acordó con el Gobierno la designación de un ex juez amigo en el Hospital El Cruce</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-07-07-Martes/5.html">5) De la Sota se reunió con Olmos y se acerca al peronismo de centro</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-07-07-Martes/6.html">6) Caputo reconoció que el swap con Estados Unidos de USD 20 mil millones hay que renegociarlo</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-07-07-Martes/7.html">7) Lule Menem choca con el nuevo vocero por la interna de La Pampa y se arriesga a un cruce con Milei</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-07-07-Martes/8.html">8) Vivir con lo nuestro: Caputo presentó una hoja de ruta para cubrir los vencimientos hasta el final del mandato de Milei</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-07-07-Martes/1.html">1) Blindaje al dólar: Caputo cubrirá los vencimientos de 2027 con deuda local, privatizaciones y bancos.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-07-07-Martes/2.html">2) Reforma electoral: partidos provinciales piden suspender las PASO y archivar el debate por las colectoras.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-07-07-Martes/3.html">3) Karina Milei amplía la mesa política y reprograma el encuentro por el partido de Argentina con Egipto.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-07-07-Martes/4.html">4) Peronismo permitido: el socialismo bonaerense evalúa subirse al plan Kicillof 2027.</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-07-07-Martes/5.html">5) Privatización de rutas: Cristóbal López ganó una licitación y regresa al negocio de los peajes.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-07-07-Martes/6.html">6) El Gobierno llega a la rosca por la reforma electoral acumulando dos meses sin repartir ATN a las provincias.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-07-07-Martes/7.html">7) Milei reordena la tropa para la reelección.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-07-07-Martes/8.html">8) La re-re de Milei: relanzamiento para la reelección.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-axios" aria-labelledby="source-axios-heading">
+<h3 class="source-heading" id="source-axios-heading"><a href="https://www.axios.com">Axios</a></h3>
+<ol class="source-notes">
+<li class="nota" id="axios_0"><a href="axios/2026-07-07-Martes/1.html">1) Irán reanuda ataques en el Estrecho de Ormuz, dice Estados Unidos.</a></li>
+<li class="nota" id="axios_1"><a href="axios/2026-07-07-Martes/2.html">2) Schumer se suma a los llamados a la retirada de Platner ante el colapso del apoyo demócrata.</a></li>
+<li class="nota" id="axios_2"><a href="axios/2026-07-07-Martes/3.html">3) Anthropic dice que Claude ha creado su propio espacio para reflexionar.</a></li>
+<li class="nota" id="axios_3"><a href="axios/2026-07-07-Martes/4.html">4) Platner dice que se está tomando el tiempo para considerar el futuro de la candidatura al Senado de Maine.</a></li>
+<li class="nota" id="axios_4"><a href="axios/2026-07-07-Martes/5.html">5) Primicia: Netanyahu pide a Trump que controle a Erdoğan antes de la cumbre de la OTAN.</a></li>
+<li class="nota" id="axios_5"><a href="axios/2026-07-07-Martes/6.html">6) Trump amenaza la buena voluntad de Estados Unidos en el Mundial con una llamada telefónica.</a></li>
+<li class="nota" id="axios_6"><a href="axios/2026-07-07-Martes/7.html">7) Folarin Balogun.</a></li>
+<li class="nota" id="axios_7"><a href="axios/2026-07-07-Martes/8.html">8) Presidente Trump.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-china_daily" aria-labelledby="source-china_daily-heading">
+<h3 class="source-heading" id="source-china_daily-heading"><a href="https://www.chinadaily.com.cn/china">China Daily</a></h3>
+<ol class="source-notes">
+<li class="nota" id="china_daily_0"><a href="china_daily/2026-07-07-Martes/1.html">1) El guardián de la montaña limpia la subida.</a></li>
+<li class="nota" id="china_daily_1"><a href="china_daily/2026-07-07-Martes/2.html">2) China y Rusia lanzan ejercicio naval conjunto.</a></li>
+<li class="nota" id="china_daily_2"><a href="china_daily/2026-07-07-Martes/3.html">3) Proyecto de humedales prueba plan para la protección del Yangtsé.</a></li>
+<li class="nota" id="china_daily_3"><a href="china_daily/2026-07-07-Martes/4.html">4) La visita de la flota de la Armada del EPL marca el comienzo del primer día de puertas abiertas en Hong Kong.</a></li>
+<li class="nota" id="china_daily_4"><a href="china_daily/2026-07-07-Martes/5.html">5) La visita a Gansu genera elogios internacionales por el alivio de la pobreza.</a></li>
+<li class="nota" id="china_daily_5"><a href="china_daily/2026-07-07-Martes/6.html">6) Vlogger gana 500.000 yuanes por un vídeo viral de Xizang.</a></li>
+<li class="nota" id="china_daily_6"><a href="china_daily/2026-07-07-Martes/7.html">7) Las iniciativas de empleo abordan los desequilibrios del mercado laboral.</a></li>
+<li class="nota" id="china_daily_7"><a href="china_daily/2026-07-07-Martes/8.html">8) China publica plan para construir una China Hermosa de 2026 a 2030.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="el_dia/2026-07-06-Lunes/1.html">1) La Plata lo pasa a gas: tras los cortes en estaciones de servicio, el combustible marca el pulso de la Región.</a></li>
+<li class="nota" id="el_dia_1"><a href="el_dia/2026-07-06-Lunes/2.html">2) Tolosa: pasaron de tener tensión baja a 244 voltios.</a></li>
+<li class="nota" id="el_dia_2"><a href="el_dia/2026-07-06-Lunes/3.html">3) Exigen datos sobre el impacto de la calidad del aire en las enfermedades.</a></li>
+<li class="nota" id="el_dia_3"><a href="el_dia/2026-07-06-Lunes/4.html">4) Una promesa platense clasificó a una competencia internacional.</a></li>
+<li class="nota" id="el_dia_4"><a href="el_dia/2026-07-06-Lunes/5.html">5) Reconocen a la bombera platense que fue a Venezuela.</a></li>
+<li class="nota" id="el_dia_5"><a href="el_dia/2026-07-06-Lunes/6.html">6) Choferes de micros en alerta y un posible paro impactaría en la Región.</a></li>
+<li class="nota" id="el_dia_6"><a href="el_dia/2026-07-06-Lunes/7.html">7) Un barrio atrapado entre la escasez de agua y las interrupciones eléctricas.</a></li>
+<li class="nota" id="el_dia_7"><a href="el_dia/2026-07-06-Lunes/8.html">8) Susto en “La Plata Comic”: dos bailarines cayeron del escenario.</a></li>
+<li class="nota" id="el_dia_8"><a href="el_dia/2026-07-06-Lunes/9.html">9) ¡A abrigarse!: el frío no da tregua y se espera otra semana invernal.</a></li>
+<li class="nota" id="el_dia_9"><a href="el_dia/2026-07-06-Lunes/10.html">10) Uno de cada ocho hombres adultos sufren cáncer de próstata.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-07-06-Lunes/1.html">1) Rusia asesta un masivo golpe de represalia contra Ucrania por sus ataques terroristas contra civiles</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-07-06-Lunes/2.html">2) Los fallecidos por devastadores terremotos en Venezuela superan los 3.000</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-07-06-Lunes/3.html">3) Rutte y Von der Leyen anuncian el &quot;fin&quot; de una época con EE.UU.</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-07-06-Lunes/4.html">4) Una decisión de la FIFA sacude el mundo del fútbol: ¿qué tiene que ver Trump?</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-07-06-Lunes/5.html">5) Investigación que remece a Ecuador ante el mundo</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-07-06-Lunes/6.html">6) Fico da su fórmula para salvar Europa, y tiene que ver con Rusia</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-07-06-Lunes/7.html">7) Inglaterra se impone a México y clasifica a cuartos de final</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-07-06-Lunes/8.html">8) Medios: Trump pidió al jefe de la FIFA revertir tarjeta roja de futbolista estadounidense</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-07-06-Lunes/1.html">1) México 2-3 Inglaterra por el Mundial 2026: los ingleses se defendieron como leones con 10 jugadores y eliminaron a los locatarios en polémico partido</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-07-06-Lunes/2.html">2) Uruguay 99-70 Cuba: contundente triunfo de la celeste que terminó líder en la primera ronda de Eliminatorias para el Mundial de básquetbol</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-07-06-Lunes/3.html">3) Dentro del MLN: sus cuadros en el poder, la mística que lo sostiene y su utopía por el socialismo</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-07-06-Lunes/4.html">4) Por qué la Odisea es la aventura que cambió la historia de Occidente (y cuál es la mejor forma de leerla en 2026)</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-07-06-Lunes/5.html">5) Incendio en Piedras Blancas: tres adultos fallecieron y un adolescente de 15 años terminó grave</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-07-06-Lunes/6.html">6) Así son los cinco modelos de blindados del Ejército que utilizará la Policía para patrullar barrios de Montevideo</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-07-06-Lunes/7.html">7) Tras masa de aire polar, meteorólogos e Inumet anuncian cómo estará el tiempo esta semana en Uruguay</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-07-06-Lunes/8.html">8) EN VIVO | Los números ganadores del sorteo millonario del 5 de Oro de este domingo 5 de julio</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-07-06-Lunes/9.html">9) Se acabó: el último baile de Neymar que terminó en patada de impotencia y llanto en la despedida de Brasil del Mundial 2026 al caer con Noruega</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-07-06-Lunes/10.html">10) Lacalle Pou prepara su regreso a un acto político: hablará en agosto por el aniversario del Partido Nacional</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-07-06-Lunes/11.html">11) La última fábrica de telas de Uruguay: la historia de la empresa que sobrevivió al derrumbe de una industria y ahora enfrenta el efecto Temu</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-07-06-Lunes/12.html">12) Pitbull mató a otro perro tras atacarlo detrás de una reja y reavivó el debate sobre las razas potencialmente peligrosas</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">La Diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-07-06-Lunes/1.html">1) 56% de los ingresos en los gobiernos departamentales durante 2025 fueron por designación directa.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-07-06-Lunes/2.html">2) Carlos Negro sobre el uso de vehículos militares: “No puede haber una opinión desfavorable a la seguridad de la Policía”.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-07-06-Lunes/3.html">3) En Paysandú el año pasado fueron impulsados 18 proyectos de vivienda promovida.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-07-06-Lunes/4.html">4) Amado contra pedido de 20 legisladores para que el Parlamento reciba al papa: “Nuestro Estado no se arrodilla ante ninguna fe”.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-07-06-Lunes/5.html">5) Bordaberry presentó proyecto de ley para facilitar la compra de tierras por parte de los colonos arrendatarios.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-07-06-Lunes/6.html">6) Trump lideró los festejos por el 250° aniversario de la independencia, en la antesala de su viaje a la cumbre de la OTAN.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-07-06-Lunes/7.html">7) Se celebró el 11° aniversario de la declaración del Paisaje Industrial de Fray Bentos como patrimonio mundial.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-07-06-Lunes/8.html">8) Delcy Rodríguez dijo que la soberanía venezolana permanece “inquebrantable”, tras los terremotos que dejaron más de 3.000 muertos.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-07-06-Lunes/9.html">9) Lubetkin: la lucha contra el crimen organizado es “un tema decisorio” y Uruguay lo “empujará” en los ámbitos de integración.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-07-06-Lunes/10.html">10) Uruguay sin Mundial y el tesoro de los inocentes.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-07-06-Lunes/1.html">1) Lucas Aguilera y Paula Giménez: crónica del regreso a casa</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-07-06-Lunes/2.html">2) Cuba| Viceministro de Relaciones Exteriores denuncia el carácter criminal del diseño político de Estados Unidos contra la isla</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-07-06-Lunes/3.html">3) Brasil| El Estado pide disculpas a indígenas avá-canoeiro por abusos en la dictadura</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-07-06-Lunes/4.html">4) Venezuela| Delcy Rodríguez asegura que ante el evento sísmico “Inmediatamente se activó el Estado venezolano en su conjunto”</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-07-06-Lunes/5.html">5) México| Sheinbaum afirma que el T-MEC seguirá vigente hasta 2036 aún sin prórroga de Estados Unidos</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-07-06-Lunes/6.html">6) Colombia| Abelardo de la Espriella instruye al ministro de Hacienda reunirse con la banca internacional para renegociar deuda del país</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-07-06-Lunes/7.html">7) Según un informe del Instituto Internacional de Estudios Estratégicos, Rusia espió con drones instalaciones nucleares de la OTAN</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-07-06-Lunes/8.html">8) Cumbre de los Acuerdos de Isaac en Buenos Aires: la institucionalización de una nueva arquitectura regional – Por Emilia Trabucco</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/1.html">1) La mira en la urna. Luego de un desgaste de tres meses por sostener la indefendible situación de Manuel Adorni, el gobierno de los Hermanos Milei encara con premura medidas que considera imprescindibles para llegar en términos competitivos a la cita electoral de 2027, cuando procurará ser la primera fuerza no peronista en conseguir la reelección. Esto es…. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/2.html">2) Tres escenas y un patrón. Las directivas del FMI: se bajan tributos al comercio exterior, se sostiene la recaudación con impuestos que pasan por el consumo y se pretende cambiar la Carta Orgánica del Banco Central. Por Lucka Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/3.html">3) Reseteo. Con el aval de Estados Unidos, leyes, decretos y privatizaciones reconfiguran el Estado argentino a favor del capital financiero extranjero. Por Horacio Rovelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/4.html">4) El fiel de la balanza. Los procesos de Nuremberg y la necesidad de alumbrar un nuevo Nunca Más. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/5.html">5) Porro y sus amigos gendarmes. Despidos, ajuste y disputa geopolítica en el sector nuclear argentino. Por Nicolás Malinovsky y Diego Hurtado.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/6.html">6) Citizen Kane y San José 1111. El verdadero peligro para la democracia no reside en los liderazgos populares sino en los consejos de accionistas de los ultrarricos. Por Sebastián Fernández.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/7.html">7) Neomacartismo. Trump agita el fantasma del comunismo ante el avance de los socialistas democráticos en Estados Unidos y su desafío al lobby de Israel. Por Aleardo Laría Rajneri.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/8.html">8) La madre de los delitos. Todos los humanos son iguales, pero algunos más que otros. El fracaso de las estrategias de persecución penal de los delitos económicos. Por Sergio Eissa.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/9.html">9) Esclavistas y cipayos. Estados Unidos y la reescritura de una sórdida historia de opresión y genocidio como historia de la libertad. Por Mario de Casas.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/10.html">10) Futuro incierto. Paro docente por el ahogo presupuestario de Nación y la falta de respuestas bonaerenses. Por Diego Kenis.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/11.html">11) El nudo de espinas. Negociaciones entre Estados Unidos e Irán en un terreno difícil mientras se intenta arribar a un acuerdo sobre el programa atómico y el Líbano. Por Marcelo Caracoche.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/12.html">12) Ni un solo niño gazatí. 1.022 bebés entre los 21.500 niños asesinados por Israel en Gaza. Por Brett Wilkins.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/13.html">13) Israel no puede parar. Continúan los crímenes de guerra y de lesa humanidad contra niñas y niños palestinos, por los que Israel debe responder ante la Justicia internacional. Por Sergio Ferrari.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/14.html">14) Impoluta Federal. El largo historial de corrupción de la fuerza que se arroga el mayor prestigio. Por Alberto Moya.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/15.html">15) El sello de la Federal. Se cumplen 50 años del peor ataque sufrido por la Iglesia católica en la Argentina: el asesinato de cinco religiosos palotinos en la parroquia San Patricio. Por Ramiro Varela.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_15"><a href="el_cohete_a_la_luna/2026-07-06-Lunes/16.html">16) Un chino en el Vaticano. El multimillonario Peter Thiel alerta sobre el “agente comunista chino” León XIV. Por Brad Reed.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-07-06-Lunes.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>
