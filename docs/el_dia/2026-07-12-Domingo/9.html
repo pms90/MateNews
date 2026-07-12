@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Alerta por pacientes que llegan a la consulta con diagnósticos de la IA.</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: auto;
+                padding: 5%;
+            }
+            .btnL {
+                background: #d1d1d1;
+                border-radius: 7px;
+                padding: 18px;
+                min-width: 100%;
+                color: #000000;
+                font-size: medium;
+                min-height: 70px;
+            }
+            button {
+                background-color: #d1d1d1;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:disabled {
+                background-color: #d1d1d1;
+                cursor: not-allowed;
+            }
+            button:hover:not(:disabled) {
+                background-color: #d1d1d1;
+            }
+            #voiceSelect {
+                margin: 10px 0;
+                padding: 5px;
+            }
+            .controls {
+                margin: 10px 0;
+            }
+
+            #fullscreenButton {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px;
+                background-color: transparent;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+            #fullscreenIcon {
+                width: 24px;
+                height: 24px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <button id="fullscreenButton">
+        <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+        </svg>
+        </button>
+
+        <div id="texto">
+            <h1>Alerta por pacientes que llegan a la consulta con diagnósticos de la IA.</h1>
+            <p>En casos, directamente piden a los profesionales una receta u orden de estudio. Cruces con el médico y riesgos</p><p>En los consultorios médicos se reitera cada vez con más frecuencia una misma situación: pacientes que llegan con un diagnóstico, posibles tratamientos e incluso pedidos de órdenes de estudios después de consultar a la inteligencia artificial (IA). Este fenómeno, que se observa en distintas especialidades, genera preocupación entre los profesionales de la salud platense, quienes advierten sobre los riesgos de tomar decisiones basadas en este tipo de herramientas.</p><p>Según los especialistas, ante los primeros síntomas, muchas personas cargan datos en estas plataformas y reciben posibles respuestas que, en algunos casos, siguen antes de recurrir a un profesional. En ese sentido, advierten que esta práctica puede derivar en demoras en la consulta médica.</p><p>Las consultas abarcan un amplio abanico de situaciones: desde cuadros leves, como una virosis o malestares comunes, hasta enfermedades más complejas y de mayor gravedad, incluso patologías oncológicas.</p><p>La mirada de los clínicos</p><p>Gastón Quintans, médico clínico, afirmó que el uso de la IA en la consulta médica “se ve muchísimo” y que el fenómeno no solo aparece en patologías comunes, sino también en la búsqueda de información sobre sustancias que están de moda, como “el magnesio y otros macronutrientes”.</p><p>En muchos casos, la consulta médica se produce porque la propia IA sugiere la realización de estudios. “Vienen directamente a pedir la orden. Ya no cuestionan si la información es correcta, sino que llegan con el mandato de hacerse determinado estudio”, señaló.</p><p>También mencionó que algunos llegan con información sobre posibles tratamientos sugeridos por la IA y buscan la opinión del profesional para saber si son adecuados.</p><p>Para Quintans, esta situación representa un riesgo, ya que “es muy grave” que una persona pueda perder tiempo de evolución de una enfermedad al consultar una plataforma y, más aún, seguir sus indicaciones. “Hoy no existe ninguna herramienta que pueda reemplazar el examen físico: tocar un abdomen, mirar una garganta o escuchar un pulmón”, remarcó.</p><p>En tanto, al marcar los riesgos, el médico fue claro: “Mientras la IA no tenga esta sensibilidad de poder ver al paciente y evaluarlo, seguirá siendo una opción peligrosa”.</p><p>En la misma línea, el especialista en clínica médica y titular del Colegio de Médicos, Jorge Mazzone, sostuvo que uno de los principales problemas es que la información no siempre es correcta. Por eso, durante la consulta, muchas veces el profesional tiene que explicar nuevamente la situación, ya que “la gente viene con una idea y cuando uno le dice que no es así, se genera una complicación”.</p><p>En algunos casos -agregó- el nivel de detalle con el que llegan los pacientes hace pensar que ya tuvieron una consulta previa con otro profesional. Sin embargo, aclaró que en realidad “solo consultaron dispositivos o googlearon”. Mazzone señaló que el tema ya es motivo de conversación entre los profesionales.</p><p>La IA frente a las emociones</p><p>La psicóloga Clarisa Moya afirmó que se desaconseja el uso de la inteligencia artificial para obtener diagnósticos o respuestas sobre malestares emocionales. Según indicó, es una práctica cada vez más extendida. “Esta problemática existe y hay que abordarla”, señaló.</p><p>La especialista señaló que muchas personas llegan a consulta con “etiquetas como ansiedad o depresión” obtenidas tras ingresar sus síntomas en un chat. El riesgo, advirtió, es que “la persona recibe un nombre para su sufrimiento” y puede apropiarse de ese diagnóstico sin profundizar su historia.</p><p>Moya sostuvo que la IA procesa información recortada y puede confirmar las sospechas del usuario. Por eso, plantea “alojar su inquietud sin confrontar”, tomando la devolución del chat como un material más en la sesión. El abordaje implica indagar qué llevó al paciente a esa consulta y qué sintió con la respuesta, diferenciando la abstracción general de su vivencia singular, para así construir una mirada propia.</p>
+        </div>
+        <br><br><br>
+            <div style="display: none;">
+                <label for="voiceSelect">Seleccionar voz:</label>
+                <select id="voiceSelect"></select>
+            </div>
+            <div class="controls">
+                <button onclick="startReading()" id="playButton">
+                    🔊 Leer
+                </button>
+                <button onclick="pauseReading()" id="pauseButton" disabled style="display: none;">
+                    ⏸️ Pausar
+                </button>
+                <button onclick="resumeReading()" id="resumeButton" disabled style="display: none;">
+                    ▶️ Continuar
+                </button>
+                <button onclick="stopReading()" id="stopButton" disabled>
+                    ⏹️ Detener
+                </button>
+            </div>
+            <div id="progress" style="display: none;"></div>
+        <br><br><br>
+        <button class="btnL" onclick="compartir()">Compartir</button>
+        <br><br><br>
+        <button class="btnL" onclick="window.location.href='https://www.eldia.com/la-ciudad/alerta-por-pacientes-que-llegan-a-la-consulta-con-diagnosticos-de-la-ia-la-ciudad_1783744775'">Ver en web original</button>
+        <br><br><br>
+        <!-- <button class="btnL" onclick="window.location.href='https://matenews.github.io/MateNews/'">Volver a la página principal</button>
+        <br><br><br> -->
+
+
+        <script>
+            function compartir() {
+            if (navigator.share) {
+                navigator.share({
+                title: 'Alerta por pacientes que llegan a la consulta con diagnósticos de la IA.',
+                text: 'Alerta por pacientes que llegan a la consulta con diagnósticos de la IA.',
+                url: 'https://www.eldia.com/la-ciudad/alerta-por-pacientes-que-llegan-a-la-consulta-con-diagnosticos-de-la-ia-la-ciudad_1783744775'
+                })
+                .then(() => console.log('Contenido compartido exitosamente'))
+                .catch((error) => console.error('Error al compartir:', error));
+            } else {
+                console.log("Web Share API no soportada");
+            }
+            }
+        </script>
+
+
+        <script>
+            let speechSynthesis = window.speechSynthesis;
+            let currentUtterance = null;
+            let isPaused = false;
+            let isReading = false;
+            let textBlocks = [];
+            let currentBlockIndex = 0;
+            let lastSpokenIndex = 0;
+            const BLOCK_SIZE = 800;
+
+            function updateButtons(speaking) {
+                document.getElementById('playButton').disabled = speaking;
+                document.getElementById('pauseButton').disabled = !speaking;
+                document.getElementById('resumeButton').disabled = !isPaused;
+                document.getElementById('stopButton').disabled = !speaking;
+            }
+
+            function updateProgress() {
+                const progressDiv = document.getElementById('progress');
+                if (isReading) {
+                    progressDiv.textContent = `Leyendo bloque ${currentBlockIndex + 1} de ${textBlocks.length}`;
+                } else {
+                    progressDiv.textContent = '';
+                }
+            }
+
+            function splitIntoBlocks(text) {
+                const sentences = text.replace(/([.!?])\s+/g, "$1|").split("|");
+
+                let blocks = [];
+                let currentBlock = '';
+
+                sentences.forEach(sentence => {
+                    if (sentence.length > BLOCK_SIZE) {
+                        let subSentences = sentence.replace(/,\s+/g, ",|").split("|");
+                        subSentences.forEach(subSentence => {
+                            if (currentBlock.length + subSentence.length > BLOCK_SIZE) {
+                                if (currentBlock) blocks.push(currentBlock.trim());
+                                currentBlock = subSentence;
+                            } else {
+                                currentBlock += (currentBlock ? ' ' : '') + subSentence;
+                            }
+                        });
+                    } else {
+                        if (currentBlock.length + sentence.length > BLOCK_SIZE) {
+                            blocks.push(currentBlock.trim());
+                            currentBlock = sentence;
+                        } else {
+                            currentBlock += (currentBlock ? ' ' : '') + sentence;
+                        }
+                    }
+                });
+
+                if (currentBlock) blocks.push(currentBlock.trim());
+                return blocks;
+            }
+
+            function speakBlock(index) {
+                if (index >= textBlocks.length) {
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                    return;
+                }
+
+                currentUtterance = new SpeechSynthesisUtterance(textBlocks[index]);
+                currentUtterance.rate = parseFloat(1.3);
+                lastSpokenIndex = index;
+
+
+                currentUtterance.onend = function() {
+                    if (isReading && !isPaused) {
+                        currentBlockIndex++;
+                        updateProgress();
+                        speakBlock(currentBlockIndex);
+                    }
+                };
+
+                currentUtterance.onerror = function(event) {
+                    console.error('Error en la lectura:', event);
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }
+
+            function startReading() {
+                const text = document.getElementById('texto').innerText;
+                if (!text) return;
+
+                stop();
+
+                textBlocks = splitIntoBlocks(text);
+                currentBlockIndex = 0;
+                isReading = true;
+                isPaused = false;
+
+                updateButtons(true);
+                updateProgress();
+                speakBlock(currentBlockIndex);
+            }
+
+            function pause() {
+                speechSynthesis.pause();
+                isPaused = true;
+                updateButtons(true);
+            }
+
+            function resume() {
+                speechSynthesis.resume();
+                isPaused = false;
+                updateButtons(true);
+            }
+
+            function stop() {
+                speechSynthesis.cancel();
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                updateButtons(false);
+                updateProgress();
+            }
+
+            function pauseReading() {
+                if (!isReading) return;
+
+                speechSynthesis.pause();
+                isPaused = true;
+                isReading = false;
+                updateButtons(true);
+                updateProgress();
+            }
+
+            function resumeReading() {
+                if (!isPaused) return;
+
+                isPaused = false;
+                isReading = true;
+
+                if (lastSpokenIndex === currentBlockIndex) {
+                    currentBlockIndex++;
+                }
+
+                updateButtons(true);
+                updateProgress();
+
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    speakBlock(currentBlockIndex);
+                }
+            }
+
+            function stopReading() {
+                speechSynthesis.cancel();
+                finishReading();
+            }
+
+            function finishReading() {
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                lastSpokenIndex = -1;
+                currentUtterance = null;
+                updateButtons(false);
+                updateProgress();
+            }
+
+        </script>
+
+        <script>
+
+            var elem = document.documentElement;
+            var fullscreenButton = document.getElementById("fullscreenButton");
+            var fullscreenIcon = document.getElementById("fullscreenIcon");
+
+            fullscreenButton.addEventListener("click", function() {
+            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+                }
+            } else {
+                if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+                }
+            }
+            });
+
+            document.addEventListener('fullscreenchange', (event) => {
+            if (!document.fullscreenElement) {
+                fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+            } else {
+                fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+            }
+            });
+        </script>
+
+    </body>
+    </html>
