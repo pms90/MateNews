@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Milei mantuvo un tenso cruce con un espectador en la Bolsa de Comercio: “Tenés una carrera si tanto te gusta hablar, kuka”.</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: auto;
+                padding: 5%;
+            }
+            .btnL {
+                background: #d1d1d1;
+                border-radius: 7px;
+                padding: 18px;
+                min-width: 100%;
+                color: #000000;
+                font-size: medium;
+                min-height: 70px;
+            }
+            button {
+                background-color: #d1d1d1;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:disabled {
+                background-color: #d1d1d1;
+                cursor: not-allowed;
+            }
+            button:hover:not(:disabled) {
+                background-color: #d1d1d1;
+            }
+            #voiceSelect {
+                margin: 10px 0;
+                padding: 5px;
+            }
+            .controls {
+                margin: 10px 0;
+            }
+
+            #fullscreenButton {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px;
+                background-color: transparent;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+            #fullscreenIcon {
+                width: 24px;
+                height: 24px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <button id="fullscreenButton">
+        <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+        </svg>
+        </button>
+
+        <div id="texto">
+            <h1>Milei mantuvo un tenso cruce con un espectador en la Bolsa de Comercio: “Tenés una carrera si tanto te gusta hablar, kuka”.</h1>
+            <p>Cuando promediaba su discurso, el mandatario fue interrumpido por uno de los asistentes al acto; el hombre fue invitado a mudarse de sala</p><p>El presidente Javier Milei mantuvo este jueves un tenso cruce con un espectador durante su discurso por el 172° aniversario de la Bolsa de Comercio de Buenos Aires , después de que uno de los asistentes al encuentro le pidiera que “terminara” con el ajuste y que el mandatario lo tratara de “kuka” .</p><p>Cuando promediaba el mensaje de Milei en defensa de ley de tierras y del ajuste, un asistente a la charla le señaló que el déficit fiscal se registraba “ahora” y no en un hipotético gobierno populista, a lo que el mandatario le respondió: “No, ahora hicimos el ajuste porque los malditos populistas dejaron plantada la bomba” .</p><p>“Terminala” , le pidió el espectador, que se identificó como ‘ingeniero Castellanos’ y es integrante vitalicio de la Bolsa de Comercio. Pero el Presidente redobló la apuesta: “Voy a terminar este mandato, ser reelecto y estar cuatro años más” . “Si no te gusta, andate a Cuba”, le recriminó.</p><p>Ante la insistencia del hombre, que permanecía con bastón a la derecha del auditorio, Milei volvió a interrumpir su discurso y le espetó: “¿Por qué no te alquilás un salón y te vas a hablar si tenés tantas ganas? En la época en que no era presidente daba conferencias y metía hasta a 10 mil personas. Tené una carrera si te gusta hablar tanto, kuka”.</p><p>Esa última intervención de Milei generó aplausos de apoyo en el auditorio. Como consecuencia del cruce, Castellanos fue invitado por el personal de ceremonial y protocolo a seguir el acto desde otra sala .</p><p>Consultado por LA NACION , el ingeniero explicó: “Me han mandado a que me calle la boca, porque si no acá se arma un quilombo que no te podés dar una idea”.</p><p>“En mis 80 años de vida he visto lo que está ocurriendo en el país”, dijo y amplió sus críticas al Gobierno: “Miente continuamente. La pobreza ha aumentado, la fábricas cierran, se quedan sin laburo; y este viene a hablar con teorías de mierda” , añadió Castellanos en referencia al Presidente.</p><p>El ingeniero dijo que es integrante de la Bolsa de Comercio desde hace “más de 30 años”. También cuestionó la “terrible cantidad de custodios, policías encubiertos, otros no encubiertos y tipos de civil. Lo único que faltaba era que viniera el FBI”, ironizó sobre la seguridad en el recinto.</p><p>Antes de cerrar el breve diálogo con este medio, Castellanos dio su visión del país. “El mejor presidente en 50 años, cuando estaba vivo, fue Néstor Kirchner . No hablo más”.</p><p>Durante su discurso, Milei se refirió a las demoras en el tratamiento de la ley de tierras y cuestionó a la oposición. “Está claro que aquellos que se opongan a la defensa férrea del derecho de propiedad son la decadencia argentina” , arremetió.</p><p>“Si violentamos el derecho de propiedad, no hay incentivos a ahorrar. Históricamente los distintos gobiernos en la Argentina se dedicaron a robarle a los argentinos y vulnerar ese derecho, pero al mismo tiempo tienen que financiar la inversión, y aquel que invierte tiene que poder capturar los resultados de esa inversión”, sostuvo el mandatario.</p>
+        </div>
+        <br><br><br>
+            <div style="display: none;">
+                <label for="voiceSelect">Seleccionar voz:</label>
+                <select id="voiceSelect"></select>
+            </div>
+            <div class="controls">
+                <button onclick="startReading()" id="playButton">
+                    🔊 Leer
+                </button>
+                <button onclick="pauseReading()" id="pauseButton" disabled style="display: none;">
+                    ⏸️ Pausar
+                </button>
+                <button onclick="resumeReading()" id="resumeButton" disabled style="display: none;">
+                    ▶️ Continuar
+                </button>
+                <button onclick="stopReading()" id="stopButton" disabled>
+                    ⏹️ Detener
+                </button>
+            </div>
+            <div id="progress" style="display: none;"></div>
+        <br><br><br>
+        <button class="btnL" onclick="compartir()">Compartir</button>
+        <br><br><br>
+        <button class="btnL" onclick="window.location.href='https://www.lanacion.com.ar/politica/milei-mantuvo-un-tenso-cruce-con-un-espectador-en-la-bolsa-de-comercio-tenes-una-carrera-si-tanto-te-nid16072026/'">Ver en web original</button>
+        <br><br><br>
+        <!-- <button class="btnL" onclick="window.location.href='https://matenews.github.io/MateNews/'">Volver a la página principal</button>
+        <br><br><br> -->
+
+
+        <script>
+            function compartir() {
+            if (navigator.share) {
+                navigator.share({
+                title: 'Milei mantuvo un tenso cruce con un espectador en la Bolsa de Comercio: “Tenés una carrera si tanto te gusta hablar, kuka”.',
+                text: 'Milei mantuvo un tenso cruce con un espectador en la Bolsa de Comercio: “Tenés una carrera si tanto te gusta hablar, kuka”.',
+                url: 'https://www.lanacion.com.ar/politica/milei-mantuvo-un-tenso-cruce-con-un-espectador-en-la-bolsa-de-comercio-tenes-una-carrera-si-tanto-te-nid16072026/'
+                })
+                .then(() => console.log('Contenido compartido exitosamente'))
+                .catch((error) => console.error('Error al compartir:', error));
+            } else {
+                console.log("Web Share API no soportada");
+            }
+            }
+        </script>
+
+
+        <script>
+            let speechSynthesis = window.speechSynthesis;
+            let currentUtterance = null;
+            let isPaused = false;
+            let isReading = false;
+            let textBlocks = [];
+            let currentBlockIndex = 0;
+            let lastSpokenIndex = 0;
+            const BLOCK_SIZE = 800;
+
+            function updateButtons(speaking) {
+                document.getElementById('playButton').disabled = speaking;
+                document.getElementById('pauseButton').disabled = !speaking;
+                document.getElementById('resumeButton').disabled = !isPaused;
+                document.getElementById('stopButton').disabled = !speaking;
+            }
+
+            function updateProgress() {
+                const progressDiv = document.getElementById('progress');
+                if (isReading) {
+                    progressDiv.textContent = `Leyendo bloque ${currentBlockIndex + 1} de ${textBlocks.length}`;
+                } else {
+                    progressDiv.textContent = '';
+                }
+            }
+
+            function splitIntoBlocks(text) {
+                const sentences = text.replace(/([.!?])\s+/g, "$1|").split("|");
+
+                let blocks = [];
+                let currentBlock = '';
+
+                sentences.forEach(sentence => {
+                    if (sentence.length > BLOCK_SIZE) {
+                        let subSentences = sentence.replace(/,\s+/g, ",|").split("|");
+                        subSentences.forEach(subSentence => {
+                            if (currentBlock.length + subSentence.length > BLOCK_SIZE) {
+                                if (currentBlock) blocks.push(currentBlock.trim());
+                                currentBlock = subSentence;
+                            } else {
+                                currentBlock += (currentBlock ? ' ' : '') + subSentence;
+                            }
+                        });
+                    } else {
+                        if (currentBlock.length + sentence.length > BLOCK_SIZE) {
+                            blocks.push(currentBlock.trim());
+                            currentBlock = sentence;
+                        } else {
+                            currentBlock += (currentBlock ? ' ' : '') + sentence;
+                        }
+                    }
+                });
+
+                if (currentBlock) blocks.push(currentBlock.trim());
+                return blocks;
+            }
+
+            function speakBlock(index) {
+                if (index >= textBlocks.length) {
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                    return;
+                }
+
+                currentUtterance = new SpeechSynthesisUtterance(textBlocks[index]);
+                currentUtterance.rate = parseFloat(1.3);
+                lastSpokenIndex = index;
+
+
+                currentUtterance.onend = function() {
+                    if (isReading && !isPaused) {
+                        currentBlockIndex++;
+                        updateProgress();
+                        speakBlock(currentBlockIndex);
+                    }
+                };
+
+                currentUtterance.onerror = function(event) {
+                    console.error('Error en la lectura:', event);
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }
+
+            function startReading() {
+                const text = document.getElementById('texto').innerText;
+                if (!text) return;
+
+                stop();
+
+                textBlocks = splitIntoBlocks(text);
+                currentBlockIndex = 0;
+                isReading = true;
+                isPaused = false;
+
+                updateButtons(true);
+                updateProgress();
+                speakBlock(currentBlockIndex);
+            }
+
+            function pause() {
+                speechSynthesis.pause();
+                isPaused = true;
+                updateButtons(true);
+            }
+
+            function resume() {
+                speechSynthesis.resume();
+                isPaused = false;
+                updateButtons(true);
+            }
+
+            function stop() {
+                speechSynthesis.cancel();
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                updateButtons(false);
+                updateProgress();
+            }
+
+            function pauseReading() {
+                if (!isReading) return;
+
+                speechSynthesis.pause();
+                isPaused = true;
+                isReading = false;
+                updateButtons(true);
+                updateProgress();
+            }
+
+            function resumeReading() {
+                if (!isPaused) return;
+
+                isPaused = false;
+                isReading = true;
+
+                if (lastSpokenIndex === currentBlockIndex) {
+                    currentBlockIndex++;
+                }
+
+                updateButtons(true);
+                updateProgress();
+
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    speakBlock(currentBlockIndex);
+                }
+            }
+
+            function stopReading() {
+                speechSynthesis.cancel();
+                finishReading();
+            }
+
+            function finishReading() {
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                lastSpokenIndex = -1;
+                currentUtterance = null;
+                updateButtons(false);
+                updateProgress();
+            }
+
+        </script>
+
+        <script>
+
+            var elem = document.documentElement;
+            var fullscreenButton = document.getElementById("fullscreenButton");
+            var fullscreenIcon = document.getElementById("fullscreenIcon");
+
+            fullscreenButton.addEventListener("click", function() {
+            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+                }
+            } else {
+                if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+                }
+            }
+            });
+
+            document.addEventListener('fullscreenchange', (event) => {
+            if (!document.fullscreenElement) {
+                fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+            } else {
+                fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+            }
+            });
+        </script>
+
+    </body>
+    </html>
