@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Domingo 19 julio 2026 22:58 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-07-19-Domingo/1.html">1) Miles de personas llegan al Obelisco pese a la derrota en la final.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-07-19-Domingo/2.html">2) Argentina dio pelea hasta el final, pero fue superado por España que ganó 1 a 0 y se consagró campeón del mundo.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-07-19-Domingo/3.html">3) El llanto de Lionel Messi tras perder la final del Mundial y la ovación que recibió de los hinchas argentinos.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-07-19-Domingo/4.html">4) Milei anunció que decretará feriado nacional el día que los jugadores de la Selección decidan celebrar el subcampeonato con la gente.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-07-19-Domingo/5.html">5) Los detalles de la pelea entre los jugadores de Argentina y España tras la final del Mundial: la intervención clave de Scaloni.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-07-19-Domingo/6.html">6) Dos personas murieron de un paro cardíaco durante la final entre Argentina y España.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-07-19-Domingo/7.html">7) Del llanto de Paredes a la frase de Otamendi contra Rodri: la reacción de los jugadores argentinos.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-07-19-Domingo/8.html">8) Así reflejaron los medios del mundo la derrota de Argentina: &quot;La despedida de Messi&quot;.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-07-19-Domingo/9.html">9) El gesto de Lamine Yamal con Messi en medio de los festejos de España.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-07-19-Domingo/10.html">10) Scaloni puso en duda su continuidad en la selección argentina, rompió en llanto y no pudo terminar la conferencia de prensa.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-07-19-Domingo/11.html">11) Mario Pergolini se despachó en la final de Argentina contra España en el Mundial: &quot;Ojalá lo prohíban de por vida&quot;.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-07-19-Domingo/12.html">12) La decisión del plantel de la selección argentina tras la derrota de Argentina ante España en el Mundial.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-07-19-Domingo/1.html">1) Todo está guardado en la memoria. Por. Juan José Panno.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-07-19-Domingo/2.html">2) Cómo reflejaron los medios del mundo la derrota de Argentina.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-07-19-Domingo/3.html">3) Nada que objetar, mucho que agradecer. Por. Daniel Guiñazú.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-07-19-Domingo/4.html">4) Insólito momento en la premiación. La obsesión de Trump por querer figurar en la entrega de la Copa.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-07-19-Domingo/5.html">5) La vidriera irrespetuosa. Por. Luis Bruschtein.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-07-19-Domingo/6.html">6) El último tango. Por. Sandra Russo.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-07-19-Domingo/7.html">7) Una idea futbolística que comenzó a trabajarse hace 22 años. España, de toro a torero. Por. Vito Amalfitano.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-07-19-Domingo/8.html">8) La fuerza del equipo por encima de las individualidades. El camino que abrió la Scaloneta. Por. Facundo Martínez.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-07-19-Domingo/9.html">9) El DT valoró el subcampeonato. Así vivió Scaloni la final y sus sensaciones post derrota. Por. Fabio Lannutti.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-07-19-Domingo/10.html">10) La pasión que muerde el corazón. Por. Felipe Yapur.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-07-19-Domingo/11.html">11) Los bonaerenses salieron a la calle a apoyar a la Selección. Cuando más necesites, ahí estará tu gente. Por. Juan Manuel Meza.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-07-19-Domingo/12.html">12) Todo listo para la marcha del 22 de julio al Congreso. La CGT vuelve a las calles contra el plan económico de Milei y Caputo.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-07-19-Domingo/1.html">1) Llora Messi, la Argentina lo abraza: gracias Leo, ya nos habías hecho demasiado felices.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-07-19-Domingo/2.html">2) Quebrado, Scaloni puso en duda si seguirá en la selección: “Me duele en el alma, lo siento”.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-07-19-Domingo/3.html">3) Una derrota que no borra la historia, pero deja cuentas pendientes: Argentina perdió con España y deberá reconstruirse.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-07-19-Domingo/4.html">4) ¿Cómo jugó la selección? Poneles puntaje a los jugadores argentinos.</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-07-19-Domingo/5.html">5) Scaloni, hasta cuando se equivoca, genera admiración: es un DT que (también) decide con el corazón.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-07-19-Domingo/6.html">6) Empujones, cruces y golpes entre jugadores de España y la Argentina después de la final del Mundial.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-07-19-Domingo/7.html">7) Las repercusiones de los medios internacionales por el título mundial de España.</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-07-19-Domingo/8.html">8) La hinchada más seguidora del Mundial se fue con tristeza pero rendida ante Messi.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-07-19-Domingo/9.html">9) En la ciudad igual se festeja: con epicentro en el Obelisco y algo menos en los barrios, la gente agradece a la selección.</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-07-19-Domingo/10.html">10) El Gobierno decretará feriado cuando los jugadores resuelvan.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-07-19-Domingo/1.html">1) Escándalo: el libertario Abdala se escapó a ver la final y pidió un avión privado para llegar a Nueva York</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-07-19-Domingo/2.html">2) Chiqui refuerza su alianza con Kicillof y anuncia que el estadio de La Plata es &quot;la nueva casa de la selección&quot;</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-07-19-Domingo/3.html">3) Pasado el Mundial, la CGT inicia un plan de lucha por jubilados y crisis laboral</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-07-19-Domingo/4.html">4) El vocero de Milei ahora elogia la bandera de Malvinas, pero llama a la Argentina &quot;país bananero&quot;</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-07-19-Domingo/5.html">5) Patricia desafía a Karina y apoya al opositor de Pino en la pelea por la Rural</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-07-19-Domingo/6.html">6) Los nuevos ricos de Beijing desatan una revolución en el mercado mundial de la carne</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-07-19-Domingo/7.html">7) En una cumbre con intendentes del Conurbano, la Iglesia pidio terminar con la &quot;política barata&quot;</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-07-19-Domingo/8.html">8) Avanza el Trambús con paradas cada 500 metros y frecuencia de 4 minutos en hora pico</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-07-19-Domingo/1.html">1) El día después del Mundial: se viene Argentina 2027.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-07-19-Domingo/2.html">2) Sin segundo semestre no hay reelección.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-07-19-Domingo/3.html">3) Vaca Muerta: los ductos que impulsa YPF y las derrotas que acumula Rocca.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-07-19-Domingo/4.html">4) Pelotazo en contra (de Milei).</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-07-19-Domingo/5.html">5) El diseño de la Boleta Única, el partido que viene.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-07-19-Domingo/6.html">6) Subidos al furor de la Scaloneta, los Mc Allister van por todo.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-07-19-Domingo/7.html">7) La gran final de Passerini.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-07-19-Domingo/8.html">8) León XIV, tres mujeres y una cúpula de cristal que cede.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-axios" aria-labelledby="source-axios-heading">
+<h3 class="source-heading" id="source-axios-heading"><a href="https://www.axios.com">Axios</a></h3>
+<ol class="source-notes">
+<li class="nota" id="axios_0"><a href="axios/2026-07-19-Domingo/1.html">1) Estados Unidos ataca de nuevo a Irán tras la muerte de tropas.</a></li>
+<li class="nota" id="axios_1"><a href="axios/2026-07-19-Domingo/2.html">2) El petróleo supera los 90 dólares a medida que se intensifican los combates en Oriente Medio.</a></li>
+<li class="nota" id="axios_2"><a href="axios/2026-07-19-Domingo/3.html">3) Alto funcionario del Pentágono critica a Dean Ball de OpenAI.</a></li>
+<li class="nota" id="axios_3"><a href="axios/2026-07-19-Domingo/4.html">4) AOC canaliza el mensaje &quot;Esperanza y cambio&quot; de Obama.</a></li>
+<li class="nota" id="axios_4"><a href="axios/2026-07-19-Domingo/5.html">5) La nueva vía de deportación del Departamento de Justicia de Trump: un tribunal nunca antes utilizado.</a></li>
+<li class="nota" id="axios_5"><a href="axios/2026-07-19-Domingo/6.html">6) Estrategia de mitad de mandato del Partido Republicano: convertirla en una &quot;elección de odio&quot;.</a></li>
+<li class="nota" id="axios_6"><a href="axios/2026-07-19-Domingo/7.html">7) supuesta campaña de influencia.</a></li>
+<li class="nota" id="axios_7"><a href="axios/2026-07-19-Domingo/8.html">8) Ley SALVAR a América.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-china_daily" aria-labelledby="source-china_daily-heading">
+<h3 class="source-heading" id="source-china_daily-heading"><a href="https://www.chinadaily.com.cn/china">China Daily</a></h3>
+<ol class="source-notes">
+<li class="nota" id="china_daily_0"><a href="china_daily/2026-07-19-Domingo/1.html">1) Los campos de arroz en terrazas de Yunnan rebosan de vegetación veraniega en Guangnan.</a></li>
+<li class="nota" id="china_daily_1"><a href="china_daily/2026-07-19-Domingo/2.html">2) El legado de la porcelana moldea un futuro más brillante.</a></li>
+<li class="nota" id="china_daily_2"><a href="china_daily/2026-07-19-Domingo/3.html">3) Los guardabosques dedican vidas a pandas que tal vez nunca vean.</a></li>
+<li class="nota" id="china_daily_3"><a href="china_daily/2026-07-19-Domingo/4.html">4) Esfuerzos de ayuda y recuperación contra inundaciones en marcha en Guangxi.</a></li>
+<li class="nota" id="china_daily_4"><a href="china_daily/2026-07-19-Domingo/5.html">5) Suzhou agregará tiempos de espera de semáforo en rojo a los cronogramas de entrega para reducir la conducción insegura.</a></li>
+<li class="nota" id="china_daily_5"><a href="china_daily/2026-07-19-Domingo/6.html">6) El municipio de Sichuan cambia el carbón por el ecoturismo.</a></li>
+<li class="nota" id="china_daily_6"><a href="china_daily/2026-07-19-Domingo/7.html">7) China revela plan para mejorar sistema de monitoreo ecoambiental.</a></li>
+<li class="nota" id="china_daily_7"><a href="china_daily/2026-07-19-Domingo/8.html">8) La magnetosfera de la Tierra es un &quot;gobernador de velocidad&quot; natural, revela un estudio chino.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="el_dia/2026-07-19-Domingo/1.html">1) VIDEO. El estruendo de las motos que opacan los festejos en La Plata.</a></li>
+<li class="nota" id="el_dia_1"><a href="el_dia/2026-07-19-Domingo/2.html">2) La Plata, en modo Scaloneta: bares y restaurantes repletos para ver la final entre Argentina vs España.</a></li>
+<li class="nota" id="el_dia_2"><a href="el_dia/2026-07-19-Domingo/3.html">3) La Plata al ritmo de la final: de la ansiedad de la previa a calles vacías durante Argentina vs España.</a></li>
+<li class="nota" id="el_dia_3"><a href="el_dia/2026-07-19-Domingo/4.html">4) Micros en La Plata: largas colas en La Terminal y en paradas, con frecuencias reducidas.</a></li>
+<li class="nota" id="el_dia_4"><a href="el_dia/2026-07-19-Domingo/5.html">5) FOTOS | La final Argentina vs España se podrá ver por pantalla gigante en Plaza Moreno.</a></li>
+<li class="nota" id="el_dia_5"><a href="el_dia/2026-07-19-Domingo/6.html">6) Chiqui Tapia mostró cómo avanzan las obras del Estadio Único de La Plata.</a></li>
+<li class="nota" id="el_dia_6"><a href="el_dia/2026-07-19-Domingo/7.html">7) Final del Mundial: así será el fuerte operativo en La Plata.</a></li>
+<li class="nota" id="el_dia_7"><a href="el_dia/2026-07-19-Domingo/8.html">8) Con una Copa del Mundo y un homenaje a Malvinas: así salen a la calle los micros de la Línea Oeste para alentar a la Selección.</a></li>
+<li class="nota" id="el_dia_8"><a href="el_dia/2026-07-19-Domingo/9.html">9) Cuenta DNI del Banco Provincia: los descuentos de hoy domingo 19 de julio.</a></li>
+<li class="nota" id="el_dia_9"><a href="el_dia/2026-07-19-Domingo/10.html">10) Domingo con viento y lluvias en La Plata: cómo estará el tiempo durante la final del Mundial.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-07-19-Domingo/1.html">1) España destrona a Argentina y se consagra campeona del mundo</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-07-19-Domingo/2.html">2) Trump: Golpeamos muy fuerte a Irán esta noche para honrar a los tres patriotas caídos</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-07-19-Domingo/3.html">3) Moscú: Los intentos de inflar la &#x27;amenaza nuclear iraní&#x27; son una tapadera para el derramamiento de sangre</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-07-19-Domingo/4.html">4) Mascarada ucraniana: Kiev envía soldados a grabar videos falsos y Rusia los captura</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-07-19-Domingo/5.html">5) Scaloni se pronuncia (no sin lágrimas) tras caer Argentina ante España</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-07-19-Domingo/6.html">6) Messi se queda sin su segundo Mundial</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-07-19-Domingo/7.html">7) Modelo de IA chino irrumpe en la élite y se pone a la altura de Claude y GPT (VIDEOS)</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-07-19-Domingo/8.html">8) VIDEO: La novedosa apuesta rusa para combatir los drones de Ucrania</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-07-19-Domingo/1.html">1) España 1-0 Argentina en la final del Mundial 2026: los españoles dieron un gran espectáculo y se consagraron campeones del mundo</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-07-19-Domingo/2.html">2) El desconsolado llanto de Lionel Messi tras retirarse de la premiación en la que España se proclamó campeona del mundo contra Argentina</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-07-19-Domingo/3.html">3) España acaparó los premios más importantes del Mundial 2026 además del título: Balón de Oro, Guante de Oro y Mejor Jugador Joven; Lionel Messi se llevó uno</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-07-19-Domingo/4.html">4) Kylian Mbappé le ganó la pulseada a Lionel Messi: fue el goleador del Mundial 2026 y quedó máximo goleador de los mundiales</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-07-19-Domingo/5.html">5) Más de 10 mil usuarios siguen sin luz tras el temporal que azotó el país; Salto continúa como el departamento más afectado</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-07-19-Domingo/6.html">6) AUDAF respaldó a Bruno Sacarelo por su estricto apego a las reglas del juego, condena críticas de dirigentes de Rentistas y anuncia acciones legales</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-07-19-Domingo/7.html">7) ¿Nos estamos burlando de la opinión pública?: en un ambiente tenso con el oficialismo, la coalición buscará negociar para mejorar la Rendición de Cuentas en comisión</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-07-19-Domingo/8.html">8) MGAP trabaja en generación de medidas concretas tras el temporal de Salto que dejó destrozos en la cosecha</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-07-19-Domingo/9.html">9) Octavio Podestá: su exposición en el Museo Gurvich, el divorcio entre la arquitectura y las artes plásticas y dónde quisiera poner su próxima obra en Montevideo</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-07-19-Domingo/10.html">10) El campeón del mundo con España que le pide ayuda a Donald Trump: No puedo creer que no me permitan ingresar a Estados Unidos</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-07-19-Domingo/11.html">11) Ministerio del Interior abrió una investigación urgente por los disturbios en el partido Rentistas-Cerrito que terminó con un jugador herido y el fútbol suspendido</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-07-19-Domingo/12.html">12) Estados Unidos lanzó nuevos ataques aéreos contra Irán tras la muerte de dos soldados</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">La Diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-07-19-Domingo/1.html">1) España campeón del Mundial: le ganó 1-0 a Argentina.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-07-19-Domingo/2.html">2) Cardama: comisión recibe el lunes a Javier García, a quien ex jerarcas le adjudican la “responsabilidad política” de la compra.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-07-19-Domingo/3.html">3) La escalada no se detiene entre Estados Unidos e Irán, cada vez más cerca de desencadenar una guerra regional.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-07-19-Domingo/4.html">4) Uno por uno de España campeona del mundo.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-07-19-Domingo/5.html">5) La Copa del Mundo: la tercerización de la felicidad.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-07-19-Domingo/6.html">6) Bergara llamó a “dar la pelea en el territorio, en los barrios, en las redes” ante una oposición “cerril” y “tosca”.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-07-19-Domingo/7.html">7) “Eligen eso antes que más metraje”: la Cámara Inmobiliaria opinó acerca del proyecto del FA sobre los monoambientes.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-07-19-Domingo/8.html">8) Rendición de Cuentas: para Abdala, las condicionalidades actuales deberían extenderse a los centros educativos de primera infancia.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-07-19-Domingo/9.html">9) ARU calificó como una “lista negra” el artículo de la Rendición de Cuentas que refuerza controles ante casos de carne contaminada.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-07-19-Domingo/10.html">10) El narcovelero que estuvo en Juan Lacaze y cayó en el océano Índico.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-07-19-Domingo/1.html">1) Lucas Aguilera y Paula Giménez: crónica del regreso a casa</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-07-19-Domingo/2.html">2) Cuba| Díaz-Canel denuncia el resurgimiento del macartismo y la ofensiva de la ultraderecha global</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-07-19-Domingo/3.html">3) Colombia| Iván Cepeda acusa a De la Espriella de traicionar la soberanía nacional</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-07-19-Domingo/4.html">4) Ecuador| Daniel Noboa crea seis gabinetes interinstitucionales para coordinar la gestión del Ejecutivo</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-07-19-Domingo/5.html">5) Nicaragua| El Gobierno anuncia la ruptura de toda relación diplomática con Italia tras declaraciones del canciller Antonio Tajani</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-07-19-Domingo/6.html">6) Chile| La Camara de Senadores aprueba la reforma económica de José Antonio Kast</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-07-19-Domingo/7.html">7) Miles de personas han salido a manifestarse en Kiev y otras ciudades en protesta por la destitución del ministro de Defensa Mijailo Fedorov</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-07-19-Domingo/8.html">8) Paula Gimenez, del Convoy Maghreb a Gaza, secuestrada en Libia – Por Claudia Korol</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/1.html">1) La pelota sí se mancha. El primer domingo del campeonato que culmina hoy en Norteamérica te dije que la Argentina encabezaba el podio como el mejor equipo del mundo en casi el último medio siglo. Creo que no había mucha conciencia de eso. Desde el campeonato ganado en 1978 hasta el actual, había llegado a cinco finales, de las que ganó tres y fue subcampeón en…. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/2.html">2) Dólares bajo la roca. La directora del FMI viaja a la Argentina a visitar uno de los yacimientos que pueden abastecer, entre otros, al principal rival estratégico de Washington, China. Por Lucka Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/3.html">3) El último que apague la luz. El gobierno de Milei desmantela la defensa nacional y la soberanía territorial. Por Sergio Eissa.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/4.html">4) 2026: Odisea del Presente. La película de Christopher Nolan nos recuerda que todos somos Odiseo, el más moderno de los hombres. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/5.html">5) Ladrillazos contra la justicia. Estados Unidos busca desmantelar el orden internacional. Su complejo militar-industrial pretende volver a un mundo hobbesiano. Por Aleardo Laría Rajneri.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/6.html">6) Inventando al enemigo. Con la excusa del terrorismo, el gobierno de Estados Unidos promueve una persecución política de escala global. Por CELS.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/7.html">7) Radiografía del vaciamiento. El sector nuclear argentino atraviesa la crisis más profunda y deliberada de sus 76 años de historia: desmantelamiento, precarización laboral y entrega a capitales extranjeros. Por Andrés J. Kreiner, Martín Iofrida, Augusto Bonelli Toro y Juan Carricondo.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/8.html">8) Nuestra historia circular. La historia argentina se repite: precarización, expoliación y deuda, 120 años después de La Forestal. Por Sebastián Fernández.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/9.html">9) Metano en fuga. Neuquén buscar controlar las emisiones de gases de efecto invernadero. Por Susana Lara.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/10.html">10) Bitácora de espera. Apuntes para entretener otra antesala inolvidable. Por Diego Kenis.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/11.html">11) El deporte no es la guerra. Malvinas y el fútbol: mensajes de los ex combatientes a la selección. Por Alberto Moya.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/12.html">12) Otra vez sopa. El acuerdo 2025 con el FMI es de nulidad absoluta e insanable. Lo dicen los expedientes, las fechas y las leyes. Falta que lo diga el Poder Judicial. Por Francisco Verbic.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/13.html">13) Oleada de nacionalizaciones. Los patrones históricos revelan por qué la propiedad estatal se expande de nuevo y en qué se diferencia esta nueva oleada de las anteriores. Por Nicholas Mulder.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/14.html">14) Ropa limpia, negocios sucios. Los trabajadores textiles que producen camisetas de algodón en los países del sur ganan salarios miserables y las empresas que comercializan hacen fortunas. Por Sergio Ferrari.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/15.html">15) Intimidación en Jujuy. Robo con amenaza a la periodista Mariana Mamaní. Por Periodistas Unidxs Autoconvocadxs de Jujuy.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_15"><a href="el_cohete_a_la_luna/2026-07-19-Domingo/16.html">16) Los discos raros. Ignacio Varchausky abre la mamushka de Fulvio Salamanca. Por Horacio Verbitsky.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-07-18-Sabado.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>
