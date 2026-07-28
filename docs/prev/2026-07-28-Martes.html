@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Martes 28 julio 2026 08:42 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-07-28-Martes/1.html">1) Viaje al centro de Vaca Muerta: Georgieva visitará un pozo clave con Caputo y se reunirá con el presidente de YPF.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-07-28-Martes/2.html">2) La ANMAT habilitó la venta libre de medicamentos para afecciones de baja complejidad: cuáles son.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-07-28-Martes/3.html">3) El video que dos ex policías usaban para reclutar mercenarios argentinos para la guerra de Ucrania.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-07-28-Martes/4.html">4) En plena tensión con Lula, Milei viaja a Perú para la asunción de Fujimori y aspira a liderar un bloque regional.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-07-28-Martes/5.html">5) Lula da Silva ninguneó a Milei tras las críticas que causaron un conflicto diplomático: &quot;¿Quién es ese tipo?&quot;.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-07-28-Martes/6.html">6) Mundial, fútbol y después: otra oportunidad perdida para España.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-07-28-Martes/7.html">7) Claudio Rígoli se casó con Elisa, su joven novia, en una boda secreta en Italia: &quot;En El Nueve se sorprendieron&quot;.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-07-28-Martes/8.html">8) Cuáles fueron los productos que los argentinos dejaron de comprar  en el supermercado.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-07-28-Martes/9.html">9) Susto en Inglaterra: perdió el equilibrio y se desvaneció tras intentar levantar más de 170 kilos.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-07-28-Martes/10.html">10) El nuevo análisis que mejoraría la prevención del infarto: por qué el test ApoB supera al control del colesterol.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-07-28-Martes/11.html">11) La mujer que asesinó a sus tres pequeñas hijas y la frase que le dijo a su marido minutos después de cometer los crímenes.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-07-28-Martes/12.html">12) &quot;Se puede fracasar ganando y tener éxito perdiendo&quot;: la cultura del alto rendimiento y el liderazgo según Sergio Hernández.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-07-28-Martes/1.html">1) El Fondo Monetario Internacional al poder. La Jefa. En una visita destinada a controlar in situ la marcha de la economía, Kristalina Georgieva tuvo su sitial en la reunión de gabinete, instruyó a los ministros y bajó línea a todo el país con Luis Caputo asintiendo a su lado. Antes de partir, recorrerá en persona Vaca Muerta, de donde saldrán los dólares para pagar la deuda. Por. Leandro Renou.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-07-28-Martes/2.html">2) Sigue la tensión bilateral. Lula sobre los agravios de Milei: “¿Quién es ese tipo?&quot;. Por. Melisa Molina.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-07-28-Martes/3.html">3) &quot;No acostumbramos a meternos con otros países”. Sheinbaum cruzó a Milei por involucrar a México en una “campaña antiArgentina”.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-07-28-Martes/4.html">4) “El objetivo es destruirnos”, denuncian. Tras los despidos, el Gobierno avanza con la destrucción de la CNEA.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-07-28-Martes/5.html">5) Los descontentos con Milei ya superan a los antiperonistas. El voto “anti”, un factor clave.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-07-28-Martes/6.html">6) Un proyecto para limitar los acuerdos con el FMI. En busca de poner un límite al endeudamiento externo. Por. Eva Moreira.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-07-28-Martes/7.html">7) Falta de oportunidades y esperanza. Desempleo, depresión, drogas y alcohol: casi el 50% de los jóvenes argentinos viven en estado de vulnerabilidad. Por. Vardan Bleyan.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-07-28-Martes/8.html">8) En medio de la disputa con la Casa Rosada. La Provincia toma el volante de las decisiones por los subsidios al transporte. Por. Juan Manuel Meza.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-07-28-Martes/9.html">9) Subasta a precio regalado. Almagro: el Gobierno nacional insiste en vender un terreno que los vecinos reclaman para un espacio verde. Por. Santiago Brunetto.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-07-28-Martes/10.html">10) La mayoría de las provincias tendrán un calendario electoral propio. Desdoblados y prescindentes: los gobernadores van por la suya propia en 2027. Por. Miguel Jorquera.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-07-28-Martes/11.html">11) &quot;Una locura de un funcionario nacional&quot;. La desregulación de Milei amenaza con destruir la banana en el NOA. Por. Maira López.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-07-28-Martes/12.html">12) La emblemática represión en la UBA. A sesenta años de la Noche de los Bastones Largos: para las universidades, la historia se repite. Por. Pablo Esteban.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-07-28-Martes/1.html">1) Javier Milei y sus medidas, en vivo: lo que dejó la visita de Georgieva, el cruce con Lula y el paro nacional de ATE.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-07-28-Martes/2.html">2) Por qué Milei insulta a Lula.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-07-28-Martes/3.html">3) Georgieva escuchó al círculo rojo en una cena privada: impuestos, sectores rezagados y el fracaso de la convertibilidad.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-07-28-Martes/4.html">4) La Anmat autorizó la venta libre de diez medicamentos que requerían receta: ya no tendrán descuento en farmacias.</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-07-28-Martes/5.html">5) Tras el escándalo en Brasil, Milei viaja a Perú para presenciar la asunción de Keiko Fujimori.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-07-28-Martes/6.html">6) “¿Cuántos de ustedes tienen dólares debajo del colchón?”: la pregunta de Georgieva a estudiantes universitarios.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-07-28-Martes/7.html">7) Reformas en el aeropuerto de Ezeiza Se reducirá la pista principal por 18 días y habrá cambios en los vuelos por razones de seguridad.</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-07-28-Martes/8.html">8) Lula opta por la ironía, mientras que su canciller transmitió el “repudio” ante los dichos de Milei.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-07-28-Martes/9.html">9) Más de 300 hinchas de la Roma fueron a recibir a Santiago Castro, que la rompió en Bologna.</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-07-28-Martes/10.html">10) Ciudadanía italiana: el cambio que puede redefinir el futuro de miles de descendientes.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-07-28-Martes/1.html">1) Alarma en la Rosada porque se desploma la confianza de los jóvenes en el Gobierno</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-07-28-Martes/2.html">2) Estudios de abogados de EEUU quieren demandar a la FIFA por la final del Mundial</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-07-28-Martes/3.html">3) Los intendentes arman una Liga y quieren poner el candidato a gobernador</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-07-28-Martes/4.html">4) Karina decidió que Fígoli pueda competir por Tecnópolis y le levantó el veto a Saguier</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-07-28-Martes/5.html">5) Creen que la pelea de Milei con Lula complica las chances de Bolsonaro en la elección de Brasil</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-07-28-Martes/6.html">6) El ministro de Economía de Lula trató a Milei de &quot;payaso&quot; ,  pero por ahora no rompen relaciones</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-07-28-Martes/7.html">7) Videos de una ruta destrozada en Río Negro revelan la crisis en infraestructura</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-07-28-Martes/8.html">8) Los Menem ganan poder en la Justicia Federal de Córdoba</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-07-28-Martes/1.html">1) Georgieva respaldó la macro, pero advirtió que el crecimiento aún no derrama.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-07-28-Martes/2.html">2) Georgieva, a Vaca Muerta: un paseo por la fábrica de dólares de la mano de Marín.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-07-28-Martes/3.html">3) La liga de intendentes bonaerenses se expande y se convierte en la cuarta pata del peronismo.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-07-28-Martes/4.html">4) Kicillof reabre el debate por la reelección de los intendentes y sacude la interna peronista.</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-07-28-Martes/5.html">5) A contramano de Milei, Jaldo cantó pri y Tucumán vota el 9 de mayo.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-07-28-Martes/6.html">6) Extranjerización de tierras: Bullrich presiona a la UCR y una movilización masiva complica la sesión.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-07-28-Martes/7.html">7) Milei contra Lula: el Presidente escribió el guion del ataque y no pedirá disculpas.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-07-28-Martes/8.html">8) Campaña antiargentina, a contramano de Milei: sin coordinación ni injerencia de Brasil.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-axios" aria-labelledby="source-axios-heading">
+<h3 class="source-heading" id="source-axios-heading"><a href="https://www.axios.com">Axios</a></h3>
+<ol class="source-notes">
+<li class="nota" id="axios_0"><a href="axios/2026-07-28-Martes/1.html">1) 1. Detrás del telón: las 6 etapas de la rendición política.</a></li>
+<li class="nota" id="axios_1"><a href="axios/2026-07-28-Martes/2.html">2) 2. Una Bibi disminuida llega a su momento con Trump.</a></li>
+<li class="nota" id="axios_2"><a href="axios/2026-07-28-Martes/3.html">3) 3. Cómo se ha intensificado la campaña de &quot;autodeportación&quot; de Trump.</a></li>
+<li class="nota" id="axios_3"><a href="axios/2026-07-28-Martes/4.html">4) 4. La antropía supera a Starbucks y McDonald&#x27;s en medio del auge de la IA.</a></li>
+<li class="nota" id="axios_4"><a href="axios/2026-07-28-Martes/5.html">5) 5. Los aranceles a los medicamentos genéricos de Trump pondrán a prueba su estrategia farmacéutica.</a></li>
+<li class="nota" id="axios_5"><a href="axios/2026-07-28-Martes/6.html">6) El objetivo de la ONU de utilizar IA basada en energías renovables se encuentra con la realidad física.</a></li>
+<li class="nota" id="axios_6"><a href="axios/2026-07-28-Martes/7.html">7) La retirada de los viajes de los canadienses cuesta miles de millones al turismo estadounidense.</a></li>
+<li class="nota" id="axios_7"><a href="axios/2026-07-28-Martes/8.html">8) viajes canadienses.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-china_daily" aria-labelledby="source-china_daily-heading">
+<h3 class="source-heading" id="source-china_daily-heading"><a href="https://www.chinadaily.com.cn/china">China Daily</a></h3>
+<ol class="source-notes">
+<li class="nota" id="china_daily_0"><a href="china_daily/2026-07-28-Martes/1.html">1) Equilibrar la acción climática con los medios de vida.</a></li>
+<li class="nota" id="china_daily_1"><a href="china_daily/2026-07-28-Martes/2.html">2) El coraje y la dignidad curan las cicatrices del terremoto de Tangshan.</a></li>
+<li class="nota" id="china_daily_2"><a href="china_daily/2026-07-28-Martes/3.html">3) Cuarta ronda de búsqueda completada después de que la inundación repentina de Gansu dejara 10 muertos.</a></li>
+<li class="nota" id="china_daily_3"><a href="china_daily/2026-07-28-Martes/4.html">4) Los voluntarios encabezan la conservación de la meseta.</a></li>
+<li class="nota" id="china_daily_4"><a href="china_daily/2026-07-28-Martes/5.html">5) La innovación científica ayuda al cultivo de alimentos.</a></li>
+<li class="nota" id="china_daily_5"><a href="china_daily/2026-07-28-Martes/6.html">6) Islas Changshan en la Lista del Patrimonio Mundial.</a></li>
+<li class="nota" id="china_daily_6"><a href="china_daily/2026-07-28-Martes/7.html">7) Plan de mapas de Shenzhen para la gestión de manglares.</a></li>
+<li class="nota" id="china_daily_7"><a href="china_daily/2026-07-28-Martes/8.html">8) China reforzará medidas contra enfermedades infecciosas.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="el_dia/2026-07-28-Martes/1.html">1) Martes con cielo gris, niebla y humedad en La Plata.</a></li>
+<li class="nota" id="el_dia_1"><a href="el_dia/2026-07-28-Martes/2.html">2) “Vacaciones” para la crisis: hay rubros con un respiro por el receso.</a></li>
+<li class="nota" id="el_dia_2"><a href="el_dia/2026-07-28-Martes/3.html">3) Subas en colegios privados del 7,5% entre agosto y septiembre.</a></li>
+<li class="nota" id="el_dia_3"><a href="el_dia/2026-07-28-Martes/4.html">4) Se levantó la restricción del GNC, pero persisten las dudas de los clientes.</a></li>
+<li class="nota" id="el_dia_4"><a href="el_dia/2026-07-28-Martes/5.html">5) Tras 30 años, cerró la calesita de Plaza Paso.</a></li>
+<li class="nota" id="el_dia_5"><a href="el_dia/2026-07-28-Martes/6.html">6) Un apostador platense ganó $403.000.000 con la Quiniela Plus.</a></li>
+<li class="nota" id="el_dia_6"><a href="el_dia/2026-07-28-Martes/7.html">7) Una obra inconclusa de Absa les bloquea el garage hace un mes.</a></li>
+<li class="nota" id="el_dia_7"><a href="el_dia/2026-07-28-Martes/8.html">8) Sigue el pedido por seguridad vial en El Peligro.</a></li>
+<li class="nota" id="el_dia_8"><a href="el_dia/2026-07-28-Martes/9.html">9) El club San Carlos entregó donaciones en comedores.</a></li>
+<li class="nota" id="el_dia_9"><a href="el_dia/2026-07-28-Martes/10.html">10) Sorpresa en Villa Elisa al aparecer una manada de ciervos.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-07-28-Martes/1.html">1) Kremlin: La amenaza que representa el régimen de Kiev debe ser eliminada para siempre</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-07-28-Martes/2.html">2) La tajante respuesta de China al nuevo plan de EE.UU. para frenar su influencia</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-07-28-Martes/3.html">3) FT: Irán mantiene su poder misilístico tras cinco meses de ataques de EE.UU.</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-07-28-Martes/4.html">4) Fujimori recibe un Perú con divisiones y una emergencia con potencial de &quot;magnitud extraordinaria&quot;</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-07-28-Martes/5.html">5) La concisa respuesta de Lula a los insultos de Milei en medio del terremoto político</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-07-28-Martes/6.html">6) ¿Cómo la UE arrastra al abismo a una exrepública soviética?</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-07-28-Martes/7.html">7) &quot;Este barco va directo a las rocas&quot;: la advertencia de Roger Waters sobre la OTAN y Rusia</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-07-28-Martes/8.html">8) Fuerte sismo de magnitud 7,1 sacude Japón (VIDEOS)</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-07-28-Martes/1.html">1) Nuevo aeropuerto en Rocha: informe señala condicionantes que afectan la viabilidad y sugiere que sea relocalizado</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-07-28-Martes/2.html">2) Megaproyecto en Bañados de Carrasco: impulsor dijo que la obra recuperará el humedal y los arroyos y descartó que se generen inundaciones</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-07-28-Martes/3.html">3) Caso Charles Carrera: la historia clínica sobre Bonomi que se acordó ingresar a juicio y la molestia de la defensa por la mala fe de fiscalía</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-07-28-Martes/4.html">4) Cuánto se estima recaudar con el impuesto Temu, uno de los pilares del MEF para generar más ingresos</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-07-28-Martes/5.html">5) Las series que tenés que ver, pero no podés (o por qué Apple TV sigue ignorando a Uruguay)</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-07-28-Martes/6.html">6) Una mujer apareció muerta sobre la Ruta 16: un vehículo volvió a atropellar el cuerpo y escapó</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-07-28-Martes/7.html">7) Fabrizio Petri, embajador de Italia en Uruguay, y su novela queer sobre los años del sida: Algunos prejuicios persisten; quizás ya no aparecen con la misma crudeza que en los 80 o 90, pero siguen de formas más sutiles</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-07-28-Martes/8.html">8) Car One Center invierte US$ 14 millones para ampliar su centro comercial de Canelones e incorporar 30 marcas nuevas: así se verá</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-07-28-Martes/9.html">9) Miles de uruguayos pueden cobrar la devolución de IRPF este martes: quiénes la reciben y quiénes deben esperar</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-07-28-Martes/10.html">10) A ocho meses de la sentencia, ¿cómo sigue el caso de Diego García, condenado a seis años y ocho meses de prisión por agresión sexual con acceso carnal?; su abogado, Diego Bandin, habló con Referí</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-07-28-Martes/11.html">11) Caso Sara Goldring: sentencia de segunda instancia desestimó condena que reclamaba daños y perjuicios</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-07-28-Martes/12.html">12) Bomba en el mercado de pases: Peñarol busca el préstamo de Nicolás De la Cruz desde Flamengo; el jugador ya dio su aprobación</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">La Diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-07-28-Martes/1.html">1) Castaingdebat “confirmó” que la prórroga que obtuvo Cardama para la garantía “fue una decisión política”, según diputado del FA.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-07-28-Martes/2.html">2) La Cámara de Senadores aprobó por unanimidad extender por dos años la intervención en el Casmu.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-07-28-Martes/3.html">3) En el Partido Colorado hay visiones encontradas sobre la propuesta de Javier García de votar juntos como coalición en 2029.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-07-28-Martes/4.html">4) “El comercio se está cruzando con las condiciones laborales y eso era impensable”, afirmó jerarca del MEF sobre aranceles de Trump.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-07-28-Martes/5.html">5) Fecovi respalda la exoneración del IVA para cooperativas de vivienda, pero señala que “no se especifica cómo se va a reglamentar”.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-07-28-Martes/6.html">6) Con margen “más acotado” que en la ley de presupuesto, Udelar busca obtener un mayor incremento presupuestal en el Parlamento.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-07-28-Martes/7.html">7) Sindicato de trabajadores de Teledoce para por tiempo indeterminado ante despidos de 25 trabajadores del canal.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-07-28-Martes/8.html">8) ASSE presentará denuncia penal e inicia sumario al exdirector del Hemocentro Regional de Maldonado por irregularidades.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-07-28-Martes/9.html">9) Canciller brasileño calificó insultos de Milei a Lula como “una ofensa” a “las instituciones democráticas y al pueblo brasileño”.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-07-28-Martes/10.html">10) Israel accede a la instalación de una fuerza internacional, pero únicamente en una zona de la Franja de Gaza.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-07-28-Martes/1.html">1) Lucas Aguilera y Paula Giménez: crónica del regreso a casa</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-07-28-Martes/2.html">2) Argentina| Tras los insultos de Milei contra Lula, el Gobierno deBrasilconvoca al embajador argentino para solicitar explicaciones</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-07-28-Martes/3.html">3) Colombia| El presidente electo Abelardo de la Espriella ordenará el cierre de al menos 14 embajadas del país en el mundo</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-07-28-Martes/4.html">4) Honduras| Expresidente Juan Hernández condenado por narcotráfico y armas, regresa al país luego del indulto otorgado por Donald Trump</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-07-28-Martes/5.html">5) Perú| Luego de 30 años, el país vuelve a contar con un Parlamento bicameral, integrado por Cámara de Senadores y Cámara de Diputados</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-07-28-Martes/6.html">6) Chile| La Policía detiene a exmilitar prófugo de la Justicia tras ser condenado por por el homicidio del cantautor Víctor Jara</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-07-28-Martes/7.html">7) Trump declaró que Israel «no sobreviviría» sin Estados Unidos, mientras Benjamín Netanyahu vuela hacia Washington para reunirse con el mandatario estadounidense</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-07-28-Martes/8.html">8) Organizaciones convocan a conferencia de prensa y movilización enArgentinapara denunciar la situación de los derechos humanos enBolivia</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/1.html">1) . Esta es la versión más disparatada que escuché: &quot;¿Será verdad que la FIFA los obligó a perder por la sábana de las Malvinas? No podían permitirles ganar porque si salían campeones no podían dejar sin sanción lo del cartel. Antes de salir a jugar hubo una gran discusión por eso, porque les reprocharon a los del cartel lo que habían hecho,…. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/2.html">2) El odio. La única campaña antiargentina es la que lleva adelante el gobierno nacional. Por Sebastián Fernández.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/3.html">3) Dólares, colchón y después. El ministro Caputo presentó una nueva modificación a la ley de inocencia fiscal con el objetivo de conseguir más divisas. Por Lucka Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/4.html">4) Nueva Atlántida. Si no damos las batallas que hay que dar nos convertiremos en otro país hundido, del que apenas sobrevivirán leyendas. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/5.html">5) El Mar Escondido. Pese a la desinformación, la estupidez y las mentiras que se vierten en forma incesante, el patriotismo, la dignidad y la fraternidad serán imposibles de tapar. Por Ricardo Aronskind.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/6.html">6) El partido desigual. En el mundo del fútbol, incluso más que en la economía mundial, no es la “convergencia” lo que impera, sino el desarrollo inequitativo y combinado. Por Adam Tooze.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/7.html">7) La influencia que supimos concebir. Mientras el Milei-performer gana ante su público, la Argentina como Estado y como sociedad pierden ante el resto del mundo. Por Emanuel Porcelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/8.html">8) Lección necesaria para Milei. La cuestión Malvinas y la selección. El gobierno desperdició la posibilidad de amplificar con sofisticación diplomática nuestra reivindicación territorial. Por Ezequiel Magnani.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/9.html">9) FIFA, todo arreglado. Un historial de corrupción y disputas geopolíticas. Por Alberto Moya.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/10.html">10) Ventajas del juego coral. El fútbol de España y sus sistemas de calidad total. Reflexiones sobre las paradojales repercusiones del Mundial en el terreno de la política internacional. Por Aleardo Laría Rajneri.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/11.html">11) Justicia sin control democrático. El gobierno embate contra la participación ciudadana en la designación de jueces. Por Jorge Elizondo.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/12.html">12) Sin crédito. Las entidades financieras han ganado fortunas con las maniobras especulativas y con un dólar frenado, pero la situación entra a complicarse por la mora de familias y empresas. Por Horacio Rovelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/13.html">13) Derrumbe en tiempo real. Diciembre, documental de Lucas Gallo, recupera imágenes inéditas de 2001 y vuelve a hacer cantar “qué se vayan todos”. Por Nicolás Peralta.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/14.html">14) La mirada cinéfila. El lugar de la revista Tiempo de Cine en la crítica cinematográfica argentina, que sentó las bases para descifrar el paisaje de nuestro cine contemporáneo. Por Daniela Kozak.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/15.html">15) Schiffrin. Cuento homenaje al fallecido camarista platense que se negó a callar cuando el Poder Judicial no podía castigar. Por Julián Axat.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_15"><a href="el_cohete_a_la_luna/2026-07-27-Lunes/16.html">16) El suicidio de un imperio. Trump asfixia al mundo con una nueva farsa arancelaria y gasta fortunas en armas en el Golfo Pérsico. Lo único que logra es acelerar su aislamiento interno y externo. Por Ariela Ruiz Caro.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-07-27-Lunes.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>
