@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sin receta y sin cobertura: amplían la venta libre de medicamentos.</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: auto;
+                padding: 5%;
+            }
+            .btnL {
+                background: #d1d1d1;
+                border-radius: 7px;
+                padding: 18px;
+                min-width: 100%;
+                color: #000000;
+                font-size: medium;
+                min-height: 70px;
+            }
+            button {
+                background-color: #d1d1d1;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:disabled {
+                background-color: #d1d1d1;
+                cursor: not-allowed;
+            }
+            button:hover:not(:disabled) {
+                background-color: #d1d1d1;
+            }
+            #voiceSelect {
+                margin: 10px 0;
+                padding: 5px;
+            }
+            .controls {
+                margin: 10px 0;
+            }
+
+            #fullscreenButton {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px;
+                background-color: transparent;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+            #fullscreenIcon {
+                width: 24px;
+                height: 24px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <button id="fullscreenButton">
+        <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+        </svg>
+        </button>
+
+        <div id="texto">
+            <h1>Sin receta y sin cobertura: amplían la venta libre de medicamentos.</h1>
+            <p>La Anmat liberó la venta de diez drogas utilizadas para tratar patologías leves, como la alergia y los mareos. Se argumenta que se busca facilitar el acceso. Ya no contarán con los descuentos de las obras sociales y prepagas</p><p>La Administración Nacional de Medicamentos, Alimentos y Tecnología Médica (Anmat) liberó la venta de diez drogas destinadas al abordaje de patologías leves. De esta manera, los pacientes ya no necesitarán receta médica para poder adquirirlas, liberación que también implica la pérdida de la cobertura del 40% de las obras sociales y prepagas en las farmacias.</p><p>Esta medida de la Anmat no fue bien recibida por los profesionales de la salud. Desde el Colegio de Farmacéuticos de la Provincia de Buenos Aires (Colfarma) en La Plata manifestaron su “preocupación por el peligro al que exponen a la población por considerar al medicamento como un producto inocuo, sin riesgos y no como herramienta terapéutica, sensible y compleja, que debe ser administrada y legislada con criterios sanitarios”.</p><p>En diálogo con este diario, la presidenta de la entidad, Alejandra Gómez, añadió a esa declaración institucional que otro de los problemas es que “esta medicación sale de la cobertura social, o sea, sale de las obras sociales y las prepagas, así que para el afiliado el impacto no es favorable porque termina teniendo que comprarlas pagando el 100%”.</p><p>Entre las drogas incluidas en la disposición 4714/2026 del Boletín Oficial se encuentran la Trimebutina Maleato, comercializada como Miopropan, usada para tratar el dolor abdominal y problemas digestivos; los antialérgicos Levocetirizina Diclorohidrato y Fexofenadina Clorhidrato, conocidos como Supraler y Alercas respectivamente; Dimenhidrinato, comercializada como Dramamine y utilizada para prevenir nauseas, vómitos y mareos durante viajes; Ivermectina, conocida como Ivercass, antiparasitario de aplicación local indicado para el tratamiento de la pediculosis.</p><p>También se liberó la venta de la Olopatadina Clorhidrato y la Nafazolina Clorhidrato con Feniramina Maleato, gotas oftálmicas conocidas como Olopat y Refenax colirio, respectivamente; Carboximetilcisteína, jarabe infantil comercializado como Mucolitic; Cloruro de aluminio hexahidratado, conocido como Alumpak, antitranspirante terapéutico para tratar hiperhidrosis; y el Carbonato de calcio con tintura de árnica montana y nitrato de plata, conocido como Bolus Oligoplex, preparado con acción cicatrizante y antiséptica usado para tratar lesiones superficiales de la piel o de las mucosas.</p><p>ARGUMENTOS Y CRÍTICAS</p><p>Desde la Anmat justificaron la medida al señalar que los principios activos incluidos en la disposición fueron comercializados “bajo receta durante al menos cinco años, con un perfil de seguridad y eficacia comprobado, sin reportes de eventos adversos graves que modifiquen su balance riesgo-beneficio”. Sobre esa base, el organismo resolvió habilitar su venta sin prescripción médica.</p><p>Además, sostuvieron que la decisión “busca facilitar el acceso a medicamentos de probada seguridad, calidad y eficacia para el tratamiento de afecciones de baja complejidad, promoviendo al mismo tiempo el uso responsable de los mismos”.</p><p>Esos argumentos no convencen a los farmacéuticos. “Se trata al medicamento como un bien de consumo y no como un bien social”, cuestionó Alejandra Gómez.</p><p>La dirigente aclaró que la condición de venta libre no implica que estos productos puedan utilizarse sin criterio sanitario. “Poner un medicamento en venta libre no significa que cualquier paciente lo pueda consumir. Solo implica que no requiere prescripción médica, pero eso no quiere decir que no puede llegar a provocar efectos adversos en la población”.</p>
+        </div>
+        <br><br><br>
+            <div style="display: none;">
+                <label for="voiceSelect">Seleccionar voz:</label>
+                <select id="voiceSelect"></select>
+            </div>
+            <div class="controls">
+                <button onclick="startReading()" id="playButton">
+                    🔊 Leer
+                </button>
+                <button onclick="pauseReading()" id="pauseButton" disabled style="display: none;">
+                    ⏸️ Pausar
+                </button>
+                <button onclick="resumeReading()" id="resumeButton" disabled style="display: none;">
+                    ▶️ Continuar
+                </button>
+                <button onclick="stopReading()" id="stopButton" disabled>
+                    ⏹️ Detener
+                </button>
+            </div>
+            <div id="progress" style="display: none;"></div>
+        <br><br><br>
+        <button class="btnL" onclick="compartir()">Compartir</button>
+        <br><br><br>
+        <button class="btnL" onclick="window.location.href='https://www.eldia.com/la-ciudad/sin-receta-y-sin-cobertura-amplian-la-venta-libre-de-medicamentos-la-ciudad_1785304123'">Ver en web original</button>
+        <br><br><br>
+        <!-- <button class="btnL" onclick="window.location.href='https://matenews.github.io/MateNews/'">Volver a la página principal</button>
+        <br><br><br> -->
+
+
+        <script>
+            function compartir() {
+            if (navigator.share) {
+                navigator.share({
+                title: 'Sin receta y sin cobertura: amplían la venta libre de medicamentos.',
+                text: 'Sin receta y sin cobertura: amplían la venta libre de medicamentos.',
+                url: 'https://www.eldia.com/la-ciudad/sin-receta-y-sin-cobertura-amplian-la-venta-libre-de-medicamentos-la-ciudad_1785304123'
+                })
+                .then(() => console.log('Contenido compartido exitosamente'))
+                .catch((error) => console.error('Error al compartir:', error));
+            } else {
+                console.log("Web Share API no soportada");
+            }
+            }
+        </script>
+
+
+        <script>
+            let speechSynthesis = window.speechSynthesis;
+            let currentUtterance = null;
+            let isPaused = false;
+            let isReading = false;
+            let textBlocks = [];
+            let currentBlockIndex = 0;
+            let lastSpokenIndex = 0;
+            const BLOCK_SIZE = 800;
+
+            function updateButtons(speaking) {
+                document.getElementById('playButton').disabled = speaking;
+                document.getElementById('pauseButton').disabled = !speaking;
+                document.getElementById('resumeButton').disabled = !isPaused;
+                document.getElementById('stopButton').disabled = !speaking;
+            }
+
+            function updateProgress() {
+                const progressDiv = document.getElementById('progress');
+                if (isReading) {
+                    progressDiv.textContent = `Leyendo bloque ${currentBlockIndex + 1} de ${textBlocks.length}`;
+                } else {
+                    progressDiv.textContent = '';
+                }
+            }
+
+            function splitIntoBlocks(text) {
+                const sentences = text.replace(/([.!?])\s+/g, "$1|").split("|");
+
+                let blocks = [];
+                let currentBlock = '';
+
+                sentences.forEach(sentence => {
+                    if (sentence.length > BLOCK_SIZE) {
+                        let subSentences = sentence.replace(/,\s+/g, ",|").split("|");
+                        subSentences.forEach(subSentence => {
+                            if (currentBlock.length + subSentence.length > BLOCK_SIZE) {
+                                if (currentBlock) blocks.push(currentBlock.trim());
+                                currentBlock = subSentence;
+                            } else {
+                                currentBlock += (currentBlock ? ' ' : '') + subSentence;
+                            }
+                        });
+                    } else {
+                        if (currentBlock.length + sentence.length > BLOCK_SIZE) {
+                            blocks.push(currentBlock.trim());
+                            currentBlock = sentence;
+                        } else {
+                            currentBlock += (currentBlock ? ' ' : '') + sentence;
+                        }
+                    }
+                });
+
+                if (currentBlock) blocks.push(currentBlock.trim());
+                return blocks;
+            }
+
+            function speakBlock(index) {
+                if (index >= textBlocks.length) {
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                    return;
+                }
+
+                currentUtterance = new SpeechSynthesisUtterance(textBlocks[index]);
+                currentUtterance.rate = parseFloat(1.3);
+                lastSpokenIndex = index;
+
+
+                currentUtterance.onend = function() {
+                    if (isReading && !isPaused) {
+                        currentBlockIndex++;
+                        updateProgress();
+                        speakBlock(currentBlockIndex);
+                    }
+                };
+
+                currentUtterance.onerror = function(event) {
+                    console.error('Error en la lectura:', event);
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }
+
+            function startReading() {
+                const text = document.getElementById('texto').innerText;
+                if (!text) return;
+
+                stop();
+
+                textBlocks = splitIntoBlocks(text);
+                currentBlockIndex = 0;
+                isReading = true;
+                isPaused = false;
+
+                updateButtons(true);
+                updateProgress();
+                speakBlock(currentBlockIndex);
+            }
+
+            function pause() {
+                speechSynthesis.pause();
+                isPaused = true;
+                updateButtons(true);
+            }
+
+            function resume() {
+                speechSynthesis.resume();
+                isPaused = false;
+                updateButtons(true);
+            }
+
+            function stop() {
+                speechSynthesis.cancel();
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                updateButtons(false);
+                updateProgress();
+            }
+
+            function pauseReading() {
+                if (!isReading) return;
+
+                speechSynthesis.pause();
+                isPaused = true;
+                isReading = false;
+                updateButtons(true);
+                updateProgress();
+            }
+
+            function resumeReading() {
+                if (!isPaused) return;
+
+                isPaused = false;
+                isReading = true;
+
+                if (lastSpokenIndex === currentBlockIndex) {
+                    currentBlockIndex++;
+                }
+
+                updateButtons(true);
+                updateProgress();
+
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    speakBlock(currentBlockIndex);
+                }
+            }
+
+            function stopReading() {
+                speechSynthesis.cancel();
+                finishReading();
+            }
+
+            function finishReading() {
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                lastSpokenIndex = -1;
+                currentUtterance = null;
+                updateButtons(false);
+                updateProgress();
+            }
+
+        </script>
+
+        <script>
+
+            var elem = document.documentElement;
+            var fullscreenButton = document.getElementById("fullscreenButton");
+            var fullscreenIcon = document.getElementById("fullscreenIcon");
+
+            fullscreenButton.addEventListener("click", function() {
+            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+                }
+            } else {
+                if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+                }
+            }
+            });
+
+            document.addEventListener('fullscreenchange', (event) => {
+            if (!document.fullscreenElement) {
+                fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+            } else {
+                fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+            }
+            });
+        </script>
+
+    </body>
+    </html>
