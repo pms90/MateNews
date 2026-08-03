@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Lunes 03 agosto 2026 00:39 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-08-03-Lunes/1.html">1) Javier Milei volvió a apuntar contra Lula: “Es ladrón, es corrupto, y lo liberaron por una falla en el procedimiento”.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-08-03-Lunes/2.html">2) El precio del petróleo se desplomó tras el anuncio de Trump de nuevas negociaciones con Irán para poner fin a la guerra.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-08-03-Lunes/3.html">3) River perdió 1 a 0 con Rosario Central en el Monumental y sumó su quinta derrota consecutiva.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-08-03-Lunes/4.html">4) Los criterios del Gobierno para elegir al candidato a vicepresidente tras la ruptura con Villarruel.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-08-03-Lunes/5.html">5) Se conocieron los resultados de la autopsia al cuerpo de Mailén Antonich, la joven de 24 años asesinada en Mar del Plata.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-08-03-Lunes/6.html">6) Los mejores memes de la derrota de River ante Rosario Central: Otamendi, Jeremías Ledesma y Coudet fueron los protagonistas.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-08-03-Lunes/7.html">7) El gol en contra de Nicolás Otamendi con el que River perdió ante Rosario Central en el Monumental.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-08-03-Lunes/8.html">8) Elecciones en Santiago del Estero: con el 66% de los votos, el Frente Cívico de Zamora ganó en todos los municipios.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-08-03-Lunes/9.html">9) Trump dijo que el lunes comenzarán las nuevas conversaciones con Irán tras frenar los ataques previstos contra el régimen.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-08-03-Lunes/10.html">10) Se reunió el Consejo Federal de Educación para coordinar controles y asegurar el 75% de clases durante el paro docente.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-08-03-Lunes/11.html">11) El mensaje de amor de Gimena Accardi a su novio Seven Kayne por sus 27 años: “Feliz cumple, baby”.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-08-03-Lunes/12.html">12) El impactante choque de cabezas que generó preocupación en el duelo entre River Plate y Rosario Central.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-08-03-Lunes/1.html">1) Los docentes de todos los niveles unifican su reclamo, paran y se movilizan. Educando a Milei. Todos los niveles de enseñanza paran hoy y mañana en una protesta unificada contra el ajuste que lleva adelante Milei sobre la educación pública. Reclaman paritarias nacionales, el cumplimiento de la Ley de Financiamiento Universitario y la restitución del Fondo de Incentivo para los maestros. El Gobierno amenaza con aplicar por primera vez la reforma laboral que limita el derecho a huelga. Por. Pablo Esteban.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-08-03-Lunes/2.html">2) Una oposición cada día más desafiada. Por. Eduardo Aliverti.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-08-03-Lunes/3.html">3) Comenzó el juego de la silla en el oficialismo. Milei con un vice enigmático, Villarruel por afuera y Bullrich se postula para el 2031. Por. Melisa Molina.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-08-03-Lunes/4.html">4) Relevamiento de Zuban-Córdoba. Una encuesta revela que el 60 por ciento votaría por un cambio de gobierno.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-08-03-Lunes/5.html">5) Había ido a una falsa entrevista laboral. Femicidio en Mar del Plata: hallan el cuerpo de una joven en una playa.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-08-03-Lunes/6.html">6) La administración colonial británica le extendió los derechos de explotación hasta 2060. Las Malvinas en explotación, Nativas avanza.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-08-03-Lunes/7.html">7) El cruce masivo de marroquíes a la ciudad norteafricana española explotó por cuestiones geopolíticas. Ceuta: El trasfondo y los responsables de la crisis humanitaria. Por. Gustavo Veiga.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-08-03-Lunes/8.html">8) El presidente de Brasil formalizó su candidatura a la reelección. Lula da Silva: “Si gano estas elecciones, será como mi cuarta copa”. Por. Darío Pignotti.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-08-03-Lunes/9.html">9) Carta abierta a la señora presidenta de la República Mexicana, Claudia Sheinbaum Pardo. Por. Mempo Giardinelli.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-08-03-Lunes/10.html">10) Empate de local con el Columbus Crew. La vuelta de Messi al Inter Miami tuvo a Luis Suárez como gran figura.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-08-03-Lunes/11.html">11) Los sectores más vulnerables son los más afectados por la deuda y la incapacidad de pago. La morosidad estalla, pero Caputo no la ve. Por. Mara Pedrazzoli.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-08-03-Lunes/12.html">12) La condena de los responsables y la beatificación del Papa Francisco. 50 años del asesinato de Angelelli. Por. Washington Uranga.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-08-03-Lunes/1.html">1) Javier Milei y sus medidas, en vivo: el tratamiento de la ley de tierras y el viaje de Milei a Ecuador y Colombia.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-08-03-Lunes/2.html">2) Javier Milei redobló sus críticas contra Lula: “Es un ladrón, un corrupto, no es inocente”.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-08-03-Lunes/3.html">3) Paro nacional docente: cómo serán los controles que hará el Gobierno para garantizar los servicios esenciales.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-08-03-Lunes/4.html">4) Las principales frases de Milei sobre Chiqui Tapia, Cristina Kirchner, Axel Kicillof y su eventual reelección.</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-08-03-Lunes/5.html">5) La furia arrasa con los matices.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-08-03-Lunes/6.html">6) En River se acabó la paciencia ante una crisis que se profundiza en la cancha y los despachos.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-08-03-Lunes/7.html">7) Flavio Bolsonaro sufre un traspié para cerrar su fórmula y expone dificultades para pactar alianzas.</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-08-03-Lunes/8.html">8) Los bancos anticipan mayores exigencias para prestar: la respuesta del Gobierno por la mora récord.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-08-03-Lunes/9.html">9) Melatonina o magnesio, ¿cuál es mejor para dormir?</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-08-03-Lunes/10.html">10) Marruecos rompió el silencio sobre Ceuta: lo atribuyó a “factores superpuestos”.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-08-03-Lunes/1.html">1) El caso Fontevecchia complica la estrategia de Cristina para ser candidata</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-08-03-Lunes/2.html">2) Llaryora lanza un plan de obras de 130 mil millones en Córdoba Capital para asegurarse la reelección</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-08-03-Lunes/3.html">3) Catástrofe libertaria en Santiago del Estero: sacaron tres concejales sobre 194</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-08-03-Lunes/4.html">4) Mal dato para Caputo: la inflación volvió a subir en Córdoba</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-08-03-Lunes/5.html">5) &quot;El modelo de Milei nos lleva a una africanización de la economía&quot;</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-08-03-Lunes/6.html">6) Libra: USD 5 millones que Hayden Davies mandó a la Argentina pasaron por una cueva que usaban para pagarle a Milei</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-08-03-Lunes/7.html">7) Le pusieron una bandera a Juez en su partido: &quot;te vendiste a todos, no vendas la Argentina&quot;</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-08-03-Lunes/8.html">8) El Chiqui Tapia apuesta al vínculo con Karina para sobrevivir en la AFA</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-08-03-Lunes/1.html">1) Qué tiene Kicillof en la cabeza.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-08-03-Lunes/2.html">2) Milei pone a prueba su poder.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-08-03-Lunes/3.html">3) Milei eterno.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-08-03-Lunes/4.html">4) Santiago del Estero: Zamora ganó en todos los municipios, ratificó su hegemonía y le envió un mensaje a Milei.</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-08-03-Lunes/5.html">5) Qué hace Caputo para que el dólar no vuele en 2027.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-08-03-Lunes/6.html">6) Intendentes por la gobernación.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-08-03-Lunes/7.html">7) Milei piensa en las elecciones de 2027: &quot;Tengo definido mi compañero de fórmula&quot;.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-08-03-Lunes/8.html">8) Kicillof en Santa Fe, ¿era por abajo?</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-axios" aria-labelledby="source-axios-heading">
+<h3 class="source-heading" id="source-axios-heading"><a href="https://www.axios.com">Axios</a></h3>
+<ol class="source-notes">
+<li class="nota" id="axios_0"><a href="axios/2026-08-03-Lunes/1.html">1) El representante Max Miller no abandonará sus estudios tras acusaciones de abuso doméstico.</a></li>
+<li class="nota" id="axios_1"><a href="axios/2026-08-03-Lunes/2.html">2) La temporada de incendios forestales en EE. UU. supera el promedio de 10 años.</a></li>
+<li class="nota" id="axios_2"><a href="axios/2026-08-03-Lunes/3.html">3) Exclusiva: Newsom muestra capacidad de recaudación de fondos para los partidos estatales.</a></li>
+<li class="nota" id="axios_3"><a href="axios/2026-08-03-Lunes/4.html">4) Ossoff: ¿Lo siguiente, o &quot;Great White Hype&quot;?</a></li>
+<li class="nota" id="axios_4"><a href="axios/2026-08-03-Lunes/5.html">5) El Partido Republicano anterior a Trump viene por Vance.</a></li>
+<li class="nota" id="axios_5"><a href="axios/2026-08-03-Lunes/6.html">6) &quot;Presión creciente&quot; mientras la búsqueda de Nancy Guthrie dura seis meses.</a></li>
+<li class="nota" id="axios_6"><a href="axios/2026-08-03-Lunes/7.html">7) Comienza el acto final de Trump.</a></li>
+<li class="nota" id="axios_7"><a href="axios/2026-08-03-Lunes/8.html">8) El manifiesto de guerra de AI.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-china_daily" aria-labelledby="source-china_daily-heading">
+<h3 class="source-heading" id="source-china_daily-heading"><a href="https://www.chinadaily.com.cn/china">China Daily</a></h3>
+<ol class="source-notes">
+<li class="nota" id="china_daily_0"><a href="china_daily/2026-08-03-Lunes/1.html">1) Una prefectura remota convierte el exceso de energía solar en big data.</a></li>
+<li class="nota" id="china_daily_1"><a href="china_daily/2026-08-03-Lunes/2.html">2) Longnan en Gansu activa respuesta de emergencia para el control de inundaciones.</a></li>
+<li class="nota" id="china_daily_2"><a href="china_daily/2026-08-03-Lunes/3.html">3) El tapir malayo debuta en el Zoológico del Bosque de Dalian en Liaoning.</a></li>
+<li class="nota" id="china_daily_3"><a href="china_daily/2026-08-03-Lunes/4.html">4) Forjando escudos con código.</a></li>
+<li class="nota" id="china_daily_4"><a href="china_daily/2026-08-03-Lunes/5.html">5) Las normas regulan la responsabilidad de los menores.</a></li>
+<li class="nota" id="china_daily_5"><a href="china_daily/2026-08-03-Lunes/6.html">6) Las reglas refuerzan la protección de la isla.</a></li>
+<li class="nota" id="china_daily_6"><a href="china_daily/2026-08-03-Lunes/7.html">7) China realiza ejercicios militares frente a Huangyan.</a></li>
+<li class="nota" id="china_daily_7"><a href="china_daily/2026-08-03-Lunes/8.html">8) Presentado proyecto de ley para combatir el ciberbullying.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="el_dia/2026-08-03-Lunes/1.html">1) La Plata Solidaria lanza su colecta &quot;Dulce Niñez&quot; de cara al Día del Niño.</a></li>
+<li class="nota" id="el_dia_1"><a href="el_dia/2026-08-03-Lunes/2.html">2) El Centro Bioquímico organiza una nueva colecta de sangre en La Plata.</a></li>
+<li class="nota" id="el_dia_2"><a href="el_dia/2026-08-03-Lunes/3.html">3) Advertencia de ingenieros por obras en los caminos rurales.</a></li>
+<li class="nota" id="el_dia_3"><a href="el_dia/2026-08-03-Lunes/4.html">4) El Tren Roca a La Plata completa su recorrido tras un accidente en Quilmes.</a></li>
+<li class="nota" id="el_dia_4"><a href="el_dia/2026-08-03-Lunes/5.html">5) Cortes de tránsito y desvíos por las obras de ensanche en el Parque Saavedra.</a></li>
+<li class="nota" id="el_dia_5"><a href="el_dia/2026-08-03-Lunes/6.html">6) Domingo de maratón y cortes de tránsito en el centro de La Plata por el 121° aniversario de Estudiantes.</a></li>
+<li class="nota" id="el_dia_6"><a href="el_dia/2026-08-03-Lunes/7.html">7) El último club de billar de La Plata sueña en grande: su presidente jugará el Mundial 2026.</a></li>
+<li class="nota" id="el_dia_7"><a href="el_dia/2026-08-03-Lunes/8.html">8) Domingo gris y frío en La Plata: el tiempo para el cierre de las vacaciones de invierno.</a></li>
+<li class="nota" id="el_dia_8"><a href="el_dia/2026-08-03-Lunes/9.html">9) Temporal: entre el mapa de los problemas y la lluvia que se viene.</a></li>
+<li class="nota" id="el_dia_9"><a href="el_dia/2026-08-03-Lunes/10.html">10) Identidad, fútbol y memoria: por qué Malvinas volvió a conmover a toda una generación.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-08-03-Lunes/1.html">1) Trump delinea sus próximos pasos sobre Irán</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-08-03-Lunes/2.html">2) Irán: &quot;El estrecho de Ormuz no volverá a la situación anterior al conflicto&quot;</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-08-03-Lunes/3.html">3) Canciller iraní lanza duro aviso a Washington</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-08-03-Lunes/4.html">4) &quot;Es un ladrón, es un corrupto&quot;: Milei redobla cruzada verbal contra Lula</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-08-03-Lunes/5.html">5) La reacción de Maduro al diálogo entre el Gobierno venezolano y la oposición</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-08-03-Lunes/6.html">6) Canciller cubano responde a la &quot;ridícula y torpe mentira&quot; de Rubio</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-08-03-Lunes/7.html">7) China traza líneas rojas a Occidente en un ámbito clave</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-08-03-Lunes/8.html">8) El petróleo argentino comenzará a fluir al mercado de este país asiático</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-08-03-Lunes/1.html">1) Una joven de 26 años fue asesinada a puñaladas en Tres Cruces: la Policía detuvo a su pareja</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-08-03-Lunes/2.html">2) Nacional 2-1 Progreso por el Torneo Intermedio: con Maximiliano Gómez al rescate, el tricolor ganó a duras penas contra un rival en zona de descenso y que jugó con 10 por 62 minutos</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-08-03-Lunes/3.html">3) Ráfaga de disparos contra un vehículo cerca del Gran Parque Central dejó dos personas heridas</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-08-03-Lunes/4.html">4) Gobierno había definido a Casablanca como coordinadora de Pasado Reciente pero finalmente se decidió que asesorará a Iliana Da Silva y no tendrá gente a cargo</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-08-03-Lunes/5.html">5) Tim Payne, sensación en las redes sociales durante el Mundial 2026, debutó con golazo de afuera del área en Olimpia: mirá el video</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-08-03-Lunes/6.html">6) Una mujer se encuentra grave tras ser atropellada por un motociclista que hacía maniobras imprudentes en Ruta 8</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-08-03-Lunes/7.html">7) Líder, capitán y respetado por los grandes: Federico Valverde brilló en Real Madrid y se fundió en un afectuoso abrazo con José Mourinho en lo que fue el gesto de la jornada</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-08-03-Lunes/8.html">8) Sorteo del 5 de Oro EN VIVO: todos los resultados con tres aciertos de este domingo 2 de agosto</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-08-03-Lunes/9.html">9) Condenaron a un hombre que utilizaba Facebook Marketplace para citar y robar a compradores en el Prado</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-08-03-Lunes/10.html">10) La ANV ofrece más de 60 casas en todo el país y mantiene beneficios para créditos hipotecarios con tasas de hasta 0%</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-08-03-Lunes/11.html">11) Transferencias monetarias: por qué el modelo uruguayo termina castigando a los más vulnerables</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-08-03-Lunes/12.html">12) Investigan un intento de violación en una zona donde se practica Baby Fútbol: vecinos buscan identificar al presunto agresor</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">La Diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-08-03-Lunes/1.html">1) Frente Amplio apuesta a “mejorar la coordinación” con el gobierno para adelantarse a situaciones que “pueden generar dificultades”.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-08-03-Lunes/2.html">2) Diputados de la oposición afirman que el gasto asignado para la exoneración de IVA a las cooperativas es insuficiente.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-08-03-Lunes/3.html">3) La situación en Ceuta de a poco se normaliza, tras el ingreso masivo de personas, en el que murieron cerca de 90.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-08-03-Lunes/4.html">4) “Quienes cumplieron pueden prometer más”, dijo Lula durante el acto de oficialización de su candidatura para las elecciones.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-08-03-Lunes/5.html">5) Trump dijo que este lunes comenzarán las negociaciones con Irán para finalizar la guerra.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-08-03-Lunes/6.html">6) Agrupación de jóvenes colorados se expresó en contra de planteo de Bordaberry de otorgar prisión domiciliaria a mayores de 70 años.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-08-03-Lunes/7.html">7) Nacional le ganó en la hora a Progreso con doblete de Maximiliano Gómez.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-08-03-Lunes/8.html">8) Ana Juanche: “En el espanto y en el horror no vamos a obtener cambios, necesitamos invertir en las cárceles”.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-08-03-Lunes/9.html">9) “Algo van a tener que pagar”, remarcó Carlos Enciso sobre el sector forestal y el uso de la caminería rural.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-08-03-Lunes/10.html">10) La innovación en salud gana impulso en Uruguay, pero el financiamiento sigue siendo clave para escalar, señalan empresas.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-08-03-Lunes/1.html">1) Lucas Aguilera y Paula Giménez: crónica del regreso a casa</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-08-03-Lunes/2.html">2) Sheinbaum advierte queMéxicono debe ser utilizado como tema de campaña por políticos estadounidenses y afirmó que el país “no es piñata de nadie</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-08-03-Lunes/3.html">3) Brasil| El TSE fija al 16 de agosto como fecha límite para que plataformas digitales y redes sociales entreguen planes de acción contra la desinformación</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-08-03-Lunes/4.html">4) Ante la crisis enBolivia, la OEA envía misión para reunirse con el Gobierno de Rodrigo Paz y Evo Morales denuncia persecución política</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-08-03-Lunes/5.html">5) Perú| Estados Unidos estrecha lazos con Perú tras la juramentación de Keiko Fujimori como presidenta</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-08-03-Lunes/6.html">6) Argentina| Milei impulsa una reforma del Banco Central que transfiere la política financiera a las corporaciones</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-08-03-Lunes/7.html">7) Trump anunció que Hamas alcanzó un acuerdo de desarme en Gaza con la Junta de Paz</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-08-03-Lunes/8.html">8) Kast impulsa enChileuna reforma laboral comparable al Plan Laboral de la dictadura pinochetista – Por Diego Lorca</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/1.html">1) República o Protectorado. La visita a la Argentina de la directora gerente del Fondo Monetario Internacional coincidió con la presentación del equipo de abogados de CFK ante el Comité de Derechos Humanos de las Naciones Unidas, reclamando que se permita el ejercicio de los derechos civiles y políticos de la ex Presidenta, mientras se tramita la presentación de…. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/2.html">2) Blindar la moneda. La ficción de la neutralidad del Banco Central. Por Luciana Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/3.html">3) Petróleo, cárcel y escalera. El golpe en Irán del ’53 y la persecución contra Cristina. Por Sebastián Fernández.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/4.html">4) Furiosas. En la mitología griega, cuando los tribunales no funcionaban, las que hacían justicia eran las Furias. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/5.html">5) Ser Batavia. Seis proyectos que buscan minar el control estatal y priorizan la concentración económica del poder real apuntan contra la soberanía argentina. Por Horacio Rovelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/6.html">6) La Industria que se apaga. El cierre de industrias estratégicas en el sur de Santa Fe refleja una pérdida de capacidades productivas que trasciende a las empresas. Por Cristian Desideri.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/7.html">7) Estado terminal. Fuerza Aérea Argentina: de la lucha descomunal en Malvinas a la renuncia a ser una aviación de combate. Por Sergio Eissa.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/8.html">8) La entrega. El proyecto de Ley Nacional de Inviolabilidad de la Propiedad Privada completaría el plan de desguace del Estado; en el sur, el experimento comenzó hace tiempo. Por Susana Lara.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/9.html">9) No a la rapiña. Carta a senadores para que se revelen ante los poderes concentrados y rechacen el proyecto de entrega de nuestro suelo y su riqueza a potencias extranjeras. Por Mesa de Organismos de Derechos Humanos.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/10.html">10) ¿Quién tiene el control?. La propuesta de reforma de la Ley de Tierras podría dejarnos a las puertas de una nueva ola de acaparamientos. Por Sol Mora.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/11.html">11) ¿Y a mí, qué?. Mientras Brasil avanza hacia una mayor horizontalidad social y autonomía internacional, la Argentina anhela un modelo de sumisión y dependencia. Por Luciano Anzelini.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/12.html">12) Con Keynes no alcanza. El modo de acumulación y regulación paradigmático del capitalismo hoy es financiero y Keynes es insuficiente para explicarlo. Por Mariano Ciafardini.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/13.html">13) Cómo cubrir un bosque. Campaña de Israel contra JP Vance y para revertir las opiniones críticas de los jóvenes MAGA sobre el genocidio en Gaza. Por Aleardo Laría Rajneri.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/14.html">14) Washington, funerales y halcones. Vance y Rubio pelean por la sucesión de Trump mientras el volátil Presidente pretende controlar el escenario geopolítico y las guerras. Por Marcelo Caracoche.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/15.html">15) Evacuar, nuevo eufemismo. El ministro de Finanzas israelí, Bezalel Smotrich, exige más limpieza étnica en Cisjordania. Por Brett Wilkins.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_15"><a href="el_cohete_a_la_luna/2026-08-03-Lunes/16.html">16) Tiro por la culata. La puesta en escena ridícula de Milei y la agresión económica de Estados Unidos activaron el nacionalismo defensivo del electorado brasileño. Por Ariela Ruiz Caro.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-08-02-Domingo.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>
