@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Sabado 29 agosto 2026 21:04 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-08-29-Sabado/1.html">1) El oficialismo busca retomar en el Senado el debate sobre las PASO, pero no hay consenso con los aliados.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-08-29-Sabado/2.html">2) La militante kirchnerista que investiga la Justicia por un contrato con la UOM: otras dos casas en Campana, 114 viajes al exterior y un sugestivo apodo.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-08-29-Sabado/3.html">3) Las Leonas buscarán ser campeonas del mundo en una final electrizante ante Países Bajos: hora y TV.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-08-29-Sabado/4.html">4) El Gobierno detectó las primeras señales electorales en el Congreso y apuesta al repunte económico.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-08-29-Sabado/5.html">5) Se hizo una ecografía y descubrió que la atendió un falso médico detenido por la muerte de otra paciente.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-08-29-Sabado/6.html">6) La furia de Lanús contra el árbitro y el VAR por no expulsar a Flores en la derrota ante Boca.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-08-29-Sabado/7.html">7) Walter Quiroz, el actor que se alejó siete años para reencontrarse y hoy revela un abuso que pudo sanar.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-08-29-Sabado/8.html">8) El brazo represivo de China se expande en el mundo gracias a diferentes complicidades.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-08-29-Sabado/9.html">9) Perdió la pelea de su vida, pero conquistó Las Vegas: la historia de amor que nació en un merendero.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-08-29-Sabado/10.html">10) Tenía 10 años y quedó atrapado en el fondo de una pileta: &quot;No podés llevar a tu hijo a jugar a un club y que te lo devuelvan muerto&quot;.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-08-29-Sabado/11.html">11) De odontólogo a maratonista del viaje: se jubiló y comenzó a recorrer el mundo, visitó 70 países y llegó en auto hasta  Alaska.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-08-29-Sabado/12.html">12) Donald Trump anunció &quot;el mayor acuerdo petrolero de la historia&quot; con Venezuela.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-08-29-Sabado/1.html">1) ¿A qué viene a la Argentina? El lado oscuro de Peter Thiel. El Congreso comenzó a investigar los verdaderos motivos del desembarco del tecnomagnate en el país. En una audiencia especial, a la que Thiel se negó a concurrir, se revelaron datos claves de su relación con el gobierno de Javier Milei y los riesgos que implica que se le entreguen todas las bases de datos personales del Estado para generar políticas de control y más ajuste.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-08-29-Sabado/2.html">2) Dijo tener ingresos mensuales por un millón de dólares. Cerimedo, el asesor de la ultraderecha.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-08-29-Sabado/3.html">3) La Selección Argentina se enfrenta a Países Bajos en la definición. Mundial de hockey: Las Leonas van por un título soñado.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-08-29-Sabado/4.html">4) Panorama económico. Maquillado para pasar la gorra. Por. Raúl Dellatorre.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-08-29-Sabado/5.html">5) La detención de Cerimedo expuso el uso criminal de las redes sociales contra la democracia. Modelo peruano. Por. Luis Bruschtein.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-08-29-Sabado/6.html">6) Crecen las dudas sobre el manejo de su patrimonio. Tini hablará del conflicto con su padre en México. Por. Yumber Vera Rojas.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-08-29-Sabado/7.html">7) Gajes del oficio: el ICE arrestó a un propagandista de Trump.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-08-29-Sabado/8.html">8) El compañero de Fernando Cerimedo. ¿Quién es Merlo Debernardi, el socio de Cerimedo en Estados Unidos? Por. Gustavo Veiga.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-08-29-Sabado/9.html">9) El conjunto de Arruabarrena le ganó a Lanús en el final del partido. El desahogo de Boca llegó en el tercer minuto de descuento. Por. Adrián De Benedictis.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-08-29-Sabado/10.html">10) Un directivo denunció la injerencia de la DAIA en el acto del Presidente. La trastienda del discurso de Javier Milei en la ORT.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-08-29-Sabado/11.html">11) Estrenan “1976. Ecos de la memoria” en El Nueve. Daniel Filmus, Tristán Bauer y Carolina Scaglione: “Hay una sociedad que aún sufre los efectos de la dictadura”. Por. Oscar Ranzani.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-08-29-Sabado/12.html">12) La doctrina Milei. Por. Sergio Olguín.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-08-29-Sabado/1.html">1) El miedo que esconden los insultos de Milei.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-08-29-Sabado/2.html">2) Fernando Cerimedo declaró ingresos de US$1 millón por mes y admitió que asesora a políticos de varios países.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-08-29-Sabado/3.html">3) Las Leonas juegan la final del Mundial ante el rival más difícil, pero tienen en qué creer.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-08-29-Sabado/4.html">4) Trump anuncia “el mayor acuerdo petrolero de la historia mundial” con Venezuela y controlará una parte de sus reservas.</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-08-29-Sabado/5.html">5) “Sin monte, no hay vida para nosotros”.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-08-29-Sabado/6.html">6) Ratas, agua de cloaca y condiciones extremas: el crudo relato a su familia de la personal trainer argentina detenida por ICE.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-08-29-Sabado/7.html">7) Ray Sugar Leonard: brilló en los rings, fue un supercampeón y superó un período depresivo, con drogas y alcohol.</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-08-29-Sabado/8.html">8) Cómo impacta en las jubilaciones la decisión que se tome sobre el salario mínimo.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-08-29-Sabado/9.html">9) Picadas legales y autos para ver en familia: el plan ideal para hacer los domingos a solo 10 minutos de la ciudad.</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-08-29-Sabado/10.html">10) Milei la rompe toda y no nos cuentan nada.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-08-29-Sabado/1.html">1) Es récord la compra de dólares de personas, en julio sumó USD 3.319 millones</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-08-29-Sabado/2.html">2) Patricia acelera su plan presidencial y advierte a Karina: &quot;los candidatos no se pueden elegir a dedo&quot;</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-08-29-Sabado/3.html">3) Pases de factura en la DAIA por el papelón de Milei en ORT</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-08-29-Sabado/4.html">4) Patricia mortificó a Milei, charlando con alumnos tranquila y sin adoctrinamiento</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-08-29-Sabado/5.html">5) Menem sale al rescate de Galperín y busca boicotear la sesión contra la usura de la Mercado Pago</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-08-29-Sabado/6.html">6) Pullaro elige a Angelini para marcarle la cancha a Javkin en la pelea por Rosario</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-08-29-Sabado/7.html">7) La caída de la granja Cerimedo sugiere que más de la mitad de los usuarios de X son bots</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-08-29-Sabado/8.html">8) Vuelve la pelea del Gobierno con las universidades y el Galleguito Álvarez sale al ataque de rectores</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-08-29-Sabado/1.html">1) Misión voto blando: las razones del Gobierno detrás de un descoordinado &quot;operativo ilusión de alivio&quot;.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-08-29-Sabado/2.html">2) El semáforo del PRO en el acuerdo con LLA en Buenos Aires.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-08-29-Sabado/3.html">3) Brito no confirma su candidatura, pero mueve fichas en Córdoba: quién arma y qué busca.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-08-29-Sabado/4.html">4) Los movimientos de Massa para ganar peso en la pulseada bonaerense.</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-08-29-Sabado/5.html">5) Ahora, con Santilli: Karina Milei vuelve a caminarle la Ciudad al macrismo.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-08-29-Sabado/6.html">6) Mahiques armó un plan para controlar el Consejo de la Magistratura y CFK busca negociar.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-08-29-Sabado/7.html">7) Ante el vacío en el peronismo, Juan Grabois piensa a Itai Hagman para la Jefatura de Gobierno porteña.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-08-29-Sabado/8.html">8) Santa Cruz: tras la foto con Belloni, Grasso prepara la ambulancia para plantarle una alternativa a Vidal.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-axios" aria-labelledby="source-axios-heading">
+<h3 class="source-heading" id="source-axios-heading"><a href="https://www.axios.com">Axios</a></h3>
+<ol class="source-notes">
+<li class="nota" id="axios_0"><a href="axios/2026-08-29-Sabado/1.html">1) The 5 craziest discoveries from OpenAI&#x27;s HuggingFace investigation.</a></li>
+<li class="nota" id="axios_1"><a href="axios/2026-08-29-Sabado/2.html">2) Why Nepal&#x27;s rare, deadly flood struck without warning.</a></li>
+<li class="nota" id="axios_2"><a href="axios/2026-08-29-Sabado/3.html">3) Scoop: AOC shakes up team ahead of 2028 decision.</a></li>
+<li class="nota" id="axios_3"><a href="axios/2026-08-29-Sabado/4.html">4) China is secretly fueling America&#x27;s data center rage.</a></li>
+<li class="nota" id="axios_4"><a href="axios/2026-08-29-Sabado/5.html">5) Trump loses longshot bid to erase hush money conviction.</a></li>
+<li class="nota" id="axios_5"><a href="axios/2026-08-29-Sabado/6.html">6) The case for the U.S. dollar&#x27;s digital edge.</a></li>
+<li class="nota" id="axios_6"><a href="axios/2026-08-29-Sabado/7.html">7) the dollar.</a></li>
+<li class="nota" id="axios_7"><a href="axios/2026-08-29-Sabado/8.html">8) &quot;That sucker is open&quot;: U.S. gains the upper hand in the battle for Hormuz.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-china_daily" aria-labelledby="source-china_daily-heading">
+<h3 class="source-heading" id="source-china_daily-heading"><a href="https://www.chinadaily.com.cn/china">China Daily</a></h3>
+<ol class="source-notes">
+<li class="nota" id="china_daily_0"><a href="china_daily/2026-08-29-Sabado/1.html">1) China&#x27;s fire and rescue force deployed to mudslide-hit Xizang.</a></li>
+<li class="nota" id="china_daily_1"><a href="china_daily/2026-08-29-Sabado/2.html">2) Hunan&#x27;s Nantan Grassland becomes summer stargazing destination.</a></li>
+<li class="nota" id="china_daily_2"><a href="china_daily/2026-08-29-Sabado/3.html">3) Images: Road repair work underway in Xizang following mudslide.</a></li>
+<li class="nota" id="china_daily_3"><a href="china_daily/2026-08-29-Sabado/4.html">4) Rich wildlife inspires amateur photographer.</a></li>
+<li class="nota" id="china_daily_4"><a href="china_daily/2026-08-29-Sabado/5.html">5) Lead ship of China&#x27;s second-generation guided-missile destroyers retires.</a></li>
+<li class="nota" id="china_daily_5"><a href="china_daily/2026-08-29-Sabado/6.html">6) Engineering China&#x27;s enhanced road safety.</a></li>
+<li class="nota" id="china_daily_6"><a href="china_daily/2026-08-29-Sabado/7.html">7) Resection extends survival in liver cancer patients.</a></li>
+<li class="nota" id="china_daily_7"><a href="china_daily/2026-08-29-Sabado/8.html">8) Revised law encourages lawyers to engage in international exchanges.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="el_dia/2026-08-29-Sabado/1.html">1) Cuenta DNI del Banco Provincia: los descuentos de hoy sábado 29 de agosto.</a></li>
+<li class="nota" id="el_dia_1"><a href="el_dia/2026-08-29-Sabado/2.html">2) Fin de semana fresco, pero soleado en La Plata: cómo estará el tiempo hoy sábado.</a></li>
+<li class="nota" id="el_dia_2"><a href="el_dia/2026-08-29-Sabado/3.html">3) Los cortes de luz no aflojan en La Plata y sigue la bronca de los vecinos.</a></li>
+<li class="nota" id="el_dia_3"><a href="el_dia/2026-08-29-Sabado/4.html">4) En Villa Alba y El Carmen basura y autos cortados.</a></li>
+<li class="nota" id="el_dia_4"><a href="el_dia/2026-08-29-Sabado/5.html">5) Merluza vs. carne: el pescado pelea lugar en la mesa.</a></li>
+<li class="nota" id="el_dia_5"><a href="el_dia/2026-08-29-Sabado/6.html">6) Confirman que la Base de Punta Indio perderá sus dos emblemas.</a></li>
+<li class="nota" id="el_dia_6"><a href="el_dia/2026-08-29-Sabado/7.html">7) La 49° Fiesta del Inmigrante ya tiene cronograma y se prepara para un mes de festejos en Berisso.</a></li>
+<li class="nota" id="el_dia_7"><a href="el_dia/2026-08-29-Sabado/8.html">8) En el Día del Árbol, crece el parque en Meridiano V.</a></li>
+<li class="nota" id="el_dia_8"><a href="el_dia/2026-08-29-Sabado/9.html">9) Denuncian que en la Técnica Nº 9 dan clases entre el líquido cloacal.</a></li>
+<li class="nota" id="el_dia_9"><a href="el_dia/2026-08-29-Sabado/10.html">10) Debate sobre justicia colaborativa.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-08-29-Sabado/1.html">1) ¿Qué se sabe de la poderosa ola de ataques rusos contra blancos militares de Kiev? (VIDEOS)</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-08-29-Sabado/2.html">2) Trump anuncia &quot;el mayor acuerdo petrolero de la historia mundial&quot; con Venezuela</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-08-29-Sabado/3.html">3) El mar donde cada isla puede desatar una crisis</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-08-29-Sabado/4.html">4) La enésima cumbre de Putin y Xi despierta a la OCS de su largo letargo</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-08-29-Sabado/5.html">5) Delcy Rodríguez ofrece detalles sobre el &quot;histórico acuerdo&quot; petrolero con EE.UU.</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-08-29-Sabado/6.html">6) Este país vota su posible adhesión a la UE: ¿qué está en juego?</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-08-29-Sabado/7.html">7) Empresa insignia de &#x27;oro blanco&#x27; latinoamericano entra en problemas: ¿qué hay detrás?</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-08-29-Sabado/8.html">8) El nuevo frente de la OTAN toma forma en la frontera rusa</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-08-29-Sabado/1.html">1) IM destinó US$ 11 millones a TV Ciudad en 2025 y recuperó menos del 5% en publicidad</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-08-29-Sabado/2.html">2) Rada a través de los tiempos: un vistazo a su evolución musical y estética a lo largo de las décadas</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-08-29-Sabado/3.html">3) Casi dos de cada tres consideran que el país está estancado o en decadencia, según Equipos Consultores</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-08-29-Sabado/4.html">4) La compraventa de inmuebles movilizó más de US$ 1.400 millones en siete meses</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-08-29-Sabado/5.html">5) Cierre de agosto con la mayor suba de precio del trigo en varios años</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-08-29-Sabado/6.html">6) Se cayó el pase de Gonzalo Carneiro a Banfield por una razón bastante peculiar</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-08-29-Sabado/7.html">7) De Montevideo a Miami: la fórmula de Ignacio González Castro para armar un foro con los líderes más poderosos del mundo</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-08-29-Sabado/8.html">8) Imputaron a dos personas por el robo a la sucursal de BROU en Pando: uno de ellos tiene vinculación directa con el asalto</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-08-29-Sabado/9.html">9) La subsecretaria de Interior se disculpó por dichos en los que vinculó problemas de salud mental y suicidios en la Policía a frase de Larrañaga sobre no aflojar</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-08-29-Sabado/10.html">10) Defensa de Sebastián Marset pide suprimir pruebas y alega que el narcotraficante entregó contraseñas de dispositivos electrónicos bajo presión</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-08-29-Sabado/11.html">11) Trump asegura haber alcanzado con Venezuela el mayor acuerdo de petróleo de la historia</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-08-29-Sabado/12.html">12) Tras el caso de la doctora imputada por usurpación de título, médicos del interior piden al MSP criterios claros sobre las funciones de especialistas con posgrados sin terminar</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">La Diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-08-29-Sabado/1.html">1) Decisión del Partido Nacional de no asistir a la reunión con Orsi: algo “insólito” o una “cuestión de timing ”, según politólogos.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-08-29-Sabado/2.html">2) Ante problema de “participación” de jóvenes, el FA busca “aggiornar” comités de base e impulsar un “taller de militancia digital”.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-08-29-Sabado/3.html">3) Con cruces por las proyecciones económicas y plazos “acotados”, la Cámara de Senadores comenzó a tratar la Rendición de Cuentas.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-08-29-Sabado/4.html">4) El MSP denunció ante Fiscalía al exsubsecretario José Luis Satdjian por autorizar un convenio entre ASSE y el Círculo Católico.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-08-29-Sabado/5.html">5) Detienen a los principales implicados en los últimos homicidios que se dieron en el marco del conflicto entre bandas.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-08-29-Sabado/6.html">6) Investigan organización criminal integrada por policías, militares y personas privadas de libertad por incautación en ex Comcar.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-08-29-Sabado/7.html">7) Trump anunció un acuerdo para que su país controle reservas de petróleo de Venezuela.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-08-29-Sabado/8.html">8) Trabajadores de TCP no aceptaron propuesta de Katoen Natie y esperan seguir negociando para destrabar el conflicto.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-08-29-Sabado/9.html">9) Oddone descartó suba de 25% del gasoil y advirtió que precios no se podrán sostener “por mucho tiempo” si el petróleo se consolida.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-08-29-Sabado/10.html">10) Marcos Israel: “Los nostálgicos de la revolución de los 60 están usando el antisionismo” para “traer vientos de totalitarismo”.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-08-29-Sabado/1.html">1) Bolivia| La Fiscalía anticipa que imputará a Fernando Cerimedo por enriquecimiento ilícito</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-08-29-Sabado/2.html">2) Ministros de Defensa deColombiayEcuadorse reunen con el jefe del Comando Sur de EEUU para abordar el narcotráfico en la frontera</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-08-29-Sabado/3.html">3) México| Cancillería exige el esclarecimiento de 17 personas bajo custodia del Servicio de Inmigración y Control de Aduanas de EEUU</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-08-29-Sabado/4.html">4) Paraguay| El Sindicato Nacional de Médicos cumple su quinta jornada consecutiva de huelga general</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-08-29-Sabado/5.html">5) Colombia| Petro pide investigar el papel de Fernando Cerimedo en las últimas elecciones presidenciales</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-08-29-Sabado/6.html">6) El Salvador| La Asamblea aprueba la prórroga número 54 del régimen de excepción</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-08-29-Sabado/7.html">7) Internacional| El jefe del Servicio de Espionaje Exterior (SVR) de Rusia, Serguei Narishkin, se reunió con el jefe de la Agencia Central de Inteligencia de EE.UU. (CIA), John Ratcliffe, en Moscú</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-08-29-Sabado/8.html">8) Argentina: ¿Quién puede manipular las elecciones de 2027? El caso Cerimedo y los sótanos de la democracia – Por Emilia Trabucco</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/1.html">1) La piedra de la locura. La idea no es nueva. Desde que Javier Milei asumió la presidencia, ronda la sospecha de que sus facultades intelectuales no están alineadas como corresponde. Pero a medida que se aproxima el último año de su mandato de cuatro, esas conjeturas se parecen cada vez más a convicciones y se pronuncian en voz más alta y en ámbitos más…. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/2.html">2) El orden en disputa. ¿Se adelantó la competencia electoral o estamos ante un límite material del modelo?. Por Lucka Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/3.html">3) Líderes del fracaso nacional. El proyecto de redistribución regresiva de Milei muestra sus límites económicos, pero no encontró hasta ahora límites sociales. Por Ricardo Aronskind.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/4.html">4) (Haches). ¿Qué estamos haciendo, o no, para preservar a los más jóvenes de las violencias que esta sociedad les inflige a diario?. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/5.html">5) Desmantelar para pagar. Este gobierno lleva adelante una sistemática y persistente campaña contra el Estado y sus funciones. Por Horacio Rovelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/6.html">6) Derrumbe de la vergüenza. El cinismo como política habitacional en la ciudad de Buenos Aires. Por María Eva Koutsovitis y Jonatan Baldiviezo.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/7.html">7) 120 años de perdón. Amparo colectivo contra YPF, la Nación y Chubut por daños ambientales en la Cuenca del Golfo San Jorge. Por Susana Lara.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/8.html">8) Tecnología, apriete y política. La Embajada de Estados Unidos amenaza a una cooperativa de ingenieros de Neuquén para que den de baja proyectos tecnológicos con la gigante china Huawei. Por Emmanuel Jaffrot.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/9.html">9) El derrame que no llega. Mientras Vaca Muerta genera ingresos millonarios, el Estado nacional y la población siguen sin percibir beneficios de su producción. Por Andrés Repar.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/10.html">10) Los sonidos del silencio. El discurso terapéutico, con su privatización del malestar, ha sido funcional al capitalismo contemporáneo para construir el empleado ideal. Por Sergio Eissa.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/11.html">11) Juzgar y castigar. Si no hay seguridad ni justicia, hay linchamiento. Por Esteban Rodríguez Alzueta.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/12.html">12) Intromisión judicial y bots. La convicción de que el fuerte no tiene que rendirle cuentas a nadie se refleja en el pedido de Hegseth a 19 países de abandonar la Corte Penal Internacional. Por Ariela Ruiz Caro.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/13.html">13) Malandras en Prefectura. Golpizas a menores, robos de celulares, asociación ilícita, narcotráfico, abusos sexuales y hostigamiento en la fuerza que asesinó a Rafael Nahuel y reprime en el Congreso. Por Alberto Moya.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/14.html">14) ¿Dónde está Miguel?. Como cada 17 de agosto, en la puerta de la comisaría 9ª de La Plata se realizó una nueva vigilia en homenaje a Miguel Bru, torturado y desaparecido por la Policía Bonaerense en 1993. Por Juan Manuel Mannarino.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/15.html">15) Palabras transpiradas. Gerchunoff cuestiona el uso desmedido de la palabra &quot;fascismo&quot; y advierte sobre los riesgos de leer la historia como profecía política. Por Aleardo Laría Rajneri.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_15"><a href="el_cohete_a_la_luna/2026-08-23-Domingo/16.html">16) Israel suma rechazos. Los votantes estadounidenses no avalan una mayor integración militar. Por Brett Wilkins.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-08-27-Jueves.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>
