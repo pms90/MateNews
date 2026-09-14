@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Escocia, Gales e Irlanda del Norte afirmaron su “derecho a la autodeterminación”.</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: auto;
+                padding: 5%;
+            }
+            .btnL {
+                background: #d1d1d1;
+                border-radius: 7px;
+                padding: 18px;
+                min-width: 100%;
+                color: #000000;
+                font-size: medium;
+                min-height: 70px;
+            }
+            button {
+                background-color: #d1d1d1;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:disabled {
+                background-color: #d1d1d1;
+                cursor: not-allowed;
+            }
+            button:hover:not(:disabled) {
+                background-color: #d1d1d1;
+            }
+            #voiceSelect {
+                margin: 10px 0;
+                padding: 5px;
+            }
+            .controls {
+                margin: 10px 0;
+            }
+
+            #fullscreenButton {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px;
+                background-color: transparent;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+            #fullscreenIcon {
+                width: 24px;
+                height: 24px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <button id="fullscreenButton">
+        <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+        </svg>
+        </button>
+
+        <div id="texto">
+            <h1>Escocia, Gales e Irlanda del Norte afirmaron su “derecho a la autodeterminación”.</h1>
+            <p>“Ningún gobierno de Westminster [británico] tiene derecho a poner trabas a la democracia”, expresaron los primeros ministros de esos países en una declaración conjunta</p><p>CARDIFF.– Los líderes de Escocia, Gales e Irlanda del Norte , reunidos este lunes en Cardiff , reivindicaron el “derecho a la autodeterminación” de sus naciones y aseguraron que su futuro está “en la Unión Europea” , según expresaron en una histórica declaración conjunta que despertó la reacción del primer ministro británico, Andy Burnham.</p><p>“ Nuestras naciones tienen derecho a la autodeterminación. Ningún gobierno de Westminster tiene derecho a poner trabas a la democracia ”, afirmaron el primer ministro escocés, John Swinney , y sus pares de Gales, Rhun ap Iorwerth , y de Irlanda del Norte, Michelle O’Neill .</p><p>“Para los que nos ven en todas estas islas —para los que nos ven en todo el mundo— no puede haber una señal más clara de que el tiempo de Westminster está llegando a su fin ”, indicaron en el texto oficial.</p><p>Los tres partidos de los mandatarios que firmaron el texto —el Nacional Escocés (SNP), el galés Plaid Cymru y el Sinn Féin, partidario de la unidad irlandesa— quieren separarse del Reino Unido, pero tienen posiciones diferentes sobre cómo y cuándo podría producirse esto .</p><p>“Por primera vez en la historia, la población de todas estas islas tiene primeros ministros en Escocia, en Gales y en Irlanda del Norte que están comprometidos con independizarse del Reino Unido ”, señalaron los líderes en el documento.</p><p>Swinney , Rhun ap Iorwerth y Michelle O’Neill se reunieron como dirigentes de sus partidos y no como representantes de sus respectivos gobiernos.</p><p>“Creemos que se avecinan cambios constitucionales” , sostuvieron, y afirmaron comprometerse “a reforzar la cooperación entre” sus partidos para averiguar en qué áreas “trabajar juntos puede marcar una verdadera diferencia”.</p><p>Mediante este memorándum de entendimiento mutuo, los tres partidos nacionalistas buscan coordinar esfuerzos para forzar a Londres a ampliar las competencias regionales y habilitar consultas populares vinculantes sobre su estatus político.</p><p>Tras la declaración conjunta, Burnham ratificó su apuesta por la “unión” de las naciones, dijo este lunes su portavoz.</p><p>“El primer ministro está comprometido a lograr cambios en las cuatro naciones del Reino Unido y cree firmemente en la unión ”, afirmó el portavoz de Burnham, según declaraciones recogidas por Sky News.</p><p>El portavoz dijo que el Reino Unido está “en su mejor momento” cuando la gente se une en torno a valores compartidos y a la resolución de problemas, “en lugar de la división”.</p><p>“El primer ministro seguirá aliviando la presión sobre las finanzas de los hogares y proporcionando una mayor seguridad económica, en lugar de participar en debates constitucionales o nuevos referéndums”, agregó.</p><p>El presidente estadounidense Donald Trump declaró este sábado que una Irlanda unificada sería “fantástica” . En una reunión con el primer ministro irlandés Micheál Martin en Dublín, el mandatario dijo que le gustaría ver la reunificación de la República de Irlanda con Irlanda del Norte, que pertenece al Reino Unido . “No quiero causar ningún problema, pero me encantaría verla unificada”, señaló Trump cuando un reportero le preguntó su opinión sobre el tema.</p><p>“Al final va a suceder. Más valdría que sucediera ahora”, agregó. “Creo que sería algo fantástico”, apuntó, y añadió que “el Reino Unido tendrá algo que decir al respecto, obviamente” .</p>
+        </div>
+        <br><br><br>
+            <div style="display: none;">
+                <label for="voiceSelect">Seleccionar voz:</label>
+                <select id="voiceSelect"></select>
+            </div>
+            <div class="controls">
+                <button onclick="startReading()" id="playButton">
+                    🔊 Leer
+                </button>
+                <button onclick="pauseReading()" id="pauseButton" disabled style="display: none;">
+                    ⏸️ Pausar
+                </button>
+                <button onclick="resumeReading()" id="resumeButton" disabled style="display: none;">
+                    ▶️ Continuar
+                </button>
+                <button onclick="stopReading()" id="stopButton" disabled>
+                    ⏹️ Detener
+                </button>
+            </div>
+            <div id="progress" style="display: none;"></div>
+        <br><br><br>
+        <button class="btnL" onclick="compartir()">Compartir</button>
+        <br><br><br>
+        <button class="btnL" onclick="window.location.href='https://www.lanacion.com.ar/el-mundo/escocia-gales-e-irlanda-del-norte-reivindicaron-su-derecho-a-la-autodeterminacion-en-una-declaracion-nid14092026/'">Ver en web original</button>
+        <br><br><br>
+        <!-- <button class="btnL" onclick="window.location.href='https://matenews.github.io/MateNews/'">Volver a la página principal</button>
+        <br><br><br> -->
+
+
+        <script>
+            function compartir() {
+            if (navigator.share) {
+                navigator.share({
+                title: 'Escocia, Gales e Irlanda del Norte afirmaron su “derecho a la autodeterminación”.',
+                text: 'Escocia, Gales e Irlanda del Norte afirmaron su “derecho a la autodeterminación”.',
+                url: 'https://www.lanacion.com.ar/el-mundo/escocia-gales-e-irlanda-del-norte-reivindicaron-su-derecho-a-la-autodeterminacion-en-una-declaracion-nid14092026/'
+                })
+                .then(() => console.log('Contenido compartido exitosamente'))
+                .catch((error) => console.error('Error al compartir:', error));
+            } else {
+                console.log("Web Share API no soportada");
+            }
+            }
+        </script>
+
+
+        <script>
+            let speechSynthesis = window.speechSynthesis;
+            let currentUtterance = null;
+            let isPaused = false;
+            let isReading = false;
+            let textBlocks = [];
+            let currentBlockIndex = 0;
+            let lastSpokenIndex = 0;
+            const BLOCK_SIZE = 800;
+
+            function updateButtons(speaking) {
+                document.getElementById('playButton').disabled = speaking;
+                document.getElementById('pauseButton').disabled = !speaking;
+                document.getElementById('resumeButton').disabled = !isPaused;
+                document.getElementById('stopButton').disabled = !speaking;
+            }
+
+            function updateProgress() {
+                const progressDiv = document.getElementById('progress');
+                if (isReading) {
+                    progressDiv.textContent = `Leyendo bloque ${currentBlockIndex + 1} de ${textBlocks.length}`;
+                } else {
+                    progressDiv.textContent = '';
+                }
+            }
+
+            function splitIntoBlocks(text) {
+                const sentences = text.replace(/([.!?])\s+/g, "$1|").split("|");
+
+                let blocks = [];
+                let currentBlock = '';
+
+                sentences.forEach(sentence => {
+                    if (sentence.length > BLOCK_SIZE) {
+                        let subSentences = sentence.replace(/,\s+/g, ",|").split("|");
+                        subSentences.forEach(subSentence => {
+                            if (currentBlock.length + subSentence.length > BLOCK_SIZE) {
+                                if (currentBlock) blocks.push(currentBlock.trim());
+                                currentBlock = subSentence;
+                            } else {
+                                currentBlock += (currentBlock ? ' ' : '') + subSentence;
+                            }
+                        });
+                    } else {
+                        if (currentBlock.length + sentence.length > BLOCK_SIZE) {
+                            blocks.push(currentBlock.trim());
+                            currentBlock = sentence;
+                        } else {
+                            currentBlock += (currentBlock ? ' ' : '') + sentence;
+                        }
+                    }
+                });
+
+                if (currentBlock) blocks.push(currentBlock.trim());
+                return blocks;
+            }
+
+            function speakBlock(index) {
+                if (index >= textBlocks.length) {
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                    return;
+                }
+
+                currentUtterance = new SpeechSynthesisUtterance(textBlocks[index]);
+                currentUtterance.rate = parseFloat(1.3);
+                lastSpokenIndex = index;
+
+
+                currentUtterance.onend = function() {
+                    if (isReading && !isPaused) {
+                        currentBlockIndex++;
+                        updateProgress();
+                        speakBlock(currentBlockIndex);
+                    }
+                };
+
+                currentUtterance.onerror = function(event) {
+                    console.error('Error en la lectura:', event);
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }
+
+            function startReading() {
+                const text = document.getElementById('texto').innerText;
+                if (!text) return;
+
+                stop();
+
+                textBlocks = splitIntoBlocks(text);
+                currentBlockIndex = 0;
+                isReading = true;
+                isPaused = false;
+
+                updateButtons(true);
+                updateProgress();
+                speakBlock(currentBlockIndex);
+            }
+
+            function pause() {
+                speechSynthesis.pause();
+                isPaused = true;
+                updateButtons(true);
+            }
+
+            function resume() {
+                speechSynthesis.resume();
+                isPaused = false;
+                updateButtons(true);
+            }
+
+            function stop() {
+                speechSynthesis.cancel();
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                updateButtons(false);
+                updateProgress();
+            }
+
+            function pauseReading() {
+                if (!isReading) return;
+
+                speechSynthesis.pause();
+                isPaused = true;
+                isReading = false;
+                updateButtons(true);
+                updateProgress();
+            }
+
+            function resumeReading() {
+                if (!isPaused) return;
+
+                isPaused = false;
+                isReading = true;
+
+                if (lastSpokenIndex === currentBlockIndex) {
+                    currentBlockIndex++;
+                }
+
+                updateButtons(true);
+                updateProgress();
+
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    speakBlock(currentBlockIndex);
+                }
+            }
+
+            function stopReading() {
+                speechSynthesis.cancel();
+                finishReading();
+            }
+
+            function finishReading() {
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                lastSpokenIndex = -1;
+                currentUtterance = null;
+                updateButtons(false);
+                updateProgress();
+            }
+
+        </script>
+
+        <script>
+
+            var elem = document.documentElement;
+            var fullscreenButton = document.getElementById("fullscreenButton");
+            var fullscreenIcon = document.getElementById("fullscreenIcon");
+
+            fullscreenButton.addEventListener("click", function() {
+            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+                }
+            } else {
+                if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+                }
+            }
+            });
+
+            document.addEventListener('fullscreenchange', (event) => {
+            if (!document.fullscreenElement) {
+                fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+            } else {
+                fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+            }
+            });
+        </script>
+
+    </body>
+    </html>
