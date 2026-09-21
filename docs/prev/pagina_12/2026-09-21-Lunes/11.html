@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Género Negro argentino, anticipación de la Patria. Por. Mempo Giardinelli.</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: auto;
+                padding: 5%;
+            }
+            .btnL {
+                background: #d1d1d1;
+                border-radius: 7px;
+                padding: 18px;
+                min-width: 100%;
+                color: #000000;
+                font-size: medium;
+                min-height: 70px;
+            }
+            button {
+                background-color: #d1d1d1;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:disabled {
+                background-color: #d1d1d1;
+                cursor: not-allowed;
+            }
+            button:hover:not(:disabled) {
+                background-color: #d1d1d1;
+            }
+            #voiceSelect {
+                margin: 10px 0;
+                padding: 5px;
+            }
+            .controls {
+                margin: 10px 0;
+            }
+
+            #fullscreenButton {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px;
+                background-color: transparent;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+            #fullscreenIcon {
+                width: 24px;
+                height: 24px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <button id="fullscreenButton">
+        <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+        </svg>
+        </button>
+
+        <div id="texto">
+            <h1>Género Negro argentino, anticipación de la Patria. Por. Mempo Giardinelli.</h1>
+            <p>Como propuesta para esta semana, el columnista responsable de esta sección se propone invitar a releer una vieja antología del Cuento Negro argentino, que es un género literario supeditado, podría decirse, al llamado Género Negro que circula todavía y cada vez más y con mayor popularidad, acaso porque se rige sobre todo por las reglas del Dios de nuestro tiempo: el Dios Mercado.</p><p>Como es popularmente reconocido, el cuento argentino es un campo demasiado vasto para ser reducido a tres o cuatro carillas. Pero puede intentarse y es oportuno un resumen, apuntando desde el vamos que el cuento que funda la narrativa argentina contemporánea --“El Matadero”, de Esteban Echeverría y 1837-- puede perfectamente encuadrarse en la literatura criminal, ya que es la historia de un joven unitario cajetilla que es despedazado por furibundos y bestiales matarifes de filiación federal.</p><p>Toda similitud validada con nuestra contemporaneidad, desde luego, porque, como señalaba hace años el gran editor que se llamó Jorge Lafforgue, en su imprescindible Cuentos policiales argentinos , publicado por Alfaguara, él dejó estampado para siempre que la evolución del cuento criminal argentino podía dividirse en varios momentos, que él llamaba períodos: formativo, clásico, de transición y negro propiamente dicho.</p><p>Por eso este columnista, consciente de su heterodoxia conceptual, postula que la literatura argentina del último medio siglo anticipa y prefigura una vez más todo lo venidero, es decir, el desastre político y moral que se vive hoy en la Argentina presidida por el atrabiliario Sr. Milei. Y entendido el vocablo “atrabiliario” como lo define el Diccionario de la Real Academia Española: “ Que tiene mal carácter y se irrita con facilidad ”.</p><p>Como es apreciable, en esencia se trata de una representación bastarda de todo lo que se frustró en este país en los últimos años y hoy mantiene a millones de compatriotas sumidos en un despreciable presente político que exacerba la decadencia moral de la sociedad quebrada y en desconcierto que define hoy a la otrora orgullosa República Argentina.</p><p>Somos –entiende este columnista– una sociedad hoy descompuesta que es urgente e imperativo recuperar y reformar cuanto antes, si es que, como ha señalado Axel Kicillof en su discurso, estamos a tiempo.</p><p>Y es que –digámoslo con todas las letras– parece aproximarse más y más al punto en que todo puede diluirse en manos de sujetos delirantes cuyos apellidos componen una grotesca pintura del actual desastre que es en estas horas la República Argentina, otrora orgullosa Patria que amamos millones de argentinos y argentinas y que hoy es menos que una colonia sometida a potencias extranjeras. Y encima, casi todas potencias cuestionables por sus ambiciones, extravagancias y vocación de daños que darían vergüenza a los principales dirigentes del mundo si acaso pudiera comprobarse que son personas capaces de sentir vergüenza, aunque sea en estado larvario.</p><p>Es notable cómo la narrativa de Claudia Piñeiro se ha anticipado a las relaciones entre las iglesias evangélicas y el poder, por ejemplo.</p><p>Y ya hace muchos años, el genial periodista y narrador que fue Osvaldo Soriano, en su original estilo astuto y profundo, prefiguraba los devenires de la patria esperanzada que todavía éramos entonces.</p><p>Llena de ilusiones, originalidad, sólidas esperanzas colectivas y numerosos talentos en marcha, aquella Nación en su devenir barría mugres a rolete y además esperanzaba porque era una Argentina original, igualitarista y universalmente respetada y respetable.</p><p>A ella habrá que volver cuando se termine la pesadilla autoritaria y fulera del libertariaje. @</p>
+        </div>
+        <br><br><br>
+            <div style="display: none;">
+                <label for="voiceSelect">Seleccionar voz:</label>
+                <select id="voiceSelect"></select>
+            </div>
+            <div class="controls">
+                <button onclick="startReading()" id="playButton">
+                    🔊 Leer
+                </button>
+                <button onclick="pauseReading()" id="pauseButton" disabled style="display: none;">
+                    ⏸️ Pausar
+                </button>
+                <button onclick="resumeReading()" id="resumeButton" disabled style="display: none;">
+                    ▶️ Continuar
+                </button>
+                <button onclick="stopReading()" id="stopButton" disabled>
+                    ⏹️ Detener
+                </button>
+            </div>
+            <div id="progress" style="display: none;"></div>
+        <br><br><br>
+        <button class="btnL" onclick="compartir()">Compartir</button>
+        <br><br><br>
+        <button class="btnL" onclick="window.location.href='https://www.pagina12.com.ar/2026/09/20/genero-negro-argentino-anticipacion-de-la-patria/'">Ver en web original</button>
+        <br><br><br>
+        <!-- <button class="btnL" onclick="window.location.href='https://matenews.github.io/MateNews/'">Volver a la página principal</button>
+        <br><br><br> -->
+
+
+        <script>
+            function compartir() {
+            if (navigator.share) {
+                navigator.share({
+                title: 'Género Negro argentino, anticipación de la Patria. Por. Mempo Giardinelli.',
+                text: 'Género Negro argentino, anticipación de la Patria. Por. Mempo Giardinelli.',
+                url: 'https://www.pagina12.com.ar/2026/09/20/genero-negro-argentino-anticipacion-de-la-patria/'
+                })
+                .then(() => console.log('Contenido compartido exitosamente'))
+                .catch((error) => console.error('Error al compartir:', error));
+            } else {
+                console.log("Web Share API no soportada");
+            }
+            }
+        </script>
+
+
+        <script>
+            let speechSynthesis = window.speechSynthesis;
+            let currentUtterance = null;
+            let isPaused = false;
+            let isReading = false;
+            let textBlocks = [];
+            let currentBlockIndex = 0;
+            let lastSpokenIndex = 0;
+            const BLOCK_SIZE = 800;
+
+            function updateButtons(speaking) {
+                document.getElementById('playButton').disabled = speaking;
+                document.getElementById('pauseButton').disabled = !speaking;
+                document.getElementById('resumeButton').disabled = !isPaused;
+                document.getElementById('stopButton').disabled = !speaking;
+            }
+
+            function updateProgress() {
+                const progressDiv = document.getElementById('progress');
+                if (isReading) {
+                    progressDiv.textContent = `Leyendo bloque ${currentBlockIndex + 1} de ${textBlocks.length}`;
+                } else {
+                    progressDiv.textContent = '';
+                }
+            }
+
+            function splitIntoBlocks(text) {
+                const sentences = text.replace(/([.!?])\s+/g, "$1|").split("|");
+
+                let blocks = [];
+                let currentBlock = '';
+
+                sentences.forEach(sentence => {
+                    if (sentence.length > BLOCK_SIZE) {
+                        let subSentences = sentence.replace(/,\s+/g, ",|").split("|");
+                        subSentences.forEach(subSentence => {
+                            if (currentBlock.length + subSentence.length > BLOCK_SIZE) {
+                                if (currentBlock) blocks.push(currentBlock.trim());
+                                currentBlock = subSentence;
+                            } else {
+                                currentBlock += (currentBlock ? ' ' : '') + subSentence;
+                            }
+                        });
+                    } else {
+                        if (currentBlock.length + sentence.length > BLOCK_SIZE) {
+                            blocks.push(currentBlock.trim());
+                            currentBlock = sentence;
+                        } else {
+                            currentBlock += (currentBlock ? ' ' : '') + sentence;
+                        }
+                    }
+                });
+
+                if (currentBlock) blocks.push(currentBlock.trim());
+                return blocks;
+            }
+
+            function speakBlock(index) {
+                if (index >= textBlocks.length) {
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                    return;
+                }
+
+                currentUtterance = new SpeechSynthesisUtterance(textBlocks[index]);
+                currentUtterance.rate = parseFloat(1.3);
+                lastSpokenIndex = index;
+
+
+                currentUtterance.onend = function() {
+                    if (isReading && !isPaused) {
+                        currentBlockIndex++;
+                        updateProgress();
+                        speakBlock(currentBlockIndex);
+                    }
+                };
+
+                currentUtterance.onerror = function(event) {
+                    console.error('Error en la lectura:', event);
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }
+
+            function startReading() {
+                const text = document.getElementById('texto').innerText;
+                if (!text) return;
+
+                stop();
+
+                textBlocks = splitIntoBlocks(text);
+                currentBlockIndex = 0;
+                isReading = true;
+                isPaused = false;
+
+                updateButtons(true);
+                updateProgress();
+                speakBlock(currentBlockIndex);
+            }
+
+            function pause() {
+                speechSynthesis.pause();
+                isPaused = true;
+                updateButtons(true);
+            }
+
+            function resume() {
+                speechSynthesis.resume();
+                isPaused = false;
+                updateButtons(true);
+            }
+
+            function stop() {
+                speechSynthesis.cancel();
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                updateButtons(false);
+                updateProgress();
+            }
+
+            function pauseReading() {
+                if (!isReading) return;
+
+                speechSynthesis.pause();
+                isPaused = true;
+                isReading = false;
+                updateButtons(true);
+                updateProgress();
+            }
+
+            function resumeReading() {
+                if (!isPaused) return;
+
+                isPaused = false;
+                isReading = true;
+
+                if (lastSpokenIndex === currentBlockIndex) {
+                    currentBlockIndex++;
+                }
+
+                updateButtons(true);
+                updateProgress();
+
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    speakBlock(currentBlockIndex);
+                }
+            }
+
+            function stopReading() {
+                speechSynthesis.cancel();
+                finishReading();
+            }
+
+            function finishReading() {
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                lastSpokenIndex = -1;
+                currentUtterance = null;
+                updateButtons(false);
+                updateProgress();
+            }
+
+        </script>
+
+        <script>
+
+            var elem = document.documentElement;
+            var fullscreenButton = document.getElementById("fullscreenButton");
+            var fullscreenIcon = document.getElementById("fullscreenIcon");
+
+            fullscreenButton.addEventListener("click", function() {
+            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+                }
+            } else {
+                if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+                }
+            }
+            });
+
+            document.addEventListener('fullscreenchange', (event) => {
+            if (!document.fullscreenElement) {
+                fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+            } else {
+                fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+            }
+            });
+        </script>
+
+    </body>
+    </html>
