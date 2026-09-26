@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Taxis y Apps de viajes, de la protesta a los golpes.</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: auto;
+                padding: 5%;
+            }
+            .btnL {
+                background: #d1d1d1;
+                border-radius: 7px;
+                padding: 18px;
+                min-width: 100%;
+                color: #000000;
+                font-size: medium;
+                min-height: 70px;
+            }
+            button {
+                background-color: #d1d1d1;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:disabled {
+                background-color: #d1d1d1;
+                cursor: not-allowed;
+            }
+            button:hover:not(:disabled) {
+                background-color: #d1d1d1;
+            }
+            #voiceSelect {
+                margin: 10px 0;
+                padding: 5px;
+            }
+            .controls {
+                margin: 10px 0;
+            }
+
+            #fullscreenButton {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px;
+                background-color: transparent;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+            #fullscreenIcon {
+                width: 24px;
+                height: 24px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <button id="fullscreenButton">
+        <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+        </svg>
+        </button>
+
+        <div id="texto">
+            <h1>Taxis y Apps de viajes, de la protesta a los golpes.</h1>
+            <p>Hubo un cruce cuando un taxista quedó rodeado de choferes frente al Palacio Municipal. Luego, caravana con escrache en 1 y 44</p><p>Lo que comenzó como una serie de manifestaciones contrapuestas frente al Palacio Municipal ubicado en calle 12 entre 51 y 53, terminó derivando en agresiones físicas, escraches cruzados en puntos neurálgicos de la ciudad y el temor generalizado de que el enfrentamiento derive en males mayores si no aparecía la policía para intermediar.</p><p>El clima tenso quedó expuesto durante las primeras horas de la mañana del viernes frente a la Municipalidad. En ese sector, un taxista que transitaba por el lugar terminó rodeado en medio de la protesta de los conductores de Apps. Volaron manotazos y golpes en la carrocería de su coche. El violento episodio requirió la presencia de efectivos policiales para evitar consecuencias más graves.</p><p>Juan Carlos Berón, referente del sector taxista, repudió los hechos aunque detalló: “Hoy vinieron las aplicaciones ilegales porque vamos a ser claros, son aplicaciones que nos roban literalmente el trabajo. Vinieron a manifestarse a la puerta de la Municipalidad y los taxistas están trabajando. Ellos increparon a varios taxistas, entre ellos fueron a la Estación de Trenes a provocar. No estoy de acuerdo con la violencia sinceramente, pero esta gente ha venido a provocar y los taxistas se han defendido”.</p><p>Berón remarcó además la falta de controles y exigió medidas drásticas contra las plataformas: “El taxista defiende su fuente de trabajo, está viendo el peligro de la comida de las familias. Nosotros pagamos todos los impuestos, nos persiguen y nos hacen cumplir con todas las normas. Pero hay un transporte ilegal que son las propias aplicaciones que nos joden la vida. Esto lo tiene que resolver el Estado Municipal y miran para un costado; tendrían que bloquear las señales satelitales de las aplicaciones en La Plata y ahí se termina todo el problema”.</p><p>Horas después, una masiva caravana compuesta por autos y una gran cantidad de motociclistas se trasladó hasta la clásica parada de taxis ubicada en la intersección de las avenidas 1 y 44, frente a la Estación de Trenes. Allí se vivieron momentos de altísima tensión, donde abundaron los bocinazos, insultos y cruces verbales cara a cara.</p><p>Desde la Agrupación de Conductores de Aplicaciones Unidas y Afines (ACAURA), su titular Pablo Alejandro León aseguró: “Nosotros no tenemos manera de controlar a todos los que están en esta actividad. Hay muchos grupos de WhatsApp autoconvocados que no están en relación con nosotros, por eso es muy difícil aplacar esto. Nosotros presentamos 14 notas al Ejecutivo municipal y al Concejo Deliberante con carácter de urgencia para pedir una mesa de trabajo ya, porque esto se está yendo de las manos”.</p><p>Respecto a los incidentes en 1 y 44, León explicó: “Nos contaron que decidieron ir a increpar a los taxis porque se comprobó que ayer agarraron a golpes a un chico de aplicaciones de moto y ese chico terminó internado en el Hospital San Martín. Esto termina siendo en definitiva una guerra entre trabajadores y se hace imperioso que el municipio tome cartas en el asunto y solucione esto de una vez. El Municipio y el Concejo Deliberante proponen controles que no sirven para nada, que son una aspirina para un cáncer”.</p><p>Con las calles convertidas en un escenario de disputas y la amenaza de nuevos cruces si no se resuelve el problema en cuestión.</p>
+        </div>
+        <br><br><br>
+            <div style="display: none;">
+                <label for="voiceSelect">Seleccionar voz:</label>
+                <select id="voiceSelect"></select>
+            </div>
+            <div class="controls">
+                <button onclick="startReading()" id="playButton">
+                    🔊 Leer
+                </button>
+                <button onclick="pauseReading()" id="pauseButton" disabled style="display: none;">
+                    ⏸️ Pausar
+                </button>
+                <button onclick="resumeReading()" id="resumeButton" disabled style="display: none;">
+                    ▶️ Continuar
+                </button>
+                <button onclick="stopReading()" id="stopButton" disabled>
+                    ⏹️ Detener
+                </button>
+            </div>
+            <div id="progress" style="display: none;"></div>
+        <br><br><br>
+        <button class="btnL" onclick="compartir()">Compartir</button>
+        <br><br><br>
+        <button class="btnL" onclick="window.location.href='https://www.eldia.com/la-ciudad/tension-en-la-plata-choferes-de-aplicaciones-fueron-a-buscar-a-los-taxistas-y-realizaron-una-caravana-por-la-ciudad-la-ciudad_1790352480'">Ver en web original</button>
+        <br><br><br>
+        <!-- <button class="btnL" onclick="window.location.href='https://matenews.github.io/MateNews/'">Volver a la página principal</button>
+        <br><br><br> -->
+
+
+        <script>
+            function compartir() {
+            if (navigator.share) {
+                navigator.share({
+                title: 'Taxis y Apps de viajes, de la protesta a los golpes.',
+                text: 'Taxis y Apps de viajes, de la protesta a los golpes.',
+                url: 'https://www.eldia.com/la-ciudad/tension-en-la-plata-choferes-de-aplicaciones-fueron-a-buscar-a-los-taxistas-y-realizaron-una-caravana-por-la-ciudad-la-ciudad_1790352480'
+                })
+                .then(() => console.log('Contenido compartido exitosamente'))
+                .catch((error) => console.error('Error al compartir:', error));
+            } else {
+                console.log("Web Share API no soportada");
+            }
+            }
+        </script>
+
+
+        <script>
+            let speechSynthesis = window.speechSynthesis;
+            let currentUtterance = null;
+            let isPaused = false;
+            let isReading = false;
+            let textBlocks = [];
+            let currentBlockIndex = 0;
+            let lastSpokenIndex = 0;
+            const BLOCK_SIZE = 800;
+
+            function updateButtons(speaking) {
+                document.getElementById('playButton').disabled = speaking;
+                document.getElementById('pauseButton').disabled = !speaking;
+                document.getElementById('resumeButton').disabled = !isPaused;
+                document.getElementById('stopButton').disabled = !speaking;
+            }
+
+            function updateProgress() {
+                const progressDiv = document.getElementById('progress');
+                if (isReading) {
+                    progressDiv.textContent = `Leyendo bloque ${currentBlockIndex + 1} de ${textBlocks.length}`;
+                } else {
+                    progressDiv.textContent = '';
+                }
+            }
+
+            function splitIntoBlocks(text) {
+                const sentences = text.replace(/([.!?])\s+/g, "$1|").split("|");
+
+                let blocks = [];
+                let currentBlock = '';
+
+                sentences.forEach(sentence => {
+                    if (sentence.length > BLOCK_SIZE) {
+                        let subSentences = sentence.replace(/,\s+/g, ",|").split("|");
+                        subSentences.forEach(subSentence => {
+                            if (currentBlock.length + subSentence.length > BLOCK_SIZE) {
+                                if (currentBlock) blocks.push(currentBlock.trim());
+                                currentBlock = subSentence;
+                            } else {
+                                currentBlock += (currentBlock ? ' ' : '') + subSentence;
+                            }
+                        });
+                    } else {
+                        if (currentBlock.length + sentence.length > BLOCK_SIZE) {
+                            blocks.push(currentBlock.trim());
+                            currentBlock = sentence;
+                        } else {
+                            currentBlock += (currentBlock ? ' ' : '') + sentence;
+                        }
+                    }
+                });
+
+                if (currentBlock) blocks.push(currentBlock.trim());
+                return blocks;
+            }
+
+            function speakBlock(index) {
+                if (index >= textBlocks.length) {
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                    return;
+                }
+
+                currentUtterance = new SpeechSynthesisUtterance(textBlocks[index]);
+                currentUtterance.rate = parseFloat(1.3);
+                lastSpokenIndex = index;
+
+
+                currentUtterance.onend = function() {
+                    if (isReading && !isPaused) {
+                        currentBlockIndex++;
+                        updateProgress();
+                        speakBlock(currentBlockIndex);
+                    }
+                };
+
+                currentUtterance.onerror = function(event) {
+                    console.error('Error en la lectura:', event);
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }
+
+            function startReading() {
+                const text = document.getElementById('texto').innerText;
+                if (!text) return;
+
+                stop();
+
+                textBlocks = splitIntoBlocks(text);
+                currentBlockIndex = 0;
+                isReading = true;
+                isPaused = false;
+
+                updateButtons(true);
+                updateProgress();
+                speakBlock(currentBlockIndex);
+            }
+
+            function pause() {
+                speechSynthesis.pause();
+                isPaused = true;
+                updateButtons(true);
+            }
+
+            function resume() {
+                speechSynthesis.resume();
+                isPaused = false;
+                updateButtons(true);
+            }
+
+            function stop() {
+                speechSynthesis.cancel();
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                updateButtons(false);
+                updateProgress();
+            }
+
+            function pauseReading() {
+                if (!isReading) return;
+
+                speechSynthesis.pause();
+                isPaused = true;
+                isReading = false;
+                updateButtons(true);
+                updateProgress();
+            }
+
+            function resumeReading() {
+                if (!isPaused) return;
+
+                isPaused = false;
+                isReading = true;
+
+                if (lastSpokenIndex === currentBlockIndex) {
+                    currentBlockIndex++;
+                }
+
+                updateButtons(true);
+                updateProgress();
+
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    speakBlock(currentBlockIndex);
+                }
+            }
+
+            function stopReading() {
+                speechSynthesis.cancel();
+                finishReading();
+            }
+
+            function finishReading() {
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                lastSpokenIndex = -1;
+                currentUtterance = null;
+                updateButtons(false);
+                updateProgress();
+            }
+
+        </script>
+
+        <script>
+
+            var elem = document.documentElement;
+            var fullscreenButton = document.getElementById("fullscreenButton");
+            var fullscreenIcon = document.getElementById("fullscreenIcon");
+
+            fullscreenButton.addEventListener("click", function() {
+            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+                }
+            } else {
+                if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+                }
+            }
+            });
+
+            document.addEventListener('fullscreenchange', (event) => {
+            if (!document.fullscreenElement) {
+                fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+            } else {
+                fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+            }
+            });
+        </script>
+
+    </body>
+    </html>
