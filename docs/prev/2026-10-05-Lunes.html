@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Lunes 05 octubre 2026 08:20 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-10-05-Lunes/1.html">1) Bolsonaro puede derrotar a Lula en la segunda vuelta, si construye un acuerdo político con los partidos de derecha.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-10-05-Lunes/2.html">2) Pedro Sánchez adelantó las elecciones generales en España tras el fracaso de sus leyes de vivienda.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-10-05-Lunes/3.html">3) El Nobel de Medicina fue otorgado a tres expertos por el uso de la luz para estudiar las células y las neuronas.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-10-05-Lunes/4.html">4) “Ducha fría para la izquierda”: la victoria de Flávio Bolsonaro sobre Lula en los medios del mundo.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-10-05-Lunes/5.html">5) Diez claves que dejó la victoria de Bolsonaro para Argentina: Milei sale fortalecido, pero hay una señal para Cristina Kirchner.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-10-05-Lunes/6.html">6) Misterioso crimen en el barrio porteño de Palermo: hay dos detenidos y no descartan un posible ajuste de cuentas narco.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-10-05-Lunes/7.html">7) El detrás de escena del error en la estrategia de Alpine en el GP de Baréin: cómo logró recuperarse Colapinto.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-10-05-Lunes/8.html">8) La ex monja que compartió el convento con la joven que inspiró la serie Cautiva: latigazos, rezos y silencios para llegar a Dios.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-10-05-Lunes/9.html">9) La revelación sobre la escandalosa salida de Cristiano de la selección de Portugal: “Cayó en la trampa”.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-10-05-Lunes/10.html">10) La Joaqui respondió a las críticas por su romance con Tiago PZK: el video y la frase que generó debate.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-10-05-Lunes/11.html">11) Bolsonaro dijo que está &quot;muy contento&quot; con el resultado de la primera vuelta: &quot;Brasil quiere un cambio&quot;.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-10-05-Lunes/12.html">12) Lula admitió que esperaba ganar los comicios y calificó de &quot;inesperado&quot; el resultado.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-10-05-Lunes/1.html">1) PáginaI12 en Brasil. El Bolso o la vida. Con una polarización anticipada, el candidato ultraderechista Flávio Bolsonaro terminó arriba en la primera vuelta, pero su sorpresiva votación no le alcanzó para evitar el balotaje. Trepó a un 47%, a menos de dos puntos del actual mandatario Lula da Silva, que enfrenta un difícil desafío para revertir el resultado de cara a la segunda vuelta del 25 de octubre. Por. Gustavo Veiga.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-10-05-Lunes/2.html">2) Brasil, sorpresa y suspenso. Por. Atilio A. Boron.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-10-05-Lunes/3.html">3) El balotaje será entre Lula y la Casa Blanca. Por. Daniel Kersffeld.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-10-05-Lunes/4.html">4) &quot;Debemos movilizarnos para doblegar a las élites&quot;. Pedro Sánchez convocó a elecciones para el 29 de noviembre en España.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-10-05-Lunes/5.html">5) El absurdo como política de Estado. Unos delirantes muy cuerdos. Por. Eduardo Aliverti.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-10-05-Lunes/6.html">6) Karl Deisseroth, Peter Hegemann y Georg Nagel. El Nobel de Medicina fue para tres científicos por sus descubrimientos en Optogenética.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-10-05-Lunes/7.html">7) A quién apoyarán los candidatos derrotados en la primera vuelta.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-10-05-Lunes/8.html">8) Lula ganó ampliamente en la votación en la Argentina.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-10-05-Lunes/9.html">9) Los resultados, estado por estado.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-10-05-Lunes/10.html">10) Investigan una posible injerencia de EE.UU. en las elecciones.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-10-05-Lunes/11.html">11) Reelecta con récord. Erika Hilton, transexual y negra, se convirtió en la diputada más votada en la historia de Brasil.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-10-05-Lunes/12.html">12) Acuerdistas y autonomistas se sacan los ojos. El papelón de Macri y De Andreis en Jujuy extremó la puja interna en el PRO. Por. Werner Pertot.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-10-05-Lunes/1.html">1) Javier Milei y sus medidas, EN VIVO: el Presidente celebró el resultado en Brasil y dijo que el continente americano “quiere vivir en libertad”.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-10-05-Lunes/2.html">2) Flavio Bolsonaro se impuso en las elecciones de Brasil y parte con ventaja frente a Lula para la segunda vuelta.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-10-05-Lunes/3.html">3) Pedro Sánchez anunció elecciones anticipadas en España para el 29 de noviembre.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-10-05-Lunes/4.html">4) Elecciones en Brasil: qué hay detrás del mazazo a Lula y por qué la aritmética juega a favor de Flavio Bolsonaro.</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-10-05-Lunes/5.html">5) Milei brinda con caipirinha.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-10-05-Lunes/6.html">6) Pablo Quirno puso en duda la segunda vuelta en Brasil: “¿Lula le va a regalar el triunfo a Bolsonaro?”.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-10-05-Lunes/7.html">7) Premio Nobel de Medicina 2026: Karl Deisseroth, Peter Hegemann y Georg Nagel, reconocidos por sus hallazgos sobre canales iónicos y la optogenética.</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-10-05-Lunes/8.html">8) Aparece otra firma intermediaria en los contratos con la AFA vinculada al reclutador de “prestanombres”.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-10-05-Lunes/9.html">9) Solo en Off | El puntano Abdala cumplió el sueño de ser Presidente y “superar” a Rodríguez Saá.</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-10-05-Lunes/10.html">10) El juicio Hotesur y Los Sauces contra Cristina y Máximo Kirchner se encamina a su reunificación.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-10-05-Lunes/1.html">1) Impactante triunfo de Bolsonaro que deja complicado a Lula para el balotaje</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-10-05-Lunes/2.html">2) Bolsonarazo</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-10-05-Lunes/3.html">3) Lula apuesta a Alckmin para acercar a los empresarios y seducir a los indecisos</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-10-05-Lunes/4.html">4) Brasil, la última batalla de Trump en la región</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-10-05-Lunes/5.html">5) &quot;Ni Lula ni Bolsonaro van a hacer el ajuste fiscal que Brasil necesita&quot;</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-10-05-Lunes/6.html">6) El bolsonarismo tendrá la bancada mas grande en el Senado y en Diputados</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-10-05-Lunes/7.html">7) Durísimo ataque de Milei al dueño de La Nación, que pone en duda que le adjudique Tecnópolis</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-10-05-Lunes/8.html">8) La Iglesia cuestiona a Milei en la previa a la llegada del Papa: &quot;Las heridas de la intolerancia supuran&quot;</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-10-05-Lunes/1.html">1) La ola ultra está de fiesta.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-10-05-Lunes/2.html">2) Batacazo de Bolsonaro en Brasil: derrotó a Lula y es favorito para la segunda vuelta.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-10-05-Lunes/3.html">3) Las petroleras nacionales vistieron la Argentina Week con anuncios del RIGI.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-10-05-Lunes/4.html">4) Nadie muestra las cartas.</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-10-05-Lunes/5.html">5) Los sillones en la Suprema Corte, una llave para las reelecciones de intendentes.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-10-05-Lunes/6.html">6) Los arzobispos anfitriones de León XIV que incomodan a Milei.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-10-05-Lunes/7.html">7) Mariel Fernández 2027: la mesa chica de la intendenta de Moreno para la carrera por la Gobernación bonaerense.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-10-05-Lunes/8.html">8) Gobernadores, PASO y Corte Suprema: los frentes que complican la hoja de ruta de Milei.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-axios" aria-labelledby="source-axios-heading">
+<h3 class="source-heading" id="source-axios-heading"><a href="https://www.axios.com">Axios</a></h3>
+<ol class="source-notes">
+<li class="nota" id="axios_0"><a href="axios/2026-10-04-Domingo/1.html">1) Iranian diplomats &quot;kicked out&quot; of U.S. after ignoring order to leave.</a></li>
+<li class="nota" id="axios_1"><a href="axios/2026-10-04-Domingo/2.html">2) Yemeni and Saudi forces launch counteroffensive against the Houthis.</a></li>
+<li class="nota" id="axios_2"><a href="axios/2026-10-04-Domingo/3.html">3) New York has a socialist mayor. Los Angeles may be next.</a></li>
+<li class="nota" id="axios_3"><a href="axios/2026-10-04-Domingo/4.html">4) Scoop: Powerful open model is set to shake up AI race.</a></li>
+<li class="nota" id="axios_4"><a href="axios/2026-10-04-Domingo/5.html">5) OpenAI&#x27;s Altman: Ascribing religion to models a &quot;safety issue&quot;.</a></li>
+<li class="nota" id="axios_5"><a href="axios/2026-10-04-Domingo/6.html">6) OpenAI.</a></li>
+<li class="nota" id="axios_6"><a href="axios/2026-10-04-Domingo/7.html">7) Rogue AI agents expose internet&#x27;s frail foundation.</a></li>
+<li class="nota" id="axios_7"><a href="axios/2026-10-04-Domingo/8.html">8) new ways.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-china_daily" aria-labelledby="source-china_daily-heading">
+<h3 class="source-heading" id="source-china_daily-heading"><a href="https://www.chinadaily.com.cn/china">China Daily</a></h3>
+<ol class="source-notes">
+<li class="nota" id="china_daily_0"><a href="china_daily/2026-10-05-Lunes/1.html">1) Personas en toda China disfrutan del feriado del Día Nacional.</a></li>
+<li class="nota" id="china_daily_1"><a href="china_daily/2026-10-05-Lunes/2.html">2) La autopista Altay-Hemu muestra los colores del otoño en Xinjiang.</a></li>
+<li class="nota" id="china_daily_2"><a href="china_daily/2026-10-05-Lunes/3.html">3) Varios eventos se llevan a cabo en toda China para celebrar el próximo Día Nacional.</a></li>
+<li class="nota" id="china_daily_3"><a href="china_daily/2026-10-05-Lunes/4.html">4) Arrulla la música, las palomas marcan el tono de la ciudad.</a></li>
+<li class="nota" id="china_daily_4"><a href="china_daily/2026-10-05-Lunes/5.html">5) El Niño registrará temperaturas récord en la superficie del mar.</a></li>
+<li class="nota" id="china_daily_5"><a href="china_daily/2026-10-05-Lunes/6.html">6) El comercio a través del Estrecho desafía las fricciones políticas.</a></li>
+<li class="nota" id="china_daily_6"><a href="china_daily/2026-10-05-Lunes/7.html">7) La &#x27;desintoxicación&#x27; del teléfono inteligente es un refresco para la tranquilidad.</a></li>
+<li class="nota" id="china_daily_7"><a href="china_daily/2026-10-05-Lunes/8.html">8) Máximo asesor político insta a aunar fuerzas para el rejuvenecimiento nacional.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="el_dia/2026-10-05-Lunes/1.html">1) Jubilados de La Plata en crisis: el drama de tener que elegir entre comprar alimentos o remedios.</a></li>
+<li class="nota" id="el_dia_1"><a href="el_dia/2026-10-05-Lunes/2.html">2) Piden la pavimentación en un tramo de calle 52.</a></li>
+<li class="nota" id="el_dia_2"><a href="el_dia/2026-10-05-Lunes/3.html">3) Provincia y distribuidoras apelaron la cautelar que frenó los aumentos de luz.</a></li>
+<li class="nota" id="el_dia_3"><a href="el_dia/2026-10-05-Lunes/4.html">4) Eligieron a los nuevos embajadores culturales de la Fiesta Provincial del Inmigrante.</a></li>
+<li class="nota" id="el_dia_4"><a href="el_dia/2026-10-05-Lunes/5.html">5) Arrancó el plazo para anotarse en colegios privados.</a></li>
+<li class="nota" id="el_dia_5"><a href="el_dia/2026-10-05-Lunes/6.html">6) Octubre rosa: la agenda de prevención y estudios contra el cáncer de mama en La Plata.</a></li>
+<li class="nota" id="el_dia_6"><a href="el_dia/2026-10-05-Lunes/7.html">7) Se viene otra semana corta en facultades y escuelas.</a></li>
+<li class="nota" id="el_dia_7"><a href="el_dia/2026-10-05-Lunes/8.html">8) Actividades: salud, arquería y talleres.</a></li>
+<li class="nota" id="el_dia_8"><a href="el_dia/2026-10-05-Lunes/9.html">9) Vecinos denuncian que el agua sale marrón en la zona de 70 y 4.</a></li>
+<li class="nota" id="el_dia_9"><a href="el_dia/2026-10-05-Lunes/10.html">10) Reclaman por el mal estado de las calles del Parque San Martín.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-10-05-Lunes/1.html">1) &quot;Es venganza&quot;: Kremlin comenta el cambio de naturaleza en sus ataques contra Ucrania</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-10-05-Lunes/2.html">2) Lula tras el primer turno en Brasil: &quot;Nosotros vamos a ganar estas elecciones&quot;</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-10-05-Lunes/3.html">3) &quot;¿Cuándo se detiene esta locura absoluta?&quot;: denuncian la entrega de cheque &#x27;secreto&#x27; a Ucrania</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-10-05-Lunes/4.html">4) Flávio Bolsonaro, el sucesor que aspira el retorno de una dinastía de poder en Brasil</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-10-05-Lunes/5.html">5) Pedro Sánchez disuelve el Parlamento y adelanta elecciones en medio de la crisis de vivienda</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-10-05-Lunes/6.html">6) Primer comentario del Kremlin sobre resultados de elecciones en Brasil</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-10-05-Lunes/7.html">7) &quot;Lobo con piel de cordero&quot;: Irán arremete contra el OIEA por su programa nuclear</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-10-05-Lunes/8.html">8) Brasil rumbo al balotaje: Flávio Bolsonaro gana a Lula en la primera vuelta</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-10-05-Lunes/1.html">1) Bolsonaro da la sorpresa frente a Lula en la primera vuelta y toma ventaja hacia el balotaje en Brasil</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-10-05-Lunes/2.html">2) Fábricas Nacionales de Cerveza: cómo siguen las negociaciones luego del cierre de la planta de Minas</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-10-05-Lunes/3.html">3) Presencia de jugadoras trans en fútbol femenino del interior genera debate sobre desigualdad y ventajas deportivas</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-10-05-Lunes/4.html">4) Luego de 12 años de abandono y a días de su inauguración, así está por dentro el espacio cultural García Lorca, un búnker de cemento en pleno Pocitos</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-10-05-Lunes/5.html">5) Asesinaron a un narco uruguayo frente a su esposa en Buenos Aires: quién era y su vínculo con Villa Española</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-10-05-Lunes/6.html">6) La maternidad y la paternidad se postergan: casi dos tercios de quienes no tienen hijos cree que el momento ideal es después de los 30</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-10-05-Lunes/7.html">7) La nueva planta en Aguas Corrientes, la apuesta del gobierno para robustecer el sistema de OSE en la zona metropolitana</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-10-05-Lunes/8.html">8) Escándalo Epstein: el ex príncipe Andrés inica acciones legales contra la policía por los registros de sus casas</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-10-05-Lunes/9.html">9) Nobel de Medicina 2026: Karl Deisseroth, Peter Hegemann y Georg Nagel destacados por sus hallazgos en optogenética</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-10-05-Lunes/10.html">10) Necesitaba ese gol: Darwin Núñez analizó su momento en la selección uruguaya y agradeció a Diego Forlán, una leyenda, por la confianza que le brindó; mirá el video</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-10-05-Lunes/11.html">11) Pedro Sánchez adelanta las elecciones generales en España al 29 de noviembre</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-10-05-Lunes/12.html">12) Exportaciones uruguayas de carne vacuna, celulosa y soja lograron casi US$ 5.000 millones</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">La Diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-10-05-Lunes/1.html">1) Flávio Bolsonaro y Lula avanzaron a la segunda vuelta, aunque el derechista quedó mejor perfilado para la contienda final.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-10-05-Lunes/2.html">2) El FA se prepara para su próximo congreso con la expectativa de “fortalecer la herramienta política” y generar “agenda propia”.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-10-05-Lunes/3.html">3) El Partido Colorado mantiene su postura de interpelar a Castillo en la Cámara de Diputados, a pesar del preacuerdo en el puerto.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-10-05-Lunes/4.html">4) Diputados avanzarán con proyecto de Abdala para que jóvenes que cometieron delitos siendo mayores no vuelvan al Inisa.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-10-05-Lunes/5.html">5) Menoni dijo que se proyecta una “buena” temporada turística, pese a menor “disponibilidad de efectivo de los argentinos”.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-10-05-Lunes/6.html">6) Uruguay llamó a elecciones en Nicaragua, pero no compartió que la situación represente una amenaza para la paz regional.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-10-05-Lunes/7.html">7) Elecciones para la representación docente en el Codicen: Pablo Macedo y Limber Santos son los nuevos consejeros.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-10-05-Lunes/8.html">8) Institución Nacional de Derechos Humanos recomienda crear grupo de trabajo para elaborar plan y atender la costa de Aguas Dulces.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-10-05-Lunes/9.html">9) Inteligencia distorsionada en la frontera de la IA.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-10-05-Lunes/10.html">10) Empresas uruguayas valoran postura de Orsi ante ONU sobre IA, pero advierten que el desafío es llevar los discursos a la práctica.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-10-05-Lunes/1.html">1) Bolivia| Ministro de Gobierno informa la detención del fiscal general Roger Mariaca que investigaba el caso de Fernando Cerimedo</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-10-05-Lunes/2.html">2) México| A dos años al frente del Gobierno, Claudia Sheinbaum destaca el significado simbólico y político de que una mujer ocupe la presidencia</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-10-05-Lunes/3.html">3) Chile| Efectivos de Carabineros reprimen marcha de estudiantes en rechazo a los recortes presupuestarios contra la educación</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-10-05-Lunes/4.html">4) Ecuador| El activista digital sueco Ola Bini fue detenido por presuntos agentes de migración en el norte de Quito</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-10-05-Lunes/5.html">5) Perú| Afectaciones a los derechos humanos en el contexto de las Elecciones General 2026</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-10-05-Lunes/6.html">6) Brasil| Lula da Silva aprueba medida que garantiza un subsidio a las mujeres víctimas de violencia machista que cause baja laboral</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-10-05-Lunes/7.html">7) Internacional| El petróleo subió más de 4% por la restricción de China y el refuerzo militar de EEUU en Medio Oriente</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-10-05-Lunes/8.html">8) Argentina, China y una relación estratégica atravesada por el comercio, las inversiones y los recursos naturales – Por Emilia Trabucco</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/1.html">1) La democracia pende de un hilo. Hoy será la primera votación entre Lula y Flavio Bolsonaro. En forma unánime todos los sondeos prevén lo que se denomina un empate técnico, es decir una diferencia menor al margen de error del método empleado para predecir, que cada encuestador debe explicitar. Salvo una pifia descomunal (como las de la provincia de Buenos Aires en 2025,…. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/2.html">2) El futuro ya fue gastado. En la fantasía del mañana, todo cierra. El problema real es hoy. Por Lucka Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/3.html">3) Peor que una colonia. El mapa de la entrega: entre los acuerdos comerciales con Estados Unidos y un fallo de la Corte que habilita la extranjerización de tierras. Por Horacio Rovelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/4.html">4) Música para Bastillas. A cuarenta años del álbum mediante el cual Los Redonditos de Ricota lanzaron su revolución. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/5.html">5) Garantes del poder. La Corte avaló la derogación de la Ley de Tierras y le negó al CECIM el derecho a reclamar por la soberanía popular. Por Javier Ortega.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/6.html">6) No hay obvio que por mal no venga. De Macri a Milei, las tangentes judiciales convalidan la cadena de despojos. Por Diego Kenis.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/7.html">7) Esclavos de una deuda. Las exigencias derivadas de las obligaciones con el FMI se traducen en el empeoramiento de las condiciones de vida de la mayor parte de la población. Por Foro Economía y Trabajo.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/8.html">8) El remate energético. El gobierno de Milei regala empresas del Estado para beneficiar los negocios privados cercanos al poder. Por Mario de Casas.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/9.html">9) Mancha venenosa. Los gobiernos y los grupos empresarios socios omiten mencionar la participación de la británica Harbour Energy PLC en la explotación de hidrocarburos en la Argentina. Por Susana Lara.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/10.html">10) La lengua fluye. Jueces en busca del lenguaje claro y un pibe encerrado escribiendo de amor. El problema de la justicia no es la claridad, sino la escucha. Por Julián Axat.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/11.html">11) Lo que trae el caso Harwicz. No se debe confundir antisemitismo con antisionismo: uno se asienta en la discriminación racial, el otro en la crítica a una política de un Estado…. Por Aleardo Laría Rajneri.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/12.html">12) Los elegidos. Un recorrido por la creación del Estado de Israel, el sionismo y el genocidio en Gaza. Por Sebastián Fernández.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/13.html">13) Cristianos en la encrucijada. En el contexto de un continente que gira hacia la derecha, tiene particular importancia la próxima visita de noviembre del papa León XIV a Sudamérica. Por Sergio Ferrari.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/14.html">14) Tormenta Negra. La sobreactuación de uniformes, controles y detenciones del gobierno porteño queda en los ojos de quienes contemplan estos procedimientos desde la infancia. Por Antolín Magallanes.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/15.html">15) Formas de censura. Espionaje macrista, silenciamientos en Radio Nacional Córdoba y apriete contra una FM del Conurbano bonaerense. Por Alberto Moya.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_15"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/16.html">16) La danza de Xi y Trump. Ambos líderes buscan una coexistencia estratégica. América Latina otea cómo puede ser afectada. Por Néstor Restivo.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-10-04-Domingo.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>
