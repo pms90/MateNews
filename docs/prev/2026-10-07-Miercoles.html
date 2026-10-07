@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Miercoles 07 octubre 2026 00:01 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-10-07-Miercoles/1.html">1) Messi le dijo adiós a la selección argentina y cerró un ciclo irrepetible de 21 años en la cima del fútbol mundial.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-10-07-Miercoles/2.html">2) El discurso completo de Messi en su despedida de la Selección y el llanto de Enzo Fernández: “Es el día más triste de mi carrera”.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-10-07-Miercoles/3.html">3) Los memes que dejó la despedida de Messi: La Sole, el Papu Gómez y el show de drones, los elegidos.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-10-07-Miercoles/4.html">4) Así fueron los shows para despedir a Lionel Messi: del abrazo del capitán con La Sole a la sorpresa de Sergio Torres.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-10-07-Miercoles/5.html">5) El gol de Nicolás Otamendi ante Benín en su despedida de la Selección y la ovación cuando fue reemplazado.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-10-07-Miercoles/6.html">6) El gol de penal de Messi en su despedida de la selección argentina: el especial festejo con el plantel.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-10-07-Miercoles/7.html">7) El grito de la sucesión: el golazo de Nico Paz y el guiño del destino.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-10-07-Miercoles/8.html">8) El show con drones que hizo emocionar a Messi en su despedida de la selección argentina.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-10-07-Miercoles/9.html">9) El homenaje a Messi a los 10 minutos: el gesto de los jugadores de Benín.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-10-07-Miercoles/10.html">10) Allanaron la casa de una mujer que revendía entradas para la despedida de Messi.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-10-07-Miercoles/11.html">11) Mirtha Legrand recibió el alta del Sanatorio Mater Dei tras casi tres semanas internada.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-10-07-Miercoles/12.html">12) Las consultoras que releva el BCRA volvieron a recortar el crecimiento del PBI y estimaron una inflación de 1,9% para septiembre.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-10-07-Miercoles/1.html">1) Se despidió como mejor sabe, repartiendo alegrías y lágrimas. En su última función, Messi nos volvió a emocionar: “Jugar en la Selección Argentina es lo más lindo que me pudo pasar”. El crack cerró un ciclo memorable en una noche ideal, rodeado de sus amigos, familiares e hinchas. Y como para no perder la costumbre, metió un gol y dos asistencias. Por último, cuando le tocó agarrar el micrófono, hasta hizo de comediante: “Hoy hablé más que nunca”. Por. Cristian Dellocchio.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-10-07-Miercoles/2.html">2) El video completo de lo que dijo tras su útlimo partido. El discurso de despedida de Messi.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-10-07-Miercoles/3.html">3) El día de San Messi. Por. Daniel Guiñazú.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-10-07-Miercoles/4.html">4) “Y Messi no se va / Messi no se va...”. Por. Vito Amalfitano.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-10-07-Miercoles/5.html">5) Un Dios con dos manos y una Pulga. Por. José Luis Lanao.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-10-07-Miercoles/6.html">6) Analiza otro expediente contra el DNU 70/2023. La Corte manda señales de una posible marcha atrás con la extranjerización de la tierra. Por. Irina Hauser.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-10-07-Miercoles/7.html">7) El gol de Messi llegó desde el punto penal.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-10-07-Miercoles/8.html">8) Nico Paz metió un golazo para estirar la ventaja de Argentina.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-10-07-Miercoles/9.html">9) Otamendi abrió el marcador tras un tiro de esquina de Messi.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-10-07-Miercoles/10.html">10) Cruces en Diputados por la iniciativa oficialista. Fuertes críticas al proyecto de Soberanía Nacional: “Es un caballo de Troya”. Por. Eva Moreira.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-10-07-Miercoles/11.html">11) Retomará un proyecto de ley. Las desesperadas maniobras del Gobierno para blindar el megaDNU. Por. Melisa Molina.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-10-07-Miercoles/12.html">12) Las fórmulas que dejan huellas. ¿Qué hace grande a una serie? Las claves del top 10 de The New York Times y su ranking. Por. Erik Gómez.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-10-07-Miercoles/1.html">1) La despedida de Lionel Messi EN VIVO vs. Benín: hora, todos los invitados y el minuto a minuto del partido.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-10-07-Miercoles/2.html">2) Messi y una despedida a la altura de su historia: emoción, recuerdos y un Monumental abrazado a su leyenda.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-10-07-Miercoles/3.html">3) Lionel Messi dio un emotivo discurso en su partido despedida: “Jugar en la selección es lo más lindo que te puede pasar”.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-10-07-Miercoles/4.html">4) El gol que Lionel Messi se debía en su despedida y una ocasión increíble que recordó que hasta él puede fallar.</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-10-07-Miercoles/5.html">5) Los cánticos de los hinchas contra el presidente de la AFA antes y después del partido despedida de Messi.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-10-07-Miercoles/6.html">6) Inmortal, el documental de LA NACION que cuenta la historia del último baile de Messi.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-10-07-Miercoles/7.html">7) Diputados: el Gobierno evalúa incluir un capítulo de Ley de Tierras en el proyecto de Inviolabilidad a la Propiedad Privada.</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-10-07-Miercoles/8.html">8) Flavio Bolsonaro suma aliados y tiende un puente con la Corte, mientras Lula apuesta al miedo y al fin de la “jornada 6x1”.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-10-07-Miercoles/9.html">9) El Súper Niño, la sequía del milenio y la herramienta creada por una provincia para anticipar lo que viene.</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-10-07-Miercoles/10.html">10) Resistencia inesperada: el desafío que enfrenta uno de los tratamientos más prometedores contra el cáncer.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-10-07-Miercoles/1.html">1) Interna en la Corte: Rosenkrantz insiste en votar contra la ley de tierras y convocan dos conjueces</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-10-07-Miercoles/2.html">2) Un primo de Bullrich defiende al Santander en un juicio por usura y la senadora deberá votar el pliego del juez</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-10-07-Miercoles/3.html">3) Santilli corre del Enacom a un hombre de Rodrigo Lugones y designa a un ex Telecom</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-10-07-Miercoles/4.html">4) Las Fuerzas del Cielo se suben al fenómeno Cleitinho para pedir lugares en las listas</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-10-07-Miercoles/5.html">5) Verón aparece como el principal outsider para suceder a Kicillof en la provincia</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-10-07-Miercoles/6.html">6) Antes de la despedida de Messi, Casación benefició a Tapia y la causa por la mansión de Toviggino seguirá en Pilar</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-10-07-Miercoles/7.html">7) La sucesión de Bartolacci agita la interna en la Universidad Nacional de Rosario</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-10-07-Miercoles/8.html">8) Un 57% quiere un cambio total de la política económica y Bullrich mide más que Milei</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-10-07-Miercoles/1.html">1) Mariel Fernández subió a Kicillof a un acto cristinista: ganaron los dos.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-10-07-Miercoles/2.html">2) Máximo Kirchner 2027: el empujón de Brasil.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-10-07-Miercoles/3.html">3) Milei, cuesta arriba: el 57,5% votaría por un cambio total de rumbo.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-10-07-Miercoles/4.html">4) La caída del salario de los docentes bonaerenses recalienta la pulseada entre Kicillof y los gremios.</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-10-07-Miercoles/5.html">5) Karina Milei y Santilli escenificaron su alianza con Sáenz, pero faltó el mileísmo salteño no acuerdista.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-10-07-Miercoles/6.html">6) Jujuy: Sadir espera un guiño de Karina Milei para sumar los votos que le faltan y tomar deuda en el exterior.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-10-07-Miercoles/7.html">7) Milei promueve una tanda de leyes punitivistas para recuperar la agenda en el Congreso.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-10-07-Miercoles/8.html">8) Consejo de la Magistratura: quién es quién en las cuatro listas que compiten para representar a los jueces.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-axios" aria-labelledby="source-axios-heading">
+<h3 class="source-heading" id="source-axios-heading"><a href="https://www.axios.com">Axios</a></h3>
+<ol class="source-notes">
+<li class="nota" id="axios_0"><a href="axios/2026-10-06-Martes/1.html">1) 1. Missing details keep U.S. plague response on hold.</a></li>
+<li class="nota" id="axios_1"><a href="axios/2026-10-06-Martes/2.html">2) 2. Trump wants to rewrite the midterm lexicon.</a></li>
+<li class="nota" id="axios_2"><a href="axios/2026-10-06-Martes/3.html">3) 3. Longevity guru Bryan Johnson: &quot;People really want me to die&quot;.</a></li>
+<li class="nota" id="axios_3"><a href="axios/2026-10-06-Martes/4.html">4) 4. The most-watched election in U.S. history.</a></li>
+<li class="nota" id="axios_4"><a href="axios/2026-10-06-Martes/5.html">5) 5. Scoop: Senate GOP to send $5m to shore up Graham in South Carolina.</a></li>
+<li class="nota" id="axios_5"><a href="axios/2026-10-06-Martes/6.html">6) Trump under fire for saying Iran could &quot;take out&quot; LA, San Diego.</a></li>
+<li class="nota" id="axios_6"><a href="axios/2026-10-06-Martes/7.html">7) Western AI labs challenge China&#x27;s open-model lead.</a></li>
+<li class="nota" id="axios_7"><a href="axios/2026-10-06-Martes/8.html">8) fresh models.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-china_daily" aria-labelledby="source-china_daily-heading">
+<h3 class="source-heading" id="source-china_daily-heading"><a href="https://www.chinadaily.com.cn/china">China Daily</a></h3>
+<ol class="source-notes">
+<li class="nota" id="china_daily_0"><a href="china_daily/2026-10-07-Miercoles/1.html">1) Personas en toda China disfrutan del feriado del Día Nacional.</a></li>
+<li class="nota" id="china_daily_1"><a href="china_daily/2026-10-07-Miercoles/2.html">2) La autopista Altay-Hemu muestra los colores del otoño en Xinjiang.</a></li>
+<li class="nota" id="china_daily_2"><a href="china_daily/2026-10-07-Miercoles/3.html">3) Varios eventos se llevan a cabo en toda China para celebrar el próximo Día Nacional.</a></li>
+<li class="nota" id="china_daily_3"><a href="china_daily/2026-10-07-Miercoles/4.html">4) Arrulla la música, las palomas marcan el tono de la ciudad.</a></li>
+<li class="nota" id="china_daily_4"><a href="china_daily/2026-10-07-Miercoles/5.html">5) Alimentar un vínculo emocional con la propia ciudad.</a></li>
+<li class="nota" id="china_daily_5"><a href="china_daily/2026-10-07-Miercoles/6.html">6) El Niño registrará temperaturas récord en la superficie del mar.</a></li>
+<li class="nota" id="china_daily_6"><a href="china_daily/2026-10-07-Miercoles/7.html">7) El comercio a través del Estrecho desafía las fricciones políticas.</a></li>
+<li class="nota" id="china_daily_7"><a href="china_daily/2026-10-07-Miercoles/8.html">8) Máximo asesor político insta a aunar fuerzas para el rejuvenecimiento nacional.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="el_dia/2026-10-07-Miercoles/1.html">1) VIDEO | Vecinos de La Loma denuncian una pérdida de agua que lleva más de una semana sin solución.</a></li>
+<li class="nota" id="el_dia_1"><a href="el_dia/2026-10-07-Miercoles/2.html">2) Amaneció con sol en La Plata pero lanzan alerta por tormentas fuertes: ¿cuándo llegan?</a></li>
+<li class="nota" id="el_dia_2"><a href="el_dia/2026-10-07-Miercoles/3.html">3) La Justicia ordenó aplicar la Ley de Financiamiento Universitario: el Gobierno apelará el fallo.</a></li>
+<li class="nota" id="el_dia_3"><a href="el_dia/2026-10-07-Miercoles/4.html">4) Obras de mejoramiento vial e hidráulico en El Rincón.</a></li>
+<li class="nota" id="el_dia_4"><a href="el_dia/2026-10-07-Miercoles/5.html">5) Distinguen a los deportistas platenses que compitieron en los Juegos Suramericanos.</a></li>
+<li class="nota" id="el_dia_5"><a href="el_dia/2026-10-07-Miercoles/6.html">6) Alquileres de comercios: las bajas ventas impactan en el mercado.</a></li>
+<li class="nota" id="el_dia_6"><a href="el_dia/2026-10-07-Miercoles/7.html">7) Secundarios de La Plata se “asomaron” a la experiencia universitaria.</a></li>
+<li class="nota" id="el_dia_7"><a href="el_dia/2026-10-07-Miercoles/8.html">8) A la espera del Papa, una artista de La Plata lo retrató junto a la Virgen.</a></li>
+<li class="nota" id="el_dia_8"><a href="el_dia/2026-10-07-Miercoles/9.html">9) En La Plata, cada mes la suba de las expensas supera a la inflación.</a></li>
+<li class="nota" id="el_dia_9"><a href="el_dia/2026-10-07-Miercoles/10.html">10) Casa Sandra pide volver a operar en el edificio céntrico de Av. 7.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-10-07-Miercoles/1.html">1) &quot;No vamos a aceptar palabras en lugar de acciones&quot;: el mensaje de Vance a Irán</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-10-07-Miercoles/2.html">2) Las &#x27;épicas&#x27; pérdidas aéreas de EE.UU. en su guerra contra Irán</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-10-07-Miercoles/3.html">3) Flávio Bolsonaro promete cambiar la Constitución de Brasil para &quot;redemocratizar el país&quot;</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-10-07-Miercoles/4.html">4) La &#x27;guerra&#x27; sigilosa que se libra en el Cono Sur</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-10-07-Miercoles/5.html">5) ¿Cicatrices que no sanarán?: la dura realidad que enfrenta EE.UU. tras represalias iraníes contra sus bases</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-10-07-Miercoles/6.html">6) &quot;La Generación Z se ha levantado&quot;: las llamas estudiantiles que devoran el legado de Macron</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-10-07-Miercoles/7.html">7) Los países que lideran el crecimiento en Latinoamérica</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-10-07-Miercoles/8.html">8) Llegan desde zona de guerra las piezas clave para un megaproyecto petrolero en Latinoamérica</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-10-07-Miercoles/1.html">1) Cuestionario, registros antropométricos y hasta punción de sangre: la encuesta que volverá a tener Uruguay para medir enfermedades no transmisibles</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-10-07-Miercoles/2.html">2) Yamandú Orsi se reunirá con el vicepresidente de El Salvador, Félix Ulloa</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-10-07-Miercoles/3.html">3) El guiño de Diego Forlán para la reconstrucción del fútbol y el redescubrimiento de la armonía en la selección uruguaya, tras el tsunami de Marcelo Bielsa</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-10-07-Miercoles/4.html">4) Aviso especial de Inumet por tormentas muy fuertes y puntualmente severas desde el miércoles</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-10-07-Miercoles/5.html">5) La emocionante despedida de Lionel Messi de la selección argentina: rompió en llanto y un país lo homenajeó de pie</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-10-07-Miercoles/6.html">6) A tres años del 7 de octubre, embajador de Israel dijo que también en Uruguay la comunidad judía ha tenido que hacer frente al aumento del antisemitismo</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-10-07-Miercoles/7.html">7) Escándalo en Portugal: la extensa carta de Cristiano Ronaldo explicando su abrupta salida de la selección: El entrenador rompió su palabra</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-10-07-Miercoles/8.html">8) Repasá los tantos de la goleada de la selección uruguaya 6-1 contra India, con un nuevo tanto de Darwin Núñez y el doblete de Maxi Araújo</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-10-07-Miercoles/9.html">9) Trump nombró al jefe de inteligencia como su nuevo Zar de la IA</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-10-07-Miercoles/10.html">10) Lubetkin afirma acuerdo con EEUU y Cuba: Los médicos cubanos seguirán operando en Uruguay; el pago será al profesional y no al país</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-10-07-Miercoles/11.html">11) El edil Gómez no presentó comprobantes al Partido Nacional por el pago del sueldo a asesor condenado</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-10-07-Miercoles/12.html">12) La baja rentabilidad más allá de los números: los últimos cierres hoteleros en Colonia, las medidas que reclama el sector y las claves de quienes logran hacer crecer el negocio</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">La Diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-10-07-Miercoles/1.html">1) Durazno: fundación liberal ganó adjudicación para la “provisión de recursos humanos” a la comuna y edil del PC pidió información.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-10-07-Miercoles/2.html">2) Caso Leiva: Jorge Díaz anunció que se analiza incluir redes de pagos como potencial riesgo en lavado de activos.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-10-07-Miercoles/3.html">3) Trabajadores de Terminal Cuenca del Plata aprobaron propuesta de convenio colectivo.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-10-07-Miercoles/4.html">4) Noche de fiesta albiceleste: Lionel Messi se despidió de la selección argentina.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-10-07-Miercoles/5.html">5) Tras caso Leiva, Fernando Pereira y senadores del FA acordaron ir a “una agenda de transparencia” en la política.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-10-07-Miercoles/6.html">6) Niggemeyer dijo que el Colegio Médico siente “presiones” del Parlamento por el caso de la anestesista condenada por mala praxis.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-10-07-Miercoles/7.html">7) Charla en torno al libro sobre los 20 años de la diaria , que se publicará en diciembre.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-10-07-Miercoles/8.html">8) Diputados rechazó moción para conformar una comisión especial que analice la situación de la Caja de Profesionales.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-10-07-Miercoles/9.html">9) El Senado conmemoró los 60 años de la CNT: “Una central que supo estar a la altura de la historia”, afirmó Andrade.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-10-07-Miercoles/10.html">10) 16 años pensando el futuro más allá de la urgencia.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-10-07-Miercoles/1.html">1) Chile| Presidente Kast presenta el presupuesto 2027 solicitando autorización de endeudamiento fiscal por más de 25 mil millones de dólares</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-10-07-Miercoles/2.html">2) Brasil| El Supremo Tribunal Federal multa a Flávio Bolsonaro por impulsar propaganda negativa contra Lula da Silva en la campaña electoral</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-10-07-Miercoles/3.html">3) Perú| La Asociación Nacional de Productores Ecológicos exige al Gobierno ayuda para familias campesinas afectadas por heladas en la región andina</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-10-07-Miercoles/4.html">4) Nicaragua| El Gobierno oficializa su retiro del Parlamento Centroamericano al considerar que el organismo no cumple con los objetivos ni beneficia a las familias</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-10-07-Miercoles/5.html">5) México| Secretaría de Relaciones Exteriores presenta reclamo formal de sanciones tras confirmarse la muerte de 18 mexicanos bajo custodia del ICE</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-10-07-Miercoles/6.html">6) Venezuela| El vicepresidente del Parlamento anuncia la constitución de la comisión especial encargada de conducir la reforma de la Ley contra el Odio</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-10-07-Miercoles/7.html">7) Internacional| Fuerzas yemeníes respaldadas por Arabia Saudita confirman que han arrebatado el control del estrecho de Bab el Mandeb a los hutíes</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-10-07-Miercoles/8.html">8) Argentina, China y una relación estratégica atravesada por el comercio, las inversiones y los recursos naturales – Por Emilia Trabucco</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/1.html">1) La democracia pende de un hilo. Hoy será la primera votación entre Lula y Flavio Bolsonaro. En forma unánime todos los sondeos prevén lo que se denomina un empate técnico, es decir una diferencia menor al margen de error del método empleado para predecir, que cada encuestador debe explicitar. Salvo una pifia descomunal (como las de la provincia de Buenos Aires en 2025,…. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/2.html">2) El futuro ya fue gastado. En la fantasía del mañana, todo cierra. El problema real es hoy. Por Lucka Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/3.html">3) Peor que una colonia. El mapa de la entrega: entre los acuerdos comerciales con Estados Unidos y un fallo de la Corte que habilita la extranjerización de tierras. Por Horacio Rovelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/4.html">4) Música para Bastillas. A cuarenta años del álbum mediante el cual Los Redonditos de Ricota lanzaron su revolución. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/5.html">5) Garantes del poder. La Corte avaló la derogación de la Ley de Tierras y le negó al CECIM el derecho a reclamar por la soberanía popular. Por Javier Ortega.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/6.html">6) No hay obvio que por mal no venga. De Macri a Milei, las tangentes judiciales convalidan la cadena de despojos. Por Diego Kenis.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/7.html">7) Esclavos de una deuda. Las exigencias derivadas de las obligaciones con el FMI se traducen en el empeoramiento de las condiciones de vida de la mayor parte de la población. Por Foro Economía y Trabajo.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/8.html">8) El remate energético. El gobierno de Milei regala empresas del Estado para beneficiar los negocios privados cercanos al poder. Por Mario de Casas.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/9.html">9) Mancha venenosa. Los gobiernos y los grupos empresarios socios omiten mencionar la participación de la británica Harbour Energy PLC en la explotación de hidrocarburos en la Argentina. Por Susana Lara.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/10.html">10) La lengua fluye. Jueces en busca del lenguaje claro y un pibe encerrado escribiendo de amor. El problema de la justicia no es la claridad, sino la escucha. Por Julián Axat.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/11.html">11) Lo que trae el caso Harwicz. No se debe confundir antisemitismo con antisionismo: uno se asienta en la discriminación racial, el otro en la crítica a una política de un Estado…. Por Aleardo Laría Rajneri.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/12.html">12) Los elegidos. Un recorrido por la creación del Estado de Israel, el sionismo y el genocidio en Gaza. Por Sebastián Fernández.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/13.html">13) Cristianos en la encrucijada. En el contexto de un continente que gira hacia la derecha, tiene particular importancia la próxima visita de noviembre del papa León XIV a Sudamérica. Por Sergio Ferrari.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/14.html">14) Tormenta Negra. La sobreactuación de uniformes, controles y detenciones del gobierno porteño queda en los ojos de quienes contemplan estos procedimientos desde la infancia. Por Antolín Magallanes.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/15.html">15) Formas de censura. Espionaje macrista, silenciamientos en Radio Nacional Córdoba y apriete contra una FM del Conurbano bonaerense. Por Alberto Moya.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_15"><a href="el_cohete_a_la_luna/2026-10-05-Lunes/16.html">16) La danza de Xi y Trump. Ambos líderes buscan una coexistencia estratégica. América Latina otea cómo puede ser afectada. Por Néstor Restivo.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-10-06-Martes.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>
