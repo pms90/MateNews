@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Guerra civil Rocket: Iñaki y Sharif ya disputan el armado de las listas</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: auto;
+                padding: 5%;
+            }
+            .btnL {
+                background: #d1d1d1;
+                border-radius: 7px;
+                padding: 18px;
+                min-width: 100%;
+                color: #000000;
+                font-size: medium;
+                min-height: 70px;
+            }
+            button {
+                background-color: #d1d1d1;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:disabled {
+                background-color: #d1d1d1;
+                cursor: not-allowed;
+            }
+            button:hover:not(:disabled) {
+                background-color: #d1d1d1;
+            }
+            #voiceSelect {
+                margin: 10px 0;
+                padding: 5px;
+            }
+            .controls {
+                margin: 10px 0;
+            }
+
+            #fullscreenButton {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px;
+                background-color: transparent;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+            #fullscreenIcon {
+                width: 24px;
+                height: 24px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <button id="fullscreenButton">
+        <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+        </svg>
+        </button>
+
+        <div id="texto">
+            <h1>Guerra civil Rocket: Iñaki y Sharif ya disputan el armado de las listas</h1>
+            <p>El influencer dijo que va a pelear lugares en las listas para los jóvenes. El más chico de los Menem cree que busca correrlo del armado junto a Rocío Gómez.</p><p>Iñaki Gutiérrez y Sharif Menem, los máximos exponentes de la juventud karinista, ya libran una guerra civil dentro del Equipo Rocket por el armado de las listas para el año que viene.</p><p>LPO explicó que Iñaki, el influencer de mayor confianza de los hermanos Milei, a tal punto que se ha quedado a dormir en la Quinta de Olivos, está recorriendo las provincias para relanzar la juventud libertaria y quiere ser diputado nacional.</p><p>A Iñaki lo suele acompañar en sus viajes Sharif, el sobrino de Martín Menem con el que los riojanos buscan controlar la juventud libertaria.</p><p>Sharif que se convirtió en una suerte de frenemy de Iñaki. Un frenemy, conjunción en inglés entre &quot;friend&quot; y &quot;enemy&quot;, es una relación en la que la complicidad simulada y la convivencia diaria esconden una competencia feroz que genera rencores y pone a trabajar a las zonas oscuras de la mente.</p><p>Iñaki y el librero libertario, los samuráis que prepara Milei para el Congreso tras la fallida experiencia de Tronco</p><p>LPO anticipó que Martín Menem le había encargado a Santiago Oría, el líder espiritual y logístico del Equipo Rocket, que oficiara de &quot;niñero&quot; entre Iñaki y Sharif. Sin embargo, las labores de cuidado del cineasta oscilante no están funcionando.</p><p>Voy a luchar para que los jóvenes formen parte de las listas, tenemos que oxigenar la política.</p><p>&quot;Voy a luchar para que los jóvenes formen parte de las listas&quot;, dijo Iñaki a la AM 680, desde Río Gallegos, en otra de las recorridas que viene haciendo por las provincias para instalar la juventud karinista.</p><p>&quot;Tenemos que priorizar nuevas caras, oxigenar la política, antes que acuerdos políticos que capaz nos hagan sacar algún que otro voto más, pero que van a hacer que nosotros renunciemos a nuestra identidad&quot;, dijo Iñaki, en un guiño a las declaraciones de Martín Menem en Tigre, cuando renegó de los acuerdos con los gobernadores que piden Diego Santilli y Luis &quot;Toto&quot; Caputo para controlar el riesgo país.</p><p>De hecho, Iñaki viajó a Santa Cruz fue a apoyar a Jairo Guzmán, el diputado que un sector del gobierno quiere como candidato a gobernador contra un mandatario aliado como Claudio Vidal.</p><p>A pesar del guiño a Menem, el sobrino no tomó bien las declaraciones de Iñaki, que ya se mueve como el dueño de la lapicera de las listas. &quot;Iñaki quiere usar su cercanía con Javier para meter candidatos y bajarle el armado a Sharif y Rocío&quot;, dijeron a LPO en La Libertad Avanza. Rocío es Gómez, la coordinadora nacional de la Juventud de La Libertad Avanza que responde a Sharif.</p><p>En algo coinciden Iñaki y Sharif, y es en dejar afuera de toda discusión a Las Fuerzas del Cielo de Santiago Caputo, que encolumnan al otro sector de jóvenes libertarios. Los celestiales ya habían sido marginados por completo de las listas de 2025 y la intención del karinismo es repetir ese formato.</p>
+        </div>
+        <br><br><br>
+            <div style="display: none;">
+                <label for="voiceSelect">Seleccionar voz:</label>
+                <select id="voiceSelect"></select>
+            </div>
+            <div class="controls">
+                <button onclick="startReading()" id="playButton">
+                    🔊 Leer
+                </button>
+                <button onclick="pauseReading()" id="pauseButton" disabled style="display: none;">
+                    ⏸️ Pausar
+                </button>
+                <button onclick="resumeReading()" id="resumeButton" disabled style="display: none;">
+                    ▶️ Continuar
+                </button>
+                <button onclick="stopReading()" id="stopButton" disabled>
+                    ⏹️ Detener
+                </button>
+            </div>
+            <div id="progress" style="display: none;"></div>
+        <br><br><br>
+        <button class="btnL" onclick="compartir()">Compartir</button>
+        <br><br><br>
+        <button class="btnL" onclick="window.location.href='https://www.lapoliticaonline.com/politica/guerra-civil-rocket-inaki-y-sharif-ya-disputan-el-armado-de-las-listas-8428/'">Ver en web original</button>
+        <br><br><br>
+        <!-- <button class="btnL" onclick="window.location.href='https://matenews.github.io/MateNews/'">Volver a la página principal</button>
+        <br><br><br> -->
+
+
+        <script>
+            function compartir() {
+            if (navigator.share) {
+                navigator.share({
+                title: 'Guerra civil Rocket: Iñaki y Sharif ya disputan el armado de las listas',
+                text: 'Guerra civil Rocket: Iñaki y Sharif ya disputan el armado de las listas',
+                url: 'https://www.lapoliticaonline.com/politica/guerra-civil-rocket-inaki-y-sharif-ya-disputan-el-armado-de-las-listas-8428/'
+                })
+                .then(() => console.log('Contenido compartido exitosamente'))
+                .catch((error) => console.error('Error al compartir:', error));
+            } else {
+                console.log("Web Share API no soportada");
+            }
+            }
+        </script>
+
+
+        <script>
+            let speechSynthesis = window.speechSynthesis;
+            let currentUtterance = null;
+            let isPaused = false;
+            let isReading = false;
+            let textBlocks = [];
+            let currentBlockIndex = 0;
+            let lastSpokenIndex = 0;
+            const BLOCK_SIZE = 800;
+
+            function updateButtons(speaking) {
+                document.getElementById('playButton').disabled = speaking;
+                document.getElementById('pauseButton').disabled = !speaking;
+                document.getElementById('resumeButton').disabled = !isPaused;
+                document.getElementById('stopButton').disabled = !speaking;
+            }
+
+            function updateProgress() {
+                const progressDiv = document.getElementById('progress');
+                if (isReading) {
+                    progressDiv.textContent = `Leyendo bloque ${currentBlockIndex + 1} de ${textBlocks.length}`;
+                } else {
+                    progressDiv.textContent = '';
+                }
+            }
+
+            function splitIntoBlocks(text) {
+                const sentences = text.replace(/([.!?])\s+/g, "$1|").split("|");
+
+                let blocks = [];
+                let currentBlock = '';
+
+                sentences.forEach(sentence => {
+                    if (sentence.length > BLOCK_SIZE) {
+                        let subSentences = sentence.replace(/,\s+/g, ",|").split("|");
+                        subSentences.forEach(subSentence => {
+                            if (currentBlock.length + subSentence.length > BLOCK_SIZE) {
+                                if (currentBlock) blocks.push(currentBlock.trim());
+                                currentBlock = subSentence;
+                            } else {
+                                currentBlock += (currentBlock ? ' ' : '') + subSentence;
+                            }
+                        });
+                    } else {
+                        if (currentBlock.length + sentence.length > BLOCK_SIZE) {
+                            blocks.push(currentBlock.trim());
+                            currentBlock = sentence;
+                        } else {
+                            currentBlock += (currentBlock ? ' ' : '') + sentence;
+                        }
+                    }
+                });
+
+                if (currentBlock) blocks.push(currentBlock.trim());
+                return blocks;
+            }
+
+            function speakBlock(index) {
+                if (index >= textBlocks.length) {
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                    return;
+                }
+
+                currentUtterance = new SpeechSynthesisUtterance(textBlocks[index]);
+                currentUtterance.rate = parseFloat(1.3);
+                lastSpokenIndex = index;
+
+
+                currentUtterance.onend = function() {
+                    if (isReading && !isPaused) {
+                        currentBlockIndex++;
+                        updateProgress();
+                        speakBlock(currentBlockIndex);
+                    }
+                };
+
+                currentUtterance.onerror = function(event) {
+                    console.error('Error en la lectura:', event);
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }
+
+            function startReading() {
+                const text = document.getElementById('texto').innerText;
+                if (!text) return;
+
+                stop();
+
+                textBlocks = splitIntoBlocks(text);
+                currentBlockIndex = 0;
+                isReading = true;
+                isPaused = false;
+
+                updateButtons(true);
+                updateProgress();
+                speakBlock(currentBlockIndex);
+            }
+
+            function pause() {
+                speechSynthesis.pause();
+                isPaused = true;
+                updateButtons(true);
+            }
+
+            function resume() {
+                speechSynthesis.resume();
+                isPaused = false;
+                updateButtons(true);
+            }
+
+            function stop() {
+                speechSynthesis.cancel();
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                updateButtons(false);
+                updateProgress();
+            }
+
+            function pauseReading() {
+                if (!isReading) return;
+
+                speechSynthesis.pause();
+                isPaused = true;
+                isReading = false;
+                updateButtons(true);
+                updateProgress();
+            }
+
+            function resumeReading() {
+                if (!isPaused) return;
+
+                isPaused = false;
+                isReading = true;
+
+                if (lastSpokenIndex === currentBlockIndex) {
+                    currentBlockIndex++;
+                }
+
+                updateButtons(true);
+                updateProgress();
+
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    speakBlock(currentBlockIndex);
+                }
+            }
+
+            function stopReading() {
+                speechSynthesis.cancel();
+                finishReading();
+            }
+
+            function finishReading() {
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                lastSpokenIndex = -1;
+                currentUtterance = null;
+                updateButtons(false);
+                updateProgress();
+            }
+
+        </script>
+
+        <script>
+
+            var elem = document.documentElement;
+            var fullscreenButton = document.getElementById("fullscreenButton");
+            var fullscreenIcon = document.getElementById("fullscreenIcon");
+
+            fullscreenButton.addEventListener("click", function() {
+            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+                }
+            } else {
+                if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+                }
+            }
+            });
+
+            document.addEventListener('fullscreenchange', (event) => {
+            if (!document.fullscreenElement) {
+                fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+            } else {
+                fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+            }
+            });
+        </script>
+
+    </body>
+    </html>

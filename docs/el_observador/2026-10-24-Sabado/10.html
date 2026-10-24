@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Brecha de precios entre Salto y Concordia se redujo levemente a 22,5% en setiembre, según informe de UCU</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: auto;
+                padding: 5%;
+            }
+            .btnL {
+                background: #d1d1d1;
+                border-radius: 7px;
+                padding: 18px;
+                min-width: 100%;
+                color: #000000;
+                font-size: medium;
+                min-height: 70px;
+            }
+            button {
+                background-color: #d1d1d1;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:disabled {
+                background-color: #d1d1d1;
+                cursor: not-allowed;
+            }
+            button:hover:not(:disabled) {
+                background-color: #d1d1d1;
+            }
+            #voiceSelect {
+                margin: 10px 0;
+                padding: 5px;
+            }
+            .controls {
+                margin: 10px 0;
+            }
+
+            #fullscreenButton {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px;
+                background-color: transparent;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+            #fullscreenIcon {
+                width: 24px;
+                height: 24px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <button id="fullscreenButton">
+        <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+        </svg>
+        </button>
+
+        <div id="texto">
+            <h1>Brecha de precios entre Salto y Concordia se redujo levemente a 22,5% en setiembre, según informe de UCU</h1>
+            <p>El Indicador de Precios Fronterizos (IPF) , elaborado por el Observatorio Económico del Campus Salto de la Universidad Católica del Uruguay (UCU), se ubicó en 22,5% en setiembre de 2026 . Este valor refleja que adquirir una canasta representativa de bienes transables en la ciudad de Salto es, en promedio, ese porcentaje más caro que en la vecina ciudad argentina de Concordia, marcando un leve descenso frente a las mediciones previas.</p><p>Dentro de las divisiones analizadas, Alimentos y bebidas no alcohólicas —la categoría de mayor incidencia con un peso del 49% en el indicador y 30 productos relevados— registró una brecha del 19% . Tras alcanzar un piso histórico de 9,1% en mayo y trepar a 23% en julio, la diferencia se redujo levemente en setiembre. Dentro de este rubro, productos como el jamón cocido (-39,2%), el pan blanco envasado (-13,7%), el polvo de hornear (-2,5%) y el yogurt común (-1,8%) registraron precios promedio más bajos en Salto que en Concordia, mientras que en el otro extremo los postres en polvo superaron el 100% de diferencia (183%).</p><p>Por su parte, la división de Transporte y combustibles redujo su brecha al 6% . En el caso específico de la nafta súper, la diferencia se sitúa en el 7% con precios más altos en Salto, contemplando el beneficio de la reducción del 22% del IMESI aplicado desde el 1° de julio. Sin considerar dicha rebaja impositiva, la diferencia superaría el 37%. Asimismo, el gasoil presenta una diferencia del 3% y los neumáticos y cámaras se ubican en -0,9%, siendo ligeramente más económicos en Salto.</p><p>El comportamiento del resto de los rubros mostró variaciones dispares: bebidas alcohólicas y tabaco se ubicó en 41,5% , comidas fuera del hogar cayó al 39% , productos del hogar descendió al 20% , prendas de vestir y calzado se mantuvo en el orden del 7% , y bienes diversos experimentó un incremento hasta llegar al 53% .</p><p>En cuanto al análisis macroeconómico, el informe señala que la evolución del tipo de cambio no actúa como factor explicativo de la baja en el indicador, ya que entre julio y setiembre la cotización en Argentina subió un 1,1% mientras que en Uruguay se mantuvo sin variaciones. En cambio, la persistencia de una inflación superior en la región pampeana argentina —que registró un 2,0% mensual en setiembre y un acumulado interanual del 33,1%, frente a una inflación interanual de 4,68% en Uruguay (y 0,54% mensual)— continúa contribuyendo a estrechar las diferencias de costos entre ambas ciudades fronterizas.</p>
+        </div>
+        <br><br><br>
+            <div style="display: none;">
+                <label for="voiceSelect">Seleccionar voz:</label>
+                <select id="voiceSelect"></select>
+            </div>
+            <div class="controls">
+                <button onclick="startReading()" id="playButton">
+                    🔊 Leer
+                </button>
+                <button onclick="pauseReading()" id="pauseButton" disabled style="display: none;">
+                    ⏸️ Pausar
+                </button>
+                <button onclick="resumeReading()" id="resumeButton" disabled style="display: none;">
+                    ▶️ Continuar
+                </button>
+                <button onclick="stopReading()" id="stopButton" disabled>
+                    ⏹️ Detener
+                </button>
+            </div>
+            <div id="progress" style="display: none;"></div>
+        <br><br><br>
+        <button class="btnL" onclick="compartir()">Compartir</button>
+        <br><br><br>
+        <button class="btnL" onclick="window.location.href='https://www.elobservador.com.uy/economia-y-empresas/brecha-precios-salto-y-concordia-se-redujo-levemente-225-setiembre-segun-informe-ucu-n6061465'">Ver en web original</button>
+        <br><br><br>
+        <!-- <button class="btnL" onclick="window.location.href='https://matenews.github.io/MateNews/'">Volver a la página principal</button>
+        <br><br><br> -->
+
+
+        <script>
+            function compartir() {
+            if (navigator.share) {
+                navigator.share({
+                title: 'Brecha de precios entre Salto y Concordia se redujo levemente a 22,5% en setiembre, según informe de UCU',
+                text: 'Brecha de precios entre Salto y Concordia se redujo levemente a 22,5% en setiembre, según informe de UCU',
+                url: 'https://www.elobservador.com.uy/economia-y-empresas/brecha-precios-salto-y-concordia-se-redujo-levemente-225-setiembre-segun-informe-ucu-n6061465'
+                })
+                .then(() => console.log('Contenido compartido exitosamente'))
+                .catch((error) => console.error('Error al compartir:', error));
+            } else {
+                console.log("Web Share API no soportada");
+            }
+            }
+        </script>
+
+
+        <script>
+            let speechSynthesis = window.speechSynthesis;
+            let currentUtterance = null;
+            let isPaused = false;
+            let isReading = false;
+            let textBlocks = [];
+            let currentBlockIndex = 0;
+            let lastSpokenIndex = 0;
+            const BLOCK_SIZE = 800;
+
+            function updateButtons(speaking) {
+                document.getElementById('playButton').disabled = speaking;
+                document.getElementById('pauseButton').disabled = !speaking;
+                document.getElementById('resumeButton').disabled = !isPaused;
+                document.getElementById('stopButton').disabled = !speaking;
+            }
+
+            function updateProgress() {
+                const progressDiv = document.getElementById('progress');
+                if (isReading) {
+                    progressDiv.textContent = `Leyendo bloque ${currentBlockIndex + 1} de ${textBlocks.length}`;
+                } else {
+                    progressDiv.textContent = '';
+                }
+            }
+
+            function splitIntoBlocks(text) {
+                const sentences = text.replace(/([.!?])\s+/g, "$1|").split("|");
+
+                let blocks = [];
+                let currentBlock = '';
+
+                sentences.forEach(sentence => {
+                    if (sentence.length > BLOCK_SIZE) {
+                        let subSentences = sentence.replace(/,\s+/g, ",|").split("|");
+                        subSentences.forEach(subSentence => {
+                            if (currentBlock.length + subSentence.length > BLOCK_SIZE) {
+                                if (currentBlock) blocks.push(currentBlock.trim());
+                                currentBlock = subSentence;
+                            } else {
+                                currentBlock += (currentBlock ? ' ' : '') + subSentence;
+                            }
+                        });
+                    } else {
+                        if (currentBlock.length + sentence.length > BLOCK_SIZE) {
+                            blocks.push(currentBlock.trim());
+                            currentBlock = sentence;
+                        } else {
+                            currentBlock += (currentBlock ? ' ' : '') + sentence;
+                        }
+                    }
+                });
+
+                if (currentBlock) blocks.push(currentBlock.trim());
+                return blocks;
+            }
+
+            function speakBlock(index) {
+                if (index >= textBlocks.length) {
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                    return;
+                }
+
+                currentUtterance = new SpeechSynthesisUtterance(textBlocks[index]);
+                currentUtterance.rate = parseFloat(1.3);
+                lastSpokenIndex = index;
+
+
+                currentUtterance.onend = function() {
+                    if (isReading && !isPaused) {
+                        currentBlockIndex++;
+                        updateProgress();
+                        speakBlock(currentBlockIndex);
+                    }
+                };
+
+                currentUtterance.onerror = function(event) {
+                    console.error('Error en la lectura:', event);
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }
+
+            function startReading() {
+                const text = document.getElementById('texto').innerText;
+                if (!text) return;
+
+                stop();
+
+                textBlocks = splitIntoBlocks(text);
+                currentBlockIndex = 0;
+                isReading = true;
+                isPaused = false;
+
+                updateButtons(true);
+                updateProgress();
+                speakBlock(currentBlockIndex);
+            }
+
+            function pause() {
+                speechSynthesis.pause();
+                isPaused = true;
+                updateButtons(true);
+            }
+
+            function resume() {
+                speechSynthesis.resume();
+                isPaused = false;
+                updateButtons(true);
+            }
+
+            function stop() {
+                speechSynthesis.cancel();
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                updateButtons(false);
+                updateProgress();
+            }
+
+            function pauseReading() {
+                if (!isReading) return;
+
+                speechSynthesis.pause();
+                isPaused = true;
+                isReading = false;
+                updateButtons(true);
+                updateProgress();
+            }
+
+            function resumeReading() {
+                if (!isPaused) return;
+
+                isPaused = false;
+                isReading = true;
+
+                if (lastSpokenIndex === currentBlockIndex) {
+                    currentBlockIndex++;
+                }
+
+                updateButtons(true);
+                updateProgress();
+
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    speakBlock(currentBlockIndex);
+                }
+            }
+
+            function stopReading() {
+                speechSynthesis.cancel();
+                finishReading();
+            }
+
+            function finishReading() {
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                lastSpokenIndex = -1;
+                currentUtterance = null;
+                updateButtons(false);
+                updateProgress();
+            }
+
+        </script>
+
+        <script>
+
+            var elem = document.documentElement;
+            var fullscreenButton = document.getElementById("fullscreenButton");
+            var fullscreenIcon = document.getElementById("fullscreenIcon");
+
+            fullscreenButton.addEventListener("click", function() {
+            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+                }
+            } else {
+                if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+                }
+            }
+            });
+
+            document.addEventListener('fullscreenchange', (event) => {
+            if (!document.fullscreenElement) {
+                fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+            } else {
+                fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+            }
+            });
+        </script>
+
+    </body>
+    </html>
