@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Jueves 29 octubre 2026 00:55 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-10-29-Jueves/1.html">1) Flávio Bolsonaro denunció fraude electoral en Brasil y les agradeció a Donald Trump y Javier Milei.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-10-29-Jueves/2.html">2) Quién es la argentina que murió en el accidente de trenes en España: también buscan a un hombre.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-10-29-Jueves/3.html">3) Todo lo que se sabe del femicidio de Nancy Godoy: 21 días de misterio, 5 detenidos y un cuerpo sumergido.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-10-29-Jueves/4.html">4) Flávio Bolsonaro aterrizó en el aeropuerto de Miami-Opa Locka procedente de Argentina.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-10-29-Jueves/5.html">5) Eduardo Bolsonaro publicó una foto con Flávio tras reencontrarse en EEUU.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-10-29-Jueves/6.html">6) Los principales partidos brasileños respaldaron el resultado del balotaje que ganó Lula da Silva.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-10-29-Jueves/7.html">7) De “presidente electo” a “líder de Brasil”: los cambios en la carta de Flávio Bolsonaro.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-10-29-Jueves/8.html">8) Trump habló tras la llegada de Bolsonaro: &quot;Le permitimos entrar al país pero no voy a involucrarme&quot;.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-10-29-Jueves/9.html">9) Cómo colaboró el Gobierno argentino con Flávio Bolsonaro para salir de Brasil.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-10-29-Jueves/10.html">10) Grupo Octubre compró la productora Mandarina Contenidos y el canal de streaming Bondi.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-10-29-Jueves/11.html">11) Diego Santilli presentará su primer informe de gestión en el Senado el 25 de noviembre.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-10-29-Jueves/12.html">12) Se demora en el Senado el dictamen que incluye límites a la venta de tierra a extranjeros.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-10-29-Jueves/1.html">1) Denuncias en la Justicia federal por su responsabilidad. Milei, el gran facilitador de la fuga de Flávio Bolsonaro. Hay por lo menos tres presentaciones contra el Presidente por la organización de la huida del excandidato presidencial de Brasil. Están señalados también el canciller Pablo Quirno y la ministra Monteoliva, entre otros. Por. Irina Hauser.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-10-29-Jueves/2.html">2) El papelón del senador al editar la carta pública. En cuestión de minutos, Flávio Bolsonaro pasó de ser “presidente electo de Brasil” a “líder”.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-10-29-Jueves/3.html">3) Desconcierto dentro del propio Partido Liberal. El jefe de campaña de Flávio Bolsonaro admitió que &quot;no hay pruebas&quot; de fraude.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-10-29-Jueves/4.html">4) A pocos días de la llegada de León XIV. La iglesia con el oído en el pueblo. Por. Laura Vales.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-10-29-Jueves/5.html">5) &quot;No voy a hacer comentarios&quot;. Trump le abrió las puertas a Flávio Bolsonaro y al mismo tiempo le marca la cancha.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-10-29-Jueves/6.html">6) Otro compatriota está desaparecido. Una joven argentina murió en el accidente ferroviario en España.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-10-29-Jueves/7.html">7) Investigan un error humano. Hay al menos 68 muertos y decenas de heridos en el choque de trenes en Toledo.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-10-29-Jueves/8.html">8) Tragedia ferroviaria en España. “Emergencia absoluta” y “gente volando por los pasillos”: el drama de los sobrevivientes.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-10-29-Jueves/9.html">9) Las víctimas mortales ascienden ya a 68 personas. Choque de trenes en España: las autoridades apuntan a una “una falla humana”.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-10-29-Jueves/10.html">10) El mito personal. Por. Gastón Garriga.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-10-29-Jueves/11.html">11) Ocurrió en Kazajistán. Escándalo en el Mundial de Lucha: una atleta le hizo “piquete de ojos” a otra y fue descalificada.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-10-29-Jueves/12.html">12) Hasta que Milei cumpla la ley. Nuevo paro universitario para que el gobierno cumpla con el financiamiento.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-10-29-Jueves/1.html">1) Javier Milei y sus medidas, en vivo: sesión en el Senado y el viaje de Karina Milei a Rosario.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-10-29-Jueves/2.html">2) Flavio Bolsonaro se presentó como el líder de Brasil y les agradeció a Milei y a Trump en un comunicado tras su fuga.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-10-29-Jueves/3.html">3) Confirman una víctima argentina en el choque de trenes en España y otra permanece desaparecida.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-10-29-Jueves/4.html">4) Más de 24hs de confusión y huida El paso a paso del viaje de Flavio Bolsonaro a EE.UU.</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-10-29-Jueves/5.html">5) Santiago Caputo fue identificado por un control policial tras el operativo de huida de Bolsonaro.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-10-29-Jueves/6.html">6) Tragedia en España: Los 17 minutos en los que nadie en el centro de control vio que el tren de alta velocidad iba a un choque brutal.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-10-29-Jueves/7.html">7) Las tres hipótesis que se recortan tras el hallazgo del cuerpo de la docente Nanci Godoy.</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-10-29-Jueves/8.html">8) Eduardo Bolsonaro, el artífice de la cinematográfica huida de su hermano Flavio a EE.UU.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-10-29-Jueves/9.html">9) “No creo que lo entiendan”: Ricardo Arriazu explicó su visión sobre la compra de reservas y reclamó cambios en la política del BCRA.</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-10-29-Jueves/10.html">10) Gerónimo Rulli atajó dos penales, fue el héroe de Manchester City y lo metió en los cuartos de final de la Carabao Cup.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-10-29-Jueves/1.html">1) Los acuerdos de la CGT con el gobierno de Milei complican su ingreso a la mesa de acuerdo del peronismo</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-10-29-Jueves/2.html">2) Mayans aprovechó la interna del gobierno con Bullrich para colar la convocatoria a Santilli al Senado</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-10-29-Jueves/3.html">3) Los trolls de Milei empezaron a atacar a Bullrich, que por ahora no piensa contestar</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-10-29-Jueves/4.html">4) La economía de Milei atraviesa una de las cuatro peores caídas de los últimos 30 años a niveles del Tequila, 2001 y Pandemia</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-10-29-Jueves/5.html">5) La Justicia ordenó vaciar la caja de seguridad de la ex esposa del juez Salmain por una causa de lavado</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-10-29-Jueves/6.html">6) Patricia rompe con Milei</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-10-29-Jueves/7.html">7) Fuerte pelea empresaria en provincia por una licitación de 30 mil millones</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-10-29-Jueves/8.html">8) Los radicales aprovechan las vacaciones del intendente de Santa Fe y le arman un frente opositor</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-10-29-Jueves/1.html">1) DESDE SU REFUGIO EN MIAMI Flávio Bolsonaro le agradeció a Milei, denunció fraude y se proclamó &quot;verdadero presidente de Brasil&quot;.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-10-29-Jueves/2.html">2) Fuga de Flávio Bolsonaro: la oposición presiona para que Santilli, Quirno y Monteoliva den explicaciones.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-10-29-Jueves/3.html">3) El decreto de Milei que no sirvió para frenar la fuga de Flávio Bolsonaro a Estados Unidos.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-10-29-Jueves/4.html">4) El gobierno de Trump le pidió a la Casa Rosada que colaborara con la fuga de Bolsonaro de Brasil.</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-10-29-Jueves/5.html">5) Los Bolsonaro, Trump &amp; Milei, al ataque: las nuevas derechas queman los puentes de la democracia.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-10-29-Jueves/6.html">6) Las cinco causas de Flávio Bolsonaro, el prófugo que Milei ayudó a escapar.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-10-29-Jueves/7.html">7) La fuga de Bolsonaro: CV y vínculos políticos de Sebastián Seoane, el jefe de Migraciones de Milei.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-10-29-Jueves/8.html">8) El Gobierno ayudó al prófugo Flávio Bolsonaro a escapar de Brasil.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-axios" aria-labelledby="source-axios-heading">
+<h3 class="source-heading" id="source-axios-heading"><a href="https://www.axios.com">Axios</a></h3>
+<ol class="source-notes">
+<li class="nota" id="axios_0"><a href="axios/2026-10-27-Martes/1.html">1) 1. Israel se prepara para unas elecciones que ambas partes advierten que podrían traer la ruina.</a></li>
+<li class="nota" id="axios_1"><a href="axios/2026-10-27-Martes/2.html">2) 2. La guerra civil socialista envuelve la carrera por la alcaldía de Los Ángeles.</a></li>
+<li class="nota" id="axios_2"><a href="axios/2026-10-27-Martes/3.html">3) 3. La IPO antrópica lidera el bombardeo de acuerdos de 235 mil millones de dólares de AI.</a></li>
+<li class="nota" id="axios_3"><a href="axios/2026-10-27-Martes/4.html">4) 4. Cómo funcionan las elecciones en Israel mientras Netanyahu lucha por mantenerse en el poder.</a></li>
+<li class="nota" id="axios_4"><a href="axios/2026-10-27-Martes/5.html">5) 5. Los norcoreanos adquieren &quot;experiencia&quot; en la guerra de Ucrania, dice el comandante estadounidense.</a></li>
+<li class="nota" id="axios_5"><a href="axios/2026-10-27-Martes/6.html">6) A mitad de la votación, la participación israelí alcanza su nivel más alto en 53 años.</a></li>
+<li class="nota" id="axios_6"><a href="axios/2026-10-27-Martes/7.html">7) Importantes demócratas del Senado fijan un listón alto para permitir el apoyo al proyecto de ley.</a></li>
+<li class="nota" id="axios_7"><a href="axios/2026-10-27-Martes/8.html">8) permitiendo.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-china_daily" aria-labelledby="source-china_daily-heading">
+<h3 class="source-heading" id="source-china_daily-heading"><a href="https://www.chinadaily.com.cn/china">China Daily</a></h3>
+<ol class="source-notes">
+<li class="nota" id="china_daily_0"><a href="china_daily/2026-10-29-Jueves/1.html">1) El satélite Jilin-1 captura el paisaje de cosechas en toda China.</a></li>
+<li class="nota" id="china_daily_1"><a href="china_daily/2026-10-29-Jueves/2.html">2) Un espectáculo floral se desarrolla en otoño en Guangdong.</a></li>
+<li class="nota" id="china_daily_2"><a href="china_daily/2026-10-29-Jueves/3.html">3) Foto: Voluntarios aportan calidez a Xizang, afectada por el terremoto.</a></li>
+<li class="nota" id="china_daily_3"><a href="china_daily/2026-10-29-Jueves/4.html">4) El sumergible Jiaolong completa pruebas de inmersión a 7.000 metros.</a></li>
+<li class="nota" id="china_daily_4"><a href="china_daily/2026-10-29-Jueves/5.html">5) Sitios arqueológicos más cerca del público.</a></li>
+<li class="nota" id="china_daily_5"><a href="china_daily/2026-10-29-Jueves/6.html">6) Los &#x27;súper estudiantes&#x27; aprovechan la ola de innovación en IA.</a></li>
+<li class="nota" id="china_daily_6"><a href="china_daily/2026-10-29-Jueves/7.html">7) Un microscopio ultraligero mejora el estudio del cerebro de un ratón.</a></li>
+<li class="nota" id="china_daily_7"><a href="china_daily/2026-10-29-Jueves/8.html">8) Nación fortalecerá respuesta de emergencia y prevención.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="el_dia/2026-10-29-Jueves/1.html">1) Provincia, calendario de pagos a estatales: por los feriados, adelantan el pago a docentes.</a></li>
+<li class="nota" id="el_dia_1"><a href="el_dia/2026-10-29-Jueves/2.html">2) Halloween en La Plata: vuelve el desfile de Mascotas a Plaza Azcuénaga.</a></li>
+<li class="nota" id="el_dia_2"><a href="el_dia/2026-10-29-Jueves/3.html">3) Demandan la modificación urgente de lomos de burro en la avenida 72 por &quot;roturas de autos&quot;.</a></li>
+<li class="nota" id="el_dia_3"><a href="el_dia/2026-10-29-Jueves/4.html">4) Vecinos de Plaza Malvinas solicitan la reparación de la fuente central por temor al dengue.</a></li>
+<li class="nota" id="el_dia_4"><a href="el_dia/2026-10-29-Jueves/5.html">5) Peligro en varios barrios: piden corte de pasto y mantenimiento de veredas.</a></li>
+<li class="nota" id="el_dia_5"><a href="el_dia/2026-10-29-Jueves/6.html">6) Vecinos de calle 16 y 58 reclaman la reparación urgente de un peligroso bache: &quot;Es un cráter&quot;.</a></li>
+<li class="nota" id="el_dia_6"><a href="el_dia/2026-10-29-Jueves/7.html">7) En Villa Elvira reclaman por una fuga de agua a días de la habilitación de la red.</a></li>
+<li class="nota" id="el_dia_7"><a href="el_dia/2026-10-29-Jueves/8.html">8) Hormigas voladoras y un &quot;vuelo nupcial&quot; que sorprende sobre la autopista La Plata - Buenos Aires.</a></li>
+<li class="nota" id="el_dia_8"><a href="el_dia/2026-10-29-Jueves/9.html">9) Sin agua en City Bell: vecinos del barrio Santana llevan tres días sin suministro por una falla entre ABSA y EDELAP.</a></li>
+<li class="nota" id="el_dia_9"><a href="el_dia/2026-10-29-Jueves/10.html">10) Los Bomberos Voluntarios de Arturo Seguí realizarán una colecta de sangre.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-10-29-Jueves/1.html">1) Flávio da marcha atrás y borra su autoproclamación como &quot;presidente electo&quot; en su carta desde EE.UU.</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-10-29-Jueves/2.html">2) PUNTOS CLAVE: El primer mensaje de Flávio Bolsonaro tras huir de Brasil a EE.UU.</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-10-29-Jueves/3.html">3) VIDEOS: Manifestantes chocan con policías y exigen renuncia del ministro de Transporte español tras mortífera tragedia ferroviaria</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-10-29-Jueves/4.html">4) Filtran audios de maquinistas justo antes de la tragedia en España: ¿qué revelan?</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-10-29-Jueves/5.html">5) Axios: EE.UU. e Israel preparan una semana de intensos bombardeos contra Irán</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-10-29-Jueves/6.html">6) Declaran emergencia en una instalación nuclear de EE.UU.</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-10-29-Jueves/7.html">7) Trump se pronuncia tras la llegada de Flávio Bolsonaro a EE.UU.</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-10-29-Jueves/8.html">8) Flávio Bolsonaro promete &quot;liderar la oposición&quot; desde EE.UU. tras huir de Brasil</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-10-29-Jueves/1.html">1) Evaluación presidencial: el 26% aprueba la gestión de Orsi y el 52% la desaprueba, según encuesta de Factum</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-10-29-Jueves/2.html">2) Desde Estados Unidos, Flávio Bolsonaro denuncia fraude y anuncia que dirigirá la oposición desde el exterior</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-10-29-Jueves/3.html">3) Choque de dos avionetas en Guazuvirá terminó con un piloto muerto; practicaban acrobacias para un festival</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-10-29-Jueves/4.html">4) Gobierno limitó la compra de municiones y prohibió las armas fabricadas mediante impresión 3D</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-10-29-Jueves/5.html">5) Cuál fue la posible causa del choque de trenes de alta velocidad que dejó al menos 68 muertos en España</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-10-29-Jueves/6.html">6) El día después de otra noche negra de Peñarol: el banderazo que no fue, la final con Wanderers y el alivio de volver a jugar sin hinchas</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-10-29-Jueves/7.html">7) El Mides iniciará en Maldonado un plan para llevar personas en situación de calle a vivir y trabajar en el campo</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-10-29-Jueves/8.html">8) Otra tragedia por choque de trenes en España: al menos 68 muertos por un descarrilamiento en Toledo y se suspende la campaña electoral</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-10-29-Jueves/9.html">9) La Trampa sumó una tercera fecha en el Antel Arena tras agotar entradas para dos shows: precios y detalles</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-10-29-Jueves/10.html">10) Estados Unidos, una vez más, elegido como refugio por la familia Bolsonaro</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-10-29-Jueves/11.html">11) El Toro Rodríguez volvió a convertir para Bournemouth ante Aston Villa y clasificaron en la Copa de la Liga; mirá el video</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-10-29-Jueves/12.html">12) Crónica de una condena negociada: reproches entre los abogados de las víctimas marcaron la audiencia en la que se cerró el caso penal de Sara Goldring</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">La Diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-10-29-Jueves/1.html">1) Trump se desligó de la carta de Flávio Bolsonaro, quien primero afirmó ser “presidente” y luego “líder” de Brasil.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-10-29-Jueves/2.html">2) Flávio Bolsonaro dice ser “el presidente electo de Brasil” en una carta difundida desde Estados Unidos.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-10-29-Jueves/3.html">3) Cámaras empresariales analizarán competitividad portuaria y evalúan apoyar una segunda terminal de contenedores.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-10-29-Jueves/4.html">4) Operación de desinformación “amiga” y contenido falso en la fuga de Bolsonaro.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-10-29-Jueves/5.html">5) Inteligencia artificial: regular antes de depender.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-10-29-Jueves/6.html">6) Otra forma de medir la desigualdad: Uruguay genera más riqueza, pero los trabajadores se quedan con menos.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-10-29-Jueves/7.html">7) España: 68 muertos y decenas de heridos tras el choque de dos trenes de alta velocidad en Toledo.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-10-29-Jueves/8.html">8) 41% de la ciudadanía está en desacuerdo con que se habilite la educación desde el hogar, mientras que 32% está de acuerdo.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-10-29-Jueves/9.html">9) Revés electoral de Netanyahu en las elecciones israelíes.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-10-29-Jueves/10.html">10) Elecciones en Israel: los aliados del opositor Eisenkot lograron más apoyo, pese a que el partido de Netanyahu fue el más votado.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-10-29-Jueves/1.html">1) Brasil| Autoridades migratorias argentinas confirman que Flávio Bolsonaro salió de Brasil víaArgentinarumbo aEcuador</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-10-29-Jueves/2.html">2) Cubaespera en la ONU nuevo apoyo mayoritario contra el bloqueo</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-10-29-Jueves/3.html">3) El Salvador| Inicia el periodo de propaganda electoral para las elecciones presidenciales</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-10-29-Jueves/4.html">4) México| El Gobierno logra en la ONU el apoyo a su resolución sobre el tráfico de armas</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-10-29-Jueves/5.html">5) Ecuador| Ministro del Interior se reúne con autoridades italianas y acuerdan acciones conjuntas contra el crimen organizado</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-10-29-Jueves/6.html">6) Venezuela| Delcy Rodríguez reafirma el compromiso del Ejecutivo con los sectores populares</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-10-29-Jueves/7.html">7) Internacional| Las elecciones en Israel muestran un empate entre Netanyahu y Eisenkot en boca de urna sin los escaños suficientes para formar gobierno</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-10-29-Jueves/8.html">8) Argentina, una semana, tres decisiones judiciales: sobreseimientos para Milei y Macri, persecución para Cristina y Máximo Kirchner – Por Emilia Trabucco</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/1.html">1) Respeto. La intendenta de Madrid Isabel Díaz Ayuso pidió respeto para Milei, porque su mandato emerge de las urnas del pueblo. En la Asamblea de Madrid le habían dicho tarado. El ex primer ministro Felipe González dijo que, si Milei seguía así, Pedro Sánchez se impondría en las elecciones. Y el candidato del PP, Alberto Núñez Feijóo, sostuvo que…. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/2.html">2) Timbero no chilla. Gobierno privatizador, estatiza familia de jueces y fiscales. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/3.html">3) La recesión como modelo. Dos trimestres seguidos de contracción económica. Los mismos sectores que celebran el ordenamiento de la macroeconomía reclaman una devaluación. Por Lucka Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/4.html">4) Lo loco es el rumbo. El rumbo es la pulsión cortoplacista del capital local e internacional, completamente desentendidos de lo que pase con el resto del país. Por Ricardo Aronskind.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/5.html">5) A todo o nada. Una disquisición sobre la naturaleza y el potencial transformador de las músicas populares. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/6.html">6) La entrega en garantía. Milei se burla de la pobreza mientras la deuda se acrecienta, alcanzando casi el 100% del PBI argentino, y es garantizada con los activos públicos. Por Horacio Rovelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/7.html">7) Durmiendo en la oscuridad. Un año sin definiciones por la censura académica negacionista en San Luis. Por Diego Kenis.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/8.html">8) La brújula descompuesta. Washington y Londres alineados. Se cae la fantasía del apoyo de Trump por Malvinas. Por María Fernanda de la Quintana.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/9.html">9) Amargura e impunidad. Casación archiva la causa por la deuda de Macri con el FMI. Las zonas problemáticas del fiscal Raúl Plee, que desistió del recurso. Por Julián Axat y Francisco Verbic.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/10.html">10) Outsourcing. Tercerizar política exterior, defensa e inteligencia implica la cesión del diseño y ejecución de políticas públicas esenciales a usinas de decisión externas. Por Luciano Anzelini.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/11.html">11) Justicia y barbarie. La Justicia federal se ha transformado en el grupo de tareas de nuestro establishment. Por Sebastián Fernández.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/12.html">12) Hiperconcentrado. Vaca Muerta es un dispositivo central de concentración de riqueza y poder en la Argentina y convierte en política pública los intereses corporativos. Por Susana Lara.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/13.html">13) Otro show punitivo. Ampliaron el régimen de alto riesgo implementado en el Servicio Penitenciario Federal, para alojar a mujeres a las que se atribuyen “funciones ejecutivas y de conducción” en organizaciones criminales. Por Osvaldo Aguirre.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/14.html">14) Soberanía o vasallaje. Un referéndum geopolítico que marcará el destino del Sur Global. Por Ariela Ruiz Caro.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/15.html">15) El derecho a gobernar. Digger y una pregunta imprescindible: ¿qué democracia subsiste cuando el poder económico dicta sus límites?. Por Antolín Magallanes.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_15"><a href="el_cohete_a_la_luna/2026-10-26-Lunes/16.html">16) Operación memoria. Los fusilamientos de José León Suárez, el oprobio del doctor Soler y el honor de Rodolfo Walsh, Enriqueta Muñiz y las víctimas de la masacre. Por Guillermo Munné.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-10-28-Miercoles.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>
