@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Miercoles 04 noviembre 2026 08:13 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-11-04-Miercoles/1.html">1) EEUU: los Demócratas controlarán la Cámara de Representantes y el Senado tras ganar varios bastiones republicanos.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-11-04-Miercoles/2.html">2) Paliza histórica para Trump: ¿Y ahora?.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-11-04-Miercoles/3.html">3) “Por qué Messi dejó de correr a los 24 años”: el puntilloso informe que explica la metamorfosis del ídolo.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-11-04-Miercoles/4.html">4) Elecciones en EEUU: tras la victoria demócrata, los mercados europeos y los futuros de Wall Street cotizan con alzas.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-11-04-Miercoles/5.html">5) La derrota de Donald Trump inicia una época global que potenciaría la influencia de Xi Jinping y León XIV.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-11-04-Miercoles/6.html">6) El Gobierno duda por las audiencias privadas del Papa mientras intenta evitar la politización de su visita.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-11-04-Miercoles/7.html">7) El Gobierno admite que se agota la paciencia con Patricia Bullrich y advierten: “Es momento de frenar”.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-11-04-Miercoles/8.html">8) Tras la polémica por los CEDEARs, el Gobierno retirará el proyecto de Competitividad Financiera.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-11-04-Miercoles/9.html">9) Cuáles fueron las claves de la victoria demócrata en las elecciones.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-11-04-Miercoles/10.html">10) Trump afirmó que los republicanos “habrían logrado una victoria aplastante” si él hubiera sido candidato.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-11-04-Miercoles/11.html">11) Quién es Abdul El-Sayed, el demócrata progresista que será el primer senador musulmán de EEUU.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-11-04-Miercoles/12.html">12) Los demócratas recuperaron el control del Senado de EEUU: uno por uno, los nuevos legisladores.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-11-04-Miercoles/1.html">1) Los demócratas toman el control total del Congreso de EE.UU. El largo adiós. Empieza la cuenta regresiva para Donald Trump: a falta de dos años para dejar el poder, se convierte en un “pato rengo” y la aplastante victoria demócrata preanuncia que el tránsito hasta su despedida será difícil. También complica a los gobiernos que, como el de Milei, necesitan de su apoyo para sostenerse. Por. Guido Vassallo.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-11-04-Miercoles/2.html">2) El dia después de las elecciones en EE.UU. Ola demócrata, derrota de Trump y dolor de cabeza para Milei.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-11-04-Miercoles/3.html">3) Históricos comicios de medio término. De la derrota republicana en Texas al primer senador musulmán: seis hitos de las elecciones en EE.UU.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-11-04-Miercoles/4.html">4) Poder concentrado y trazados de distritos que inhiben la competencia electoral. Una democracia de baja calidad. Por. Gustavo Veiga.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-11-04-Miercoles/5.html">5) Se mostró con 15 diputados de su espacio. Bullrich muestra los dientes y amenaza a Milei con bloquearle el Congreso. Por. Eva Moreira.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-11-04-Miercoles/6.html">6) Corridas y protestas en la ciudad de Asunción. La caída del Ueno Bank en Paraguay hace tambalear al presidente Santiago Peña.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-11-04-Miercoles/7.html">7) Cómo se orquestó el ataque transfóbico en Palermo y quiénes están detrás. Por. Martín Villagarcía.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-11-04-Miercoles/8.html">8) El silencio es complicidad. Por. Flor de la V.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-11-04-Miercoles/9.html">9) Tini, Lali, María Becerra, Nicki Nicole y Emilia Mernes repudiaron el brutal ataque a las mujeres trans.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-11-04-Miercoles/10.html">10) Encuentro cara a cara en La Plata. Máximo Kirchner y Axel Kicillof se reunieron para ordenar el PJ bonaerense. Por. Sebastián Cazón.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-11-04-Miercoles/11.html">11) Diferenciarse para después negociar. Mauricio Macri insiste con su posición a favor de las PASO.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-11-04-Miercoles/12.html">12) La UIA pidió mejorar la actividad, el ministro anunció medidas de supervivencia. Caputo ofrece cuidados paliativos a una industria en terapia. Por. Leandro Renou.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-11-04-Miercoles/1.html">1) Javier Milei y sus medidas, en vivo: el Presidente viaja a España y guarda silencio tras la elección intermedia en EE.UU.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-11-04-Miercoles/2.html">2) Los demócratas le arrebataron a Trump el control del Congreso en las elecciones de medio término.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-11-04-Miercoles/3.html">3) Una derrota que afecta a Milei.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-11-04-Miercoles/4.html">4) Una hecatombe electoral que hunde a Trump al peor de los escenarios en el tramo final de su carrera política.</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-11-04-Miercoles/5.html">5) El mapa de resultados estado por estado de republicanos y demócratas, en vivo.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-11-04-Miercoles/6.html">6) Donald Trump dijo que aceptará el resultado electoral y que trabajará con los demócratas.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-11-04-Miercoles/7.html">7) Quién es James Talarico, el demócrata que hizo historia en Texas y acabó con la hegemonía republicana.</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-11-04-Miercoles/8.html">8) Antes de su viaje a la Argentina, el Papa recordó conceptos clave de la doctrina social de la Iglesia.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-11-04-Miercoles/9.html">9) Diputados: el papel de Santiago Caputo en la huida de Bolsonaro tensiona a los aliados y puede frenar el avance de la ley Malvinas.</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-11-04-Miercoles/10.html">10) Monitor de El Niño Las variables del fenómeno climático, en tiempo real.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-11-04-Miercoles/1.html">1) Abrumadora derrota de Trump que pierde las dos cámaras del Congreso y queda a tiro de investigaciones</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-11-04-Miercoles/2.html">2) Histórico: James Talarico derrota a Elon Musk y termina con casi 40 años de triunfos republicanos en Texas</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-11-04-Miercoles/3.html">3) Los demócratas lideran la pelea por el Senado y están ganando en estados republicanos</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-11-04-Miercoles/4.html">4) Los demócratas se encaminan a controlar la Cámara de Representantes y podrían activar investigaciones contra Elon Musk</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-11-04-Miercoles/5.html">5) Milei quiso poner un impuesto a la venta de acciones y tuvo que dar marcha atrás por la furia de los traders libertarios</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-11-04-Miercoles/6.html">6) Las acciones de los bancos se derrumban y exponen el fracaso del modelo financiero de Milei</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-11-04-Miercoles/7.html">7) Chile y Brasil devalúan y agravan el atraso cambiario de Argentina</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-11-04-Miercoles/8.html">8) Patricia arma un bloque de 15 diputados y amenaza con bloquear las leyes del Gobierno: &quot;No sale más nada&quot;</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-11-04-Miercoles/1.html">1) Un pato Donald rengo, un león herido.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-11-04-Miercoles/2.html">2) Milei espera un temblor financiero por la derrota de Trump, pero confía en no perder apoyo de EE.UU.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-11-04-Miercoles/3.html">3) Kicillof y Kirchner se reunieron en La Plata y confirmaron el acuerdo por el Congreso del PJ.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-11-04-Miercoles/4.html">4) Bullrich, a su tropa legislativa: si yo soy rebelde, ustedes también.</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-11-04-Miercoles/5.html">5) Gobernadores en la UIA: los mineros celebran y en el centro piden por la industria, pero la macro no se mancha.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-11-04-Miercoles/6.html">6) La industria del agro, al rojo vivo: despidos, sueldos atrasados, deudas y tres gigantes contra las cuerdas.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-11-04-Miercoles/7.html">7) Kicillof destina 11 mil policías a la misa de León XIV en Luján.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-11-04-Miercoles/8.html">8) Boto, sobre la llegada de León XIV a Luján: &quot;El gran esfuerzo lo hacen la provincia y el municipio&quot;.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-axios" aria-labelledby="source-axios-heading">
+<h3 class="source-heading" id="source-axios-heading"><a href="https://www.axios.com">Axios</a></h3>
+<ol class="source-notes">
+<li class="nota" id="axios_0"><a href="axios/2026-11-01-Domingo/1.html">1) Haley Stevens enfrenta presión para ser removida del caucus demócrata de la Cámara de Representantes.</a></li>
+<li class="nota" id="axios_1"><a href="axios/2026-11-01-Domingo/2.html">2) El personal y los colegas de Haley Stevens estallan ante su &quot;traición&quot;.</a></li>
+<li class="nota" id="axios_2"><a href="axios/2026-11-01-Domingo/3.html">3) Haley Stevens respalda a Mike Rogers en medio de la disputa demócrata de Michigan.</a></li>
+<li class="nota" id="axios_3"><a href="axios/2026-11-01-Domingo/4.html">4) Dónde están poniendo sus fichas los partidarios de 2028.</a></li>
+<li class="nota" id="axios_4"><a href="axios/2026-11-01-Domingo/5.html">5) El senador Chris Murphy hospitalizado tras sufrir un derrame cerebral.</a></li>
+<li class="nota" id="axios_5"><a href="axios/2026-11-01-Domingo/6.html">6) Trump mantiene una llamada franca con Netanyahu sobre el próximo paso en la guerra con Irán.</a></li>
+<li class="nota" id="axios_6"><a href="axios/2026-11-01-Domingo/7.html">7) Detrás del telón: el juego de poder postelectoral de OpenAI.</a></li>
+<li class="nota" id="axios_7"><a href="axios/2026-11-01-Domingo/8.html">8) Abierto AI.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-china_daily" aria-labelledby="source-china_daily-heading">
+<h3 class="source-heading" id="source-china_daily-heading"><a href="https://www.chinadaily.com.cn/china">China Daily</a></h3>
+<ol class="source-notes">
+<li class="nota" id="china_daily_0"><a href="china_daily/2026-11-04-Miercoles/1.html">1) Course charted for strict Party self-governance.</a></li>
+<li class="nota" id="china_daily_1"><a href="china_daily/2026-11-04-Miercoles/2.html">2) Draft amendment to Criminal Procedure Law boosts legal aid.</a></li>
+<li class="nota" id="china_daily_2"><a href="china_daily/2026-11-04-Miercoles/3.html">3) Extend panda conservation model to other endangered species, experts say.</a></li>
+<li class="nota" id="china_daily_3"><a href="china_daily/2026-11-04-Miercoles/4.html">4) Nation backs HK as global financial hub.</a></li>
+<li class="nota" id="china_daily_4"><a href="china_daily/2026-11-04-Miercoles/5.html">5) In search of starry, starry nights.</a></li>
+<li class="nota" id="china_daily_5"><a href="china_daily/2026-11-04-Miercoles/6.html">6) Descendants of resistance heroes retrace historic route.</a></li>
+<li class="nota" id="china_daily_6"><a href="china_daily/2026-11-04-Miercoles/7.html">7) Deliveryman chases his poetic dream.</a></li>
+<li class="nota" id="china_daily_7"><a href="china_daily/2026-11-04-Miercoles/8.html">8) Lingka tradition thrives as leisure economy in Lhasa.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="el_dia/2026-11-04-Miercoles/1.html">1) Cuenta DNI del Banco Provincia: los descuentos de hoy miércoles 4 de noviembre del 2026.</a></li>
+<li class="nota" id="el_dia_1"><a href="el_dia/2026-11-04-Miercoles/2.html">2) En La Plata, la variación de los precios de octubre fue del 2%.</a></li>
+<li class="nota" id="el_dia_2"><a href="el_dia/2026-11-04-Miercoles/3.html">3) El Niño y los seguros de autos: agua, piedra y caída de árboles en la póliza.</a></li>
+<li class="nota" id="el_dia_3"><a href="el_dia/2026-11-04-Miercoles/4.html">4) Arrancan las elecciones estudiantiles en la UNLP.</a></li>
+<li class="nota" id="el_dia_4"><a href="el_dia/2026-11-04-Miercoles/5.html">5) Estudia Ingeniería en La Plata y ya planeó un viaje a la Luna.</a></li>
+<li class="nota" id="el_dia_5"><a href="el_dia/2026-11-04-Miercoles/6.html">6) El cronograma del Roca cambiará por el Papa.</a></li>
+<li class="nota" id="el_dia_6"><a href="el_dia/2026-11-04-Miercoles/7.html">7) Se sortearon las vacantes para los colegios de la UNLP: todos los resultados.</a></li>
+<li class="nota" id="el_dia_7"><a href="el_dia/2026-11-04-Miercoles/8.html">8) El área de Zoonosis deja el Bosque y pasa a una nueva sede en San Carlos.</a></li>
+<li class="nota" id="el_dia_8"><a href="el_dia/2026-11-04-Miercoles/9.html">9) Taxistas vuelven a la carga para que se extienda la vigencia de los autos.</a></li>
+<li class="nota" id="el_dia_9"><a href="el_dia/2026-11-04-Miercoles/10.html">10) Quejas vecinales en Los Hornos por un caño roto en 148 entre 55 y 56.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-11-04-Miercoles/1.html">1) Demócratas ganan control del Congreso en EE.UU.: ¿ahora qué? (MINUTO A MINUTO)</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-11-04-Miercoles/2.html">2) Resultados preliminares muestran victoria de los demócratas en las elecciones de EE.UU.</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-11-04-Miercoles/3.html">3) Líder supremo de Irán publica un mensaje sobre los resultados de las elecciones en EE.UU.</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-11-04-Miercoles/4.html">4) Teherán reacciona a resultados de elecciones en EE.UU.</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-11-04-Miercoles/5.html">5) Trump reconoce que su guerra contra Irán fue uno de los factores del fracaso de los republicanos</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-11-04-Miercoles/6.html">6) ¿Qué hará China para abrir el estrecho de Ormuz?</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-11-04-Miercoles/7.html">7) Candidato &quot;yihadista&quot; gana un escaño en el Senado de EE.UU.: ¿qué pasó?</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-11-04-Miercoles/8.html">8) &quot;Haremos lo que sea mejor para el país&quot;: Trump sobre posible escalada contra Irán tras elecciones</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-11-04-Miercoles/1.html">1) Midterms 2026: los demócratas toman control del Senado, con triunfos históricos en Texas y Kansas</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-11-04-Miercoles/2.html">2) Puerto de aguas profundas en Rocha: Orsi reflota la idea y actualizará el proyecto en que trabajó Mujica</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-11-04-Miercoles/3.html">3) República Ganadera: informe concluyó que existió una maniobra coordinada de desvío de fondos y vaciamiento patrimonial de la empresa</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-11-04-Miercoles/4.html">4) Europa necesita crecer más rápido y mira la agenda de reformas de Latinoamérica</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-11-04-Miercoles/5.html">5) La resignificación al opio de los pueblos, la mano comunista en el Vaticano y elogios del Frente Amplio a Francisco y León XIV por desafiar al sistema</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-11-04-Miercoles/6.html">6) Empresarios uruguayos fabricantes de maquinaria agrícola participarán en la EIMA Internacional en Italia</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-11-04-Miercoles/7.html">7) Maratón de cine papal para preparar la llegada de León XIV: de thrillers políticos en el Vaticano a un papa psicoanalizado, algunos destacados del streaming</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-11-04-Miercoles/8.html">8) Se fue Oscar Puente, acorralado y convertido en una mochila de plomo para Pedro Sanchez antes del 29N</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-11-04-Miercoles/9.html">9) Buscan a una joven de 27 años desaparecida en Maldonado: el sábado viajó a Montevideo con su novio y no regresó</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-11-04-Miercoles/10.html">10) ¡Habemus papamóvil!: presentaron el vehículo en el que se trasladará el papa León XIV en Uruguay</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-11-04-Miercoles/11.html">11) En la casa de la democracia, no: blancos y colorados rechazan homenaje a Fidel Castro en el Parlamento</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-11-04-Miercoles/12.html">12) Fernando Vilar pidió disculpas por sus expresiones sobre las infancias trans en Buscadores: Me consta que mi pregunta fue ofensiva, violenta, discriminatoria, estigmatizante</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">La Diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-11-04-Miercoles/1.html">1) El rechazo a Trump llevó a los demócratas a un gran triunfo en las dos cámaras en las elecciones de medio mandato.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-11-04-Miercoles/2.html">2) Senado aprobó que los legisladores deban rendir cuentas de los viáticos.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-11-04-Miercoles/3.html">3) Ministerio de Defensa Nacional recibió informe de urgencia sobre la muerte de efectivos militares en Fray Bentos.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-11-04-Miercoles/4.html">4) Jutep recibió una denuncia anónima contra la Intendencia de Durazno por contratación de la fundación Free.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-11-04-Miercoles/5.html">5) Fernando Pereira: “Tenemos cierto complejo de decir que somos de izquierda y cristianos, y es lo que hay que abatir”.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-11-04-Miercoles/6.html">6) Uruguay expresó en la ONU su “profunda preocupación” por “amenazas” y “medidas coercitivas” contra la Corte Penal Internacional.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-11-04-Miercoles/7.html">7) La superficie urbanizada de Uruguay creció 125% entre 1985 y 2025.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-11-04-Miercoles/8.html">8) Dragado del canal Martín García: sindicato rechazó propuesta de la empresa y presentó otra, pero hay “ganas de negociar”.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-11-04-Miercoles/9.html">9) Vuelve Zafhfaroni, la legendaria banda uruguaya de jazz-rock fusión.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-11-04-Miercoles/10.html">10) Enrique Topolansky: Uruguay tiene un potencial innovador “increíble”, pero sigue “trancado” en la “vieja escuela”.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-11-04-Miercoles/1.html">1) Paraguay| El presidente del Banco Central, Carlos Carvallo, presentó su renuncia luego de la intervención al Ueno Bank, entidad vinculada a los negocios del presidente Santiago Peña</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-11-04-Miercoles/2.html">2) Argentina| Cristina Fernández se reúne con el diputado brasileño André Janones, creador de la estructura digital que impulsó la victoria electoral de Lula</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-11-04-Miercoles/3.html">3) Chile| Presidente José Kast se reúne con la primera ministra italiana Giorgia Meloni en su gira por Europa</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-11-04-Miercoles/4.html">4) Colombia|  La CUT convoca a un paro nacional para el 19 de noviembre en repudio a la Ley de Rescate Económico promovida por De la Espriella</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-11-04-Miercoles/5.html">5) Uruguay| Docentes de Educación Secundaria anuncia paro ante el incremento de las situaciones de violencia dentro de los centros educativos</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-11-04-Miercoles/6.html">6) Cuba| Canciller Bruno Rodríguez recibe a Richard Tur, diplomático expulsado de EEUU tras la agresión en la ONU</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-11-04-Miercoles/7.html">7) Internacional| Donald Trump anunció que Estados Unidos dejará de proporcionar 4.000 millones de dólares de ayuda militar a Israel a finales de año</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-11-04-Miercoles/8.html">8) Brasil| La base material de la victoria de Lula: políticas populares y disputa de todos los territorios – Por Solange Martínez</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/1.html">1) Electrizados. Mientras ensaya su personaje de contracara progresista de Javier Milei y candidato natural del peronismo, Axel Kicillof está preparando la electrificación del escudo y la red que arrojará sobre los usuarios de electricidad de la provincia de Buenos Aires. Con el mayor sigilo, el 23 de septiembre sostuvo en un documento oficial que la…. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/2.html">2) Exportar para deber. El oro se fuga, la deuda derrama. Por Lucka Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/3.html">3) Juguemos en el bosque. No existe fuerza más poderosa que la de los humanos cuando se asocian para crear algo bello, sea artístico o socio-político. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/4.html">4) ¿Energía para quién?. El país consolida su perfil de potencia petrolera mientras una parte creciente de su población no puede pagar las tarifas de luz y gas. Por Horacio Rovelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/5.html">5) El acelerador de Néstor. Mucho peor que impulsar los vaivenes políticos es consolidar un modelo de miseria planificada por creer que es un destino inexorable. Por Sebastián Fernández.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/6.html">6) El termidor argentino. La historia enseña que una restauración puede cambiar gobiernos y reducir derechos, pero difícilmente devuelve a una sociedad al punto exacto del que partió. Por Antolín Magallanes.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/7.html">7) La paja y el trigo. Los mejores suelos fértiles destinados a la producción de alimentos de las provincias de Río Negro y Neuquén están en riesgo. Por Susana Lara.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/8.html">8) La hora de las urnas. La ciudadanía se pronunció en las urnas en Brasil, en Israel y en Serbia y en manifestaciones populares en las calles de Italia. Por Marcelo Caracoche.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/9.html">9) A la hoguera y sin derechos. Milei y los dueños de medios van por el Estatuto del Periodista. Los senadores que se comprometieron a tratar la “modernización” se desentienden de su promesa. Por Diego Martinez.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/10.html">10) Fuera de campo. Desde el 5 de noviembre, Mar del Plata será epicentro de la tercera edición de Fuera de Campo, un encuentro autogestionado de cine argentino. Por Diego Kenis.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/11.html">11) Esos seres grises. Algunas consideraciones de Hannah Arendt y Betina Stangnett para pensar quiénes, cómo y por qué sostienen el poder en la Argentina. Por Sergio Eissa.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/12.html">12) Un sinfín de nueve dedos. La derecha se burla de los mutilados en accidentes laborales, que afectan a cuatrocientos millones de personas por año en el mundo. Por Alberto Moya.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/13.html">13) Museos del exterminio. Un documental sobre la exhibición triunfalista del genocidio en tiempos de impunidad. Por Juan Manuel Mannarino.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/14.html">14) Repensar la escuela. Modernidad y educación: una sociedad terminada. Por Raúl Moroni.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-11-01-Domingo/15.html">15) Armas con cerebro propio. El uso bélico de la Inteligencia Artificial (IA), cada vez más generalizado, genera preguntas no solo sobre su capacidad destructiva, sino también sobre riesgos, límites, reglas y valores éticos y jurídicos. Por Sergio Ferrari.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-11-03-Martes.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>
