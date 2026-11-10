@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Martes 10 noviembre 2026 10:10 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-11-10-Martes/1.html">1) Jairo interpretó el “Ave María” para recibir al Papa en Córdoba: “Es una gran felicidad estar acá”.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-11-10-Martes/2.html">2) León XIV en la UCA: &quot;El acceso al trabajo para todos debe ser un objetivo de las políticas públicas&quot;.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-11-10-Martes/3.html">3) Fuerte impacto en el sindicalismo por el discurso del Sumo Pontífice ante el mundo del trabajo.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-11-10-Martes/4.html">4) Música en vivo y operativo especial: cómo será el encuentro de León XIV con los jóvenes hoy en Palermo.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-11-10-Martes/5.html">5) Inflación: la buena señal de los primeros días de noviembre y el dato que el Indec dará a conocer esta semana.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-11-10-Martes/6.html">6) Argentina va al Tribunal del Mar para frenar Sea Lion en Malvinas: los argumentos contra el Reino Unido.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-11-10-Martes/7.html">7) Cámara a bordo: la brillante vuelta bajo la lluvia de Colapinto para superar a Gasly en una pista resbaladiza.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-11-10-Martes/8.html">8) Suben las temperaturas en el AMBA: cuándo llegará la máxima de 29 grados y qué día se esperan lluvias.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-11-10-Martes/9.html">9) Caso Ueno Bank: incautaron dos autos clásicos que el Grupo Vázquez restauraba en un taller por USD 78.000.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-11-10-Martes/10.html">10) Es el instrumento en pesos más eficaz para protegerse contra la inflación y su uso se disparó en 2026.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-11-10-Martes/11.html">11) Preocupación por la figura del Bayern Múnich Jamal Musiala tras la enfermedad que le detectaron.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-11-10-Martes/12.html">12) Alex Caniggia mostró el antes y el después de su cambio físico: &quot;De ser obeso a convertirme en una bestia&quot;.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-11-10-Martes/1.html">1) Tercer día de la histórica visita. El Papa encabeza en Córdoba su segunda misa en el país. León XIV oficia la ceremonia religiosa en el predio de la Fábrica Argentina de Aviones (FAdeA) ante una multitud. Por la noche estará nuevamente en CABA para encabezar una vigilia con los jóvenes en el Monumento de los Españoles.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-11-10-Martes/2.html">2) Córdoba vibró en una noche de fe y emoción a la espera de León XIV.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-11-10-Martes/3.html">3) León XIV vivió una segunda jornada intensa, emotiva y multitudinaria. Justicia social para millones. Por. Washington Uranga.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-11-10-Martes/4.html">4) En el Monumento a los Españoles. Una misa con presencia política acotada al oficialismo. Por. Melisa Molina.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-11-10-Martes/5.html">5) Reproches y quejas en redes sociales. La carpa VIP de la polémica en la misa de León XIV.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-11-10-Martes/6.html">6) Más de dos millones de fieles en Palermo. Una multitud para escuchar al Papa. Por. Santiago Brunetto.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-11-10-Martes/7.html">7) Alba Camargo tiene a sus padres y tíos desaparecidos. El Papa se reunirá con una de las impulsoras de la búsqueda en La Perla. Por. Luciana Bertoia.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-11-10-Martes/8.html">8) En el Pequeño Cottolengo Don Orione. Kicillof recibió a León XIV en Claypole: “Que lo escuchen los que tenían los oídos tapados”.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-11-10-Martes/9.html">9) De Fiorito a Claypole, así fue la visita al conurbano. El Papa en tierra de D10S: el fervor que desató León XIV camino al Cottolengo. Por. Adrián Figueroa Díaz.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-11-10-Martes/10.html">10) León XIV le puso el cuerpo a su prédica. La visita del Papa al Don Orione, una reivindicación de la lucha del colectivo de la discapacidad. Por. Matías Ferrari.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-11-10-Martes/11.html">11) Las contradicciones de la burguesía nacional. ¿El Papa León, el Círculo Rojo y el ajuste de Milei son lo mismo? Por. Leandro Renou.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-11-10-Martes/12.html">12) La de pan acumula un retraso del 55 por ciento en los últimos dos años. La venta de facturas en panaderías cayó 80%.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-11-10-Martes/1.html">1) Papa León XIV en la Argentina, EN VIVO: la visita a Córdoba y todo sobre la vigilia joven en el Monumento de los Españoles.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-11-10-Martes/2.html">2) Javier Milei y sus medidas, EN VIVO: el Gobierno desmiente a Villarruel por la invitación a la misa del Papa en Palermo.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-11-10-Martes/3.html">3) León XIV: las razones del fervor.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-11-10-Martes/4.html">4) Discursos comparados Lo que León le dijo a la Argentina (y no a los demás países).</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-11-10-Martes/5.html">5) El Papa habló del “drama” del desempleo, reivindicó la justicia social y apoyó el rol de los gremios y movimientos sociales.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-11-10-Martes/6.html">6) Una multitud capaz de abrazar a Messi y a un papa.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-11-10-Martes/7.html">7) La otra batalla cultural: ¿quién se queda con la palabra del Papa?</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-11-10-Martes/8.html">8) EL PAPA EN SUDAMÉRICA Diario de viaje de la histórica visita de León XIV a Uruguay, la Argentina y Perú; apuntes desde la intimidad de la gira papal.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-11-10-Martes/9.html">9) Trastienda en la UCA: invitados VIP, ausencias y las lecturas que provocó el mensaje del Papa ante empresarios y sindicalistas.</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-11-10-Martes/10.html">10) Un papa cercano a la gente y un mensaje incómodo para el poder.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-11-10-Martes/1.html">1) El Papa cuestionó el modelo de Milei: reivindicó al obispo Angelelli y pidió &quot;tierra, techo y trabajo&quot;</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-11-10-Martes/2.html">2) Vaca Muerta tiene récord de exportación, pero la inversión extranjera no llega pese al RIGI</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-11-10-Martes/3.html">3) &quot;La ruptura con Bullrich pone en riesgo la reelección de Milei&quot;</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-11-10-Martes/4.html">4) El gobernador de Neuquén no esperó a a los libertarios y anticipo la elección a febrero</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-11-10-Martes/5.html">5) Karina quiere echar a todos los funcionarios de Patricia  y de las fuerzas incluido el jefe de Gendarmería</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-11-10-Martes/6.html">6) Bullrich desafía a Milei a que la eche: &quot;Si lo hace el riesgo país se va a 1500&quot;</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-11-10-Martes/7.html">7) El Papa defendió a los discapacitados en Don Orione: &quot;Sus vidas son una bendición&quot;</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-11-10-Martes/8.html">8) El Papa advirtió sobre los trabajadores que no llegan a fin de mes: &quot;La economía al servicio del hombre, no al revés&quot;</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-11-10-Martes/1.html">1) Schiaretti, Martín Menem y Karina Milei, en primera fila para ver a León XIV en FADEA.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-11-10-Martes/2.html">2) León XIV pone a Córdoba ante los ojos del mundo y Llaryora y el obispo Rossi exprimen su nueva sintonía.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-11-10-Martes/3.html">3) Lo que León XIV dijo solo en Argentina que refuta al gobierno de Milei sobre el destinatario del mensaje.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-11-10-Martes/4.html">4) El Gobierno, en su cápsula: la Casa Rosada dice que León XIV no apunta contra Milei.</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-11-10-Martes/5.html">5) El diario de León XIV: los perdedores del modelo y peronismo sin bombo en un lunes trágico para Milei.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-11-10-Martes/6.html">6) Conurbano bendito: Kicillof, el papa y el país que el gobernador quiere disputarle a Milei.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-11-10-Martes/7.html">7) León XIV, el verdadero papa peronista.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-11-10-Martes/8.html">8) León XIV, la discapacidad y un mensaje que interpela a Milei desde el corazón del conurbano.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-axios" aria-labelledby="source-axios-heading">
+<h3 class="source-heading" id="source-axios-heading"><a href="https://www.axios.com">Axios</a></h3>
+<ol class="source-notes">
+<li class="nota" id="axios_0"><a href="axios/2026-11-09-Lunes/1.html">1) 1. Trump: Nuevos ataques en Irán son &quot;bastante improbables&quot;.</a></li>
+<li class="nota" id="axios_1"><a href="axios/2026-11-09-Lunes/2.html">2) 2. Nvidia no tiene un sucesor obvio para Jensen Huang, y eso es un problema.</a></li>
+<li class="nota" id="axios_2"><a href="axios/2026-11-09-Lunes/3.html">3) 3. Hegseth enfrenta una resolución de juicio político por parte de un miembro del Partido Republicano con poco que perder.</a></li>
+<li class="nota" id="axios_3"><a href="axios/2026-11-09-Lunes/4.html">4) 4. La Casa Blanca se muestra cautelosamente optimista sobre las conversaciones de paz entre Rusia y Ucrania esta semana.</a></li>
+<li class="nota" id="axios_4"><a href="axios/2026-11-09-Lunes/5.html">5) 5. El Congreso se enfrenta a una sesión especialmente aburrida.</a></li>
+<li class="nota" id="axios_5"><a href="axios/2026-11-09-Lunes/6.html">6) Sexo, secretos y espías: la historia de las supuestas trampas de miel.</a></li>
+<li class="nota" id="axios_6"><a href="axios/2026-11-09-Lunes/7.html">7) amorío.</a></li>
+<li class="nota" id="axios_7"><a href="axios/2026-11-09-Lunes/8.html">8) La presión aumenta sobre Thune antes de las elecciones de liderazgo del Partido Republicano.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-china_daily" aria-labelledby="source-china_daily-heading">
+<h3 class="source-heading" id="source-china_daily-heading"><a href="https://www.chinadaily.com.cn/china">China Daily</a></h3>
+<ol class="source-notes">
+<li class="nota" id="china_daily_0"><a href="china_daily/2026-11-10-Martes/1.html">1) Gobernanza oceánica de China recibe elogios.</a></li>
+<li class="nota" id="china_daily_1"><a href="china_daily/2026-11-10-Martes/2.html">2) La tecnología puede ayudar a la nación a lograr la neutralidad de carbono antes de 2060: Informe.</a></li>
+<li class="nota" id="china_daily_2"><a href="china_daily/2026-11-10-Martes/3.html">3) El turismo al aire libre está a punto de escalar nuevas alturas nacionales.</a></li>
+<li class="nota" id="china_daily_3"><a href="china_daily/2026-11-10-Martes/4.html">4) Centremos los vínculos con los pandas en el hábitat: director de zoológico de EE. UU.</a></li>
+<li class="nota" id="china_daily_4"><a href="china_daily/2026-11-10-Martes/5.html">5) Foro se centra en la convivencia cultural.</a></li>
+<li class="nota" id="china_daily_5"><a href="china_daily/2026-11-10-Martes/6.html">6) Los descendientes de los héroes de la resistencia recorren una ruta histórica.</a></li>
+<li class="nota" id="china_daily_6"><a href="china_daily/2026-11-10-Martes/7.html">7) Un guardia honesto y un músico holandés agradecido interpretan &#x27;My Motherland&#x27;.</a></li>
+<li class="nota" id="china_daily_7"><a href="china_daily/2026-11-10-Martes/8.html">8) El condado de Drachen se recupera tras un terremoto de magnitud 7,0.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="el_dia/2026-11-10-Martes/1.html">1) Agresiones durante las elecciones en Derecho de la UNLP: comunicado oficial.</a></li>
+<li class="nota" id="el_dia_1"><a href="el_dia/2026-11-10-Martes/2.html">2) San Carlos: los frentistas limpiaron por su cuenta una boca de tormenta.</a></li>
+<li class="nota" id="el_dia_2"><a href="el_dia/2026-11-10-Martes/3.html">3) Vecinos de Tolosa denuncian un basural en 527 y 121 y que llevan 14 días sin recolección de residuos.</a></li>
+<li class="nota" id="el_dia_3"><a href="el_dia/2026-11-10-Martes/4.html">4) Soleado amanecer en La Plata pero se aproximan chaparrones: ¿cuándo llegan?</a></li>
+<li class="nota" id="el_dia_4"><a href="el_dia/2026-11-10-Martes/5.html">5) Los comercios buscan recuperarse tras el feriado: mañana abren casi todos en La Plata.</a></li>
+<li class="nota" id="el_dia_5"><a href="el_dia/2026-11-10-Martes/6.html">6) La Catedral, un punto de encuentro platense para seguir al papa León XIV.</a></li>
+<li class="nota" id="el_dia_6"><a href="el_dia/2026-11-10-Martes/7.html">7) Historias y emoción en el festejo centenario del Club Atlético City Bell.</a></li>
+<li class="nota" id="el_dia_7"><a href="el_dia/2026-11-10-Martes/8.html">8) Las facturas, un lujo: las ventas cayeron un 80%.</a></li>
+<li class="nota" id="el_dia_8"><a href="el_dia/2026-11-10-Martes/9.html">9) Realizan más de 50 pedidos de arreglo de calles.</a></li>
+<li class="nota" id="el_dia_9"><a href="el_dia/2026-11-10-Martes/10.html">10) Celebraron los 50 años del título de abogados.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-11-10-Martes/1.html">1) Rusia, Ucrania y EE.UU. reanudan el diálogo en Abu Dabi</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-11-10-Martes/2.html">2) ¿Quién representará a Rusia en las negociaciones trilaterales con EE.UU. y Ucrania en Abu Dabi?</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-11-10-Martes/3.html">3) Merz &#x27;chantajea&#x27; a la UE para conseguir dinero para Kiev</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-11-10-Martes/4.html">4) Lavrov revela por qué Occidente orquestó una guerra contra Rusia utilizando a Kiev</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-11-10-Martes/5.html">5) ¿Qué pasará con la bóveda secreta de Santiago Peña protegida por tecnología israelí que nadie logra abrir?</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-11-10-Martes/6.html">6) &quot;Que se queden en el hotel&quot;: Lavrov ironiza sobre el rol de los europeos en la reunión de Abu Dabi</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-11-10-Martes/7.html">7) La explosiva revelación sobre el verdadero negocio de Ueno Bank</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-11-10-Martes/8.html">8) La advertencia de los hutíes a una potencia nuclear tras colaborar con Arabia Saudita</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-11-10-Martes/1.html">1) Hay 39 localidades con más perros y gatos que humanos: el mapa de las mascotas en barrios y localidades de Uruguay</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-11-10-Martes/2.html">2) Ignacio Ruglio confirmó que no será candidato a presidente en las elecciones de Peñarol</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-11-10-Martes/3.html">3) Presidente del BCU: En Uruguay la estabilidad no farmea aura, seguimos decidiendo en base al país que fuimos</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-11-10-Martes/4.html">4) De Uruguay a la Unión Europea: cómo fueron las exportaciones en los primeros seis meses de acuerdo con el Mercosur</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-11-10-Martes/5.html">5) Así será el primer casino de Grupo Cipriani en Punta del Este</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-11-10-Martes/6.html">6) ¡Primera semana cálida desde hace varios meses!: meteorólogo pronostica temperaturas hasta 8 °C por encima de lo normal en Uruguay</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-11-10-Martes/7.html">7) Peñarol la sacó regalada: solo una multa de 30 UR por el incidente con bengalas contra Montevideo City Torque por Copa AUF Uruguay</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-11-10-Martes/8.html">8) Misión cumplida, acabamos de pasar a la historia: el piloto que llevó al papa León XIV a Paysandú y el gesto del pontífice que nunca olvidará</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-11-10-Martes/9.html">9) Cinco días sin homicidios en Uruguay: la llamativa coincidencia con la visita del papa León XIV y la aclaración del Ministerio del Interior</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-11-10-Martes/10.html">10) La apuesta de Orsi previo a la visita del papa León XIV y el clima de concordia que alienta al gobierno</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-11-10-Martes/11.html">11) De Plaza Independencia a Florida: el mensaje sin concesiones de León XIV que interpeló a católicos y no católicos</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-11-10-Martes/12.html">12) Carne vacuna y celulosa en el selecto grupo de los US$ 2.000 millones de ingresos por exportaciones</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">La Diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-11-10-Martes/1.html">1) Allanaron la casa del expresidente Peña en Asunción, mientras siguen las investigaciones por la quiebra del Ueno Bank.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-11-10-Martes/2.html">2) Orsi se reunió con los intendentes de Canelones, San José y Florida por el proyecto de Solaria, que iniciaría las obras en 2027.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-11-10-Martes/3.html">3) Lazo se reunió con legisladores del FA y la oposición por las muertes de los militares en Fray Bentos.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-11-10-Martes/4.html">4) El Frente Amplio expresó su “profunda preocupación” ante la crisis financiera e institucional de Paraguay.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-11-10-Martes/5.html">5) El presidente del BCU aseguró que el grupo propietario de Ueno Bank “no tiene actividades en Uruguay”.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-11-10-Martes/6.html">6) Organización de Marset lavó 4,1 millones de dólares en Ueno Bank.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-11-10-Martes/7.html">7) Conexión Ganadera: denuncian maniobras en remate de ganado tras la muerte de Basso.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-11-10-Martes/8.html">8) A raíz del caso Lust, Perrone presentó proyecto que exige un certificado de “libre de deuda” para el cobro por los votos.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-11-10-Martes/9.html">9) Francesca Lessa: “El acceso a los archivos sigue siendo uno de los desafíos principales” en la búsqueda de la verdad.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-11-10-Martes/10.html">10) Encuestas en España le dan mayoría a la derecha para las elecciones del 29 de noviembre.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-11-10-Martes/1.html">1) Paraguay| Allanan la mansión de Santiago Peña tras su destitución y encuentran una bóveda oculta en medio del escándalo de Ueno Bank</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-11-10-Martes/2.html">2) Marcha del Orgullo enArgentina: miles de personas salen a reclamar contra los discursos de odio y ataques a la comunidad LGBTQ+</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-11-10-Martes/3.html">3) Bolivia| Evo Morales cuestiona el proyecto de descentralización del sistema educativo impulsado por la administración de Rodrigo Paz</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-11-10-Martes/4.html">4) Colombia| Fuerzas de Seguridad reprimen a estudiantes universitarios que manifestaban en rechazo a la visita del presidente De la Espriella</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-11-10-Martes/5.html">5) Chile| Gremios de camioneros y transportistas independientes bloquean varias rutas del sur del país en rechazo al aumento del combustible</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-11-10-Martes/6.html">6) Venezuela| Vicepresidente y el embajador de la India se reúnen para trazar alianzas en transporte, energía y gestión de riesgos</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-11-10-Martes/7.html">7) Internacional| Lista Conjunta, alianza de partidos liderados por árabes, respaldará al líder de la oposición Gadi Eisenkot, para que forme un nuevo gobierno en Israel</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-11-10-Martes/8.html">8) León XIV en laArgentinade Milei: una disputa histórica por la fe y la hegemonía política – Por Emilia Trabucco</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/1.html">1) Es la nafta, estúpido. La fuga de las derechas que señalamos en la edición del domingo pasado se aceleró durante la semana, a una velocidad y en una dirección, que podría hacer gritar a sus conductores May Day, May Day. La derrota de Donald Trump en las elecciones de medio término de Estados Unidos fue estrepitosa. No sólo perdió el control de las dos cámaras…. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/2.html">2) El Papa visita &quot;Liberland&quot;. León XIV llegará hoy a la Argentina, una tierra “libre” de justicia social. Por Marcelo Ciaramella.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/3.html">3) Salida de emergencia. Frente financiero en llamas: los bonos se derrumban, el riesgo país se instala en niveles asociados a una elevada probabilidad de incumplimiento y el Banco Central debe intervenir. Por Lucka Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/4.html">4) Una historia secreta de la Argentina (1949-2026). Claves de un país (en)cantado, a través de la vida y la obra del Indio Solari. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/5.html">5) ¿El programa peronista?. No es admisible el estado de flojera opositora frente a uno de los peores gobiernos del mundo y de los más agresivos contra su población. Por Ricardo Aronskind.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/6.html">6) El colapso. El fin del programa financiero y cambiario del JP Morgan. Por Horacio Rovelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/7.html">7) Shock distributivo. Un recorrido histórico para una pregunta clave: ¿alcanza con educar o hace falta distribuir?. Por Sebastián Fernández.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/8.html">8) Brasil oxigena al mundo. De la victoria de Lula a la contraofensiva del movimiento popular global. Por Héctor Luis Saint-Pierre.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/9.html">9) Harbour en la mira. La petrolera británica salpica al RIGI de la exportación de gas. La denuncia de la Procuraduría de Investigaciones Administrativas por la vista gorda a su inhabilitación. Por Susana Lara.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/10.html">10) Es la política. El triunfo de Lula ofrece una lección continental, lejos de la “torre de marfil” de los analistas. Por Luciano Anzelini.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/11.html">11) No más tibios. Bernie Sanders aconseja implementar medidas de fondo para no volver a frustrar las expectativas populares.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/12.html">12) Demagogo de vuelo breve. Las elecciones de medio término en Estados Unidos son el concierto crepuscular del Presidente Trump, que fue castigado por no haber cumplido sus promesas. Por Marcelo Caracoche.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/13.html">13) Renuncia o destitución. Pete Hegseth, secretario de Pentágono, a las puertas del juicio político. Por Jake Johnson.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/14.html">14) Orfandad estratégica. Las juventudes de Francia, España y la Argentina frente al desencantamiento del mundo. Por Walter Bosisio, Juan Montes Cató y Lucas Spinosa.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/15.html">15) La rebeldía no se jubila. Los adultos mayores, un grupo etario que luego de terminar su ciclo “productivo” es, en muchas latitudes, ignorado, despreciado y hasta reprimido. Por Sergio Ferrari.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_15"><a href="el_cohete_a_la_luna/2026-11-09-Lunes/16.html">16) La batalla de Michigan. Vencer la islamofobia y cambiar el paradigma, el desafío de Abdul El-Sayed, que le ganó a Trump, al lobby israelí y al establishment demócrata. Por Aleardo Laría Rajneri.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-11-09-Lunes.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>
