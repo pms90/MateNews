@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Elecciones obligatorias BPS 2026: dónde voto, hasta qué hora se puede y cuáles son las multas por no hacerlo</title>
+        <style>
+            body {
+                max-width: 800px;
+                margin: auto;
+                padding: 5%;
+            }
+            .btnL {
+                background: #d1d1d1;
+                border-radius: 7px;
+                padding: 18px;
+                min-width: 100%;
+                color: #000000;
+                font-size: medium;
+                min-height: 70px;
+            }
+            button {
+                background-color: #d1d1d1;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:disabled {
+                background-color: #d1d1d1;
+                cursor: not-allowed;
+            }
+            button:hover:not(:disabled) {
+                background-color: #d1d1d1;
+            }
+            #voiceSelect {
+                margin: 10px 0;
+                padding: 5px;
+            }
+            .controls {
+                margin: 10px 0;
+            }
+
+            #fullscreenButton {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px;
+                background-color: transparent;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+            #fullscreenIcon {
+                width: 24px;
+                height: 24px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <button id="fullscreenButton">
+        <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+        </svg>
+        </button>
+
+        <div id="texto">
+            <h1>Elecciones obligatorias BPS 2026: dónde voto, hasta qué hora se puede y cuáles son las multas por no hacerlo</h1>
+            <p>Las elecciones del Banco de Previsión Social (BPS) se realizarán el domingo 22 de noviembre y cerca de 2,2 millones de personas estarán habilitadas para votar a los representantes sociales que integrarán el directorio del organismo.</p><p>En estos comicios se elegirán tres representantes: uno por los trabajadores activos, otro por los jubilados y pensionistas y un tercero por las empresas contribuyentes.</p><p>La Corte Electoral ya puso a disposición el plan circuital para que los ciudadanos puedan consultar dónde les corresponde votar.</p><p>El voto es obligatorio para las personas habilitadas, salvo las excepciones previstas en la normativa. Quienes no concurran a las urnas y tampoco justifiquen su ausencia estarán sujetos a multas económicas.</p><p>Dónde voto en las elecciones del BPS 2026: cómo consultar el padrón electoral Los ciudadanos pueden consultar su circuito de votación a través del buscador habilitado por la Corte Electoral para las elecciones del BPS. La consulta puede realizarse mediante tres modalidades: Credencial cívica: ingresando la serie y el número. Cédula de identidad: utilizando el número del documento. Datos personales: indicando nombre, apellido y fecha de nacimiento. El sistema permite conocer el lugar asignado para emitir el voto el domingo 22 de noviembre. Entre los habilitados hay aproximadamente 63.600 personas extranjeras que no cuentan con credencial cívica, pero que podrán votar presentando su cédula de identidad. ¿Es obligatorio votar en las elecciones del BPS? Sí. El voto en las elecciones del BPS es obligatorio para quienes integran el padrón electoral, con determinadas excepciones. La normativa establece que están exoneradas de votar las personas mayores de 75 años y quienes reciben prestaciones por incapacidad, independientemente de su edad. Sin embargo, estas excepciones no se aplican a los mandatarios o apoderados designados para representar a empresas contribuyentes. Cuánto es la multa por no votar en las elecciones del BPS 2026 Las personas habilitadas que no concurran a votar y no presenten una justificación válida deberán pagar una multa. Para las personas físicas, la sanción equivale a una unidad reajustable (UR), unos $ 1.923, según el valor de referencia informado para octubre de 2026. En el caso de las empresas contribuyentes, las multas dependen de la cantidad de trabajadores dependientes y pueden alcanzar los siguientes valores: Estas sanciones se aplican cuando la empresa no designa un mandatario para votar o cuando el representante designado no concurre al acto electoral. Los importes en pesos son orientativos y están calculados sobre una UR de $ 1.923. Quiénes pueden justificar no votar en las elecciones del BPS La Corte Electoral contempla cuatro causales para justificar la ausencia en las elecciones del BPS: Enfermedad, invalidez o imposibilidad física debidamente comprobada. Razones de fuerza mayor que impidan concurrir al circuito. Encontrarse fuera de Uruguay el día de la elección. Estar domiciliado en un departamento diferente al que corresponde votar. Esta causal no se aplica a los mandatarios empresariales. Quienes se encuentren en alguna de estas situaciones deberán presentar la justificación correspondiente ante la Corte Electoral. A qué hora se vota y qué se elige en las elecciones del BPS Las elecciones se realizarán el domingo 22 de noviembre, de 8:00 a 19:30 horas, según la información oficial del BPS. Elecciones Sociales BPS+1 Los votantes elegirán a los representantes de trabajadores activos, jubilados y pensionistas, y empresas contribuyentes que integrarán el directorio del organismo. Para consultar si están habilitados y conocer su local de votación, los ciudadanos pueden ingresar directamente al buscador oficial habilitado por la Corte Electoral . También están disponibles los planes circuitales por departamento .</p>
+        </div>
+        <br><br><br>
+            <div style="display: none;">
+                <label for="voiceSelect">Seleccionar voz:</label>
+                <select id="voiceSelect"></select>
+            </div>
+            <div class="controls">
+                <button onclick="startReading()" id="playButton">
+                    🔊 Leer
+                </button>
+                <button onclick="pauseReading()" id="pauseButton" disabled style="display: none;">
+                    ⏸️ Pausar
+                </button>
+                <button onclick="resumeReading()" id="resumeButton" disabled style="display: none;">
+                    ▶️ Continuar
+                </button>
+                <button onclick="stopReading()" id="stopButton" disabled>
+                    ⏹️ Detener
+                </button>
+            </div>
+            <div id="progress" style="display: none;"></div>
+        <br><br><br>
+        <button class="btnL" onclick="compartir()">Compartir</button>
+        <br><br><br>
+        <button class="btnL" onclick="window.location.href='https://www.elobservador.com.uy/nacional/elecciones-obligatorias-bps-2026-donde-voto-que-hora-se-puede-y-cuales-son-las-multas-no-hacerlo-n6062711'">Ver en web original</button>
+        <br><br><br>
+        <!-- <button class="btnL" onclick="window.location.href='https://matenews.github.io/MateNews/'">Volver a la página principal</button>
+        <br><br><br> -->
+
+
+        <script>
+            function compartir() {
+            if (navigator.share) {
+                navigator.share({
+                title: 'Elecciones obligatorias BPS 2026: dónde voto, hasta qué hora se puede y cuáles son las multas por no hacerlo',
+                text: 'Elecciones obligatorias BPS 2026: dónde voto, hasta qué hora se puede y cuáles son las multas por no hacerlo',
+                url: 'https://www.elobservador.com.uy/nacional/elecciones-obligatorias-bps-2026-donde-voto-que-hora-se-puede-y-cuales-son-las-multas-no-hacerlo-n6062711'
+                })
+                .then(() => console.log('Contenido compartido exitosamente'))
+                .catch((error) => console.error('Error al compartir:', error));
+            } else {
+                console.log("Web Share API no soportada");
+            }
+            }
+        </script>
+
+
+        <script>
+            let speechSynthesis = window.speechSynthesis;
+            let currentUtterance = null;
+            let isPaused = false;
+            let isReading = false;
+            let textBlocks = [];
+            let currentBlockIndex = 0;
+            let lastSpokenIndex = 0;
+            const BLOCK_SIZE = 800;
+
+            function updateButtons(speaking) {
+                document.getElementById('playButton').disabled = speaking;
+                document.getElementById('pauseButton').disabled = !speaking;
+                document.getElementById('resumeButton').disabled = !isPaused;
+                document.getElementById('stopButton').disabled = !speaking;
+            }
+
+            function updateProgress() {
+                const progressDiv = document.getElementById('progress');
+                if (isReading) {
+                    progressDiv.textContent = `Leyendo bloque ${currentBlockIndex + 1} de ${textBlocks.length}`;
+                } else {
+                    progressDiv.textContent = '';
+                }
+            }
+
+            function splitIntoBlocks(text) {
+                const sentences = text.replace(/([.!?])\s+/g, "$1|").split("|");
+
+                let blocks = [];
+                let currentBlock = '';
+
+                sentences.forEach(sentence => {
+                    if (sentence.length > BLOCK_SIZE) {
+                        let subSentences = sentence.replace(/,\s+/g, ",|").split("|");
+                        subSentences.forEach(subSentence => {
+                            if (currentBlock.length + subSentence.length > BLOCK_SIZE) {
+                                if (currentBlock) blocks.push(currentBlock.trim());
+                                currentBlock = subSentence;
+                            } else {
+                                currentBlock += (currentBlock ? ' ' : '') + subSentence;
+                            }
+                        });
+                    } else {
+                        if (currentBlock.length + sentence.length > BLOCK_SIZE) {
+                            blocks.push(currentBlock.trim());
+                            currentBlock = sentence;
+                        } else {
+                            currentBlock += (currentBlock ? ' ' : '') + sentence;
+                        }
+                    }
+                });
+
+                if (currentBlock) blocks.push(currentBlock.trim());
+                return blocks;
+            }
+
+            function speakBlock(index) {
+                if (index >= textBlocks.length) {
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                    return;
+                }
+
+                currentUtterance = new SpeechSynthesisUtterance(textBlocks[index]);
+                currentUtterance.rate = parseFloat(1.3);
+                lastSpokenIndex = index;
+
+
+                currentUtterance.onend = function() {
+                    if (isReading && !isPaused) {
+                        currentBlockIndex++;
+                        updateProgress();
+                        speakBlock(currentBlockIndex);
+                    }
+                };
+
+                currentUtterance.onerror = function(event) {
+                    console.error('Error en la lectura:', event);
+                    isReading = false;
+                    updateButtons(false);
+                    updateProgress();
+                };
+
+                speechSynthesis.speak(currentUtterance);
+            }
+
+            function startReading() {
+                const text = document.getElementById('texto').innerText;
+                if (!text) return;
+
+                stop();
+
+                textBlocks = splitIntoBlocks(text);
+                currentBlockIndex = 0;
+                isReading = true;
+                isPaused = false;
+
+                updateButtons(true);
+                updateProgress();
+                speakBlock(currentBlockIndex);
+            }
+
+            function pause() {
+                speechSynthesis.pause();
+                isPaused = true;
+                updateButtons(true);
+            }
+
+            function resume() {
+                speechSynthesis.resume();
+                isPaused = false;
+                updateButtons(true);
+            }
+
+            function stop() {
+                speechSynthesis.cancel();
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                updateButtons(false);
+                updateProgress();
+            }
+
+            function pauseReading() {
+                if (!isReading) return;
+
+                speechSynthesis.pause();
+                isPaused = true;
+                isReading = false;
+                updateButtons(true);
+                updateProgress();
+            }
+
+            function resumeReading() {
+                if (!isPaused) return;
+
+                isPaused = false;
+                isReading = true;
+
+                if (lastSpokenIndex === currentBlockIndex) {
+                    currentBlockIndex++;
+                }
+
+                updateButtons(true);
+                updateProgress();
+
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else {
+                    speakBlock(currentBlockIndex);
+                }
+            }
+
+            function stopReading() {
+                speechSynthesis.cancel();
+                finishReading();
+            }
+
+            function finishReading() {
+                isReading = false;
+                isPaused = false;
+                currentBlockIndex = 0;
+                lastSpokenIndex = -1;
+                currentUtterance = null;
+                updateButtons(false);
+                updateProgress();
+            }
+
+        </script>
+
+        <script>
+
+            var elem = document.documentElement;
+            var fullscreenButton = document.getElementById("fullscreenButton");
+            var fullscreenIcon = document.getElementById("fullscreenIcon");
+
+            fullscreenButton.addEventListener("click", function() {
+            if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { /* Firefox */
+                document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+                document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { /* IE/Edge */
+                document.msExitFullscreen();
+                }
+            } else {
+                if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+                } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+                } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+                }
+            }
+            });
+
+            document.addEventListener('fullscreenchange', (event) => {
+            if (!document.fullscreenElement) {
+                fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+            } else {
+                fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+            }
+            });
+        </script>
+
+    </body>
+    </html>
