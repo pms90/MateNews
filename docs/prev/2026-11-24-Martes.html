@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./mate.jpg">
+    <title>MateNews</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --page-max-width: 800px;
+            --page-padding: 7%;
+            --surface: rgba(255, 255, 255, 0.96);
+            --line: rgba(0, 0, 0, 0.14);
+            --shadow: rgba(0, 0, 0, 0.08);
+            --highlight: #ffd1003d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            max-width: var(--page-max-width);
+            margin: 0 auto;
+            padding: 24px var(--page-padding) 40px;
+            font-size: 18px;
+        }
+
+        .page-content {
+            position: relative;
+        }
+
+        .source-section {
+            margin-bottom: 28px;
+            scroll-margin-top: 26px;
+        }
+
+        .source-heading {
+            margin-bottom: 14px;
+        }
+
+        .source-notes {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nota {
+            margin-bottom: 10px;
+        }
+
+        :link, a:visited {
+            color: black;
+            text-decoration: none;
+        }
+
+        a:visited {
+            color: black;
+        }
+        a:hover {
+            background: var(--highlight);
+        }
+        a:active {
+            color: black;
+        }
+
+        .tocLink:hover {
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        .btnL {
+            background: #d1d1d1;
+            border-radius: 7px;
+            padding: 18px;
+            min-width: 100%;
+            color: #000000;
+            font-size: 18px;
+            min-height: 70px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #tocToggle {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+
+            z-index: 1100;
+        }
+
+        .tocToggleLines {
+            display: grid;
+            gap: 4px;
+        }
+
+        .tocToggleLines span {
+            display: block;
+            width: 14px;
+            height: 1px;
+            background: #111111;
+            opacity: 1;
+        }
+
+        #tocSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: min(17rem, 82vw);
+            height: 100vh;
+            padding: 72px 16px 24px;
+            box-sizing: border-box;
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            transform: translateX(calc(-100% - 14px));
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        body.toc-open #tocSidebar {
+            transform: translateX(0);
+        }
+
+        #tocBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.36);
+            backdrop-filter: blur(1px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1040;
+        }
+
+        body.toc-open #tocBackdrop {
+            opacity: 0;
+            pointer-events: auto;
+        }
+
+        .tocTitle {
+            margin: 0 0 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+        }
+
+        .tocList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .tocLink {
+            display: block;
+            padding: 6px 0;
+        }
+
+        .tocEmpty {
+            margin: 0;
+            font-size: 0.95rem;
+            opacity: 1;
+        }
+
+        #fullscreenButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            cursor: pointer;
+            border-radius: 0;
+            z-index: 1100;
+        }
+
+        #fullscreenIcon {
+            width: 24px;
+            height: 24px;
+            opacity: 0.8;
+        }
+
+        #tocToggle:focus-visible,
+        #fullscreenButton:focus-visible,
+        .btnL:focus-visible,
+        .tocLink:focus-visible {
+            outline: 1px solid black;
+            outline-offset: 2px;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding-right: 5%;
+                padding-left: 5%;
+            }
+
+            #tocToggle {
+                left: 12px;
+            }
+
+            #fullscreenButton {
+                right: 12px;
+            }
+
+            #tocSidebar {
+                width: min(18rem, 88vw);
+            }
+        }
+
+        @media (min-width: 1100px) {
+            #tocSidebar {
+                top: 18px;
+                left: 18px;
+                height: calc(100vh - 36px);
+                transform: translateX(calc(-100% - 18px));
+            }
+
+
+            #tocBackdrop {
+                background: rgba(255, 255, 255, 0.22);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition: none !important;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main id="mainContent" class="page-content">
+        <br>
+        <br>
+        <h1>MateNews</h1>
+        <p>Martes 24 noviembre 2026 06:01 hs</p>
+        <br>
+
+        <div id="sourceIndex" aria-label="Listado principal de noticias por fuente">
+<section class="source-section" id="source-infobae" aria-labelledby="source-infobae-heading">
+<h3 class="source-heading" id="source-infobae-heading"><a href="https://www.infobae.com/?noredirect">Infobae</a></h3>
+<ol class="source-notes">
+<li class="nota" id="infobae_0"><a href="infobae/2026-11-24-Martes/1.html">1) El Gobierno encara otra reunión clave para aplacar sus conflictos y acomodarse antes de un desafiante fin de año.</a></li>
+<li class="nota" id="infobae_1"><a href="infobae/2026-11-24-Martes/2.html">2) ¿El dólar empieza a inquietar?: el mercado vuelve a cubrirse ante una eventual suba a menos de un año de las elecciones.</a></li>
+<li class="nota" id="infobae_2"><a href="infobae/2026-11-24-Martes/3.html">3) Un juego sexual misterioso y el robo de 70 mil dólares: el actor de Hollywood que murió atado, amordazado y con una soga al cuello.</a></li>
+<li class="nota" id="infobae_3"><a href="infobae/2026-11-24-Martes/4.html">4) La huella de León XIV: el proyecto sobre ludopatía agrega un tema ineludible y ajeno a la apretada agenda del oficialismo.</a></li>
+<li class="nota" id="infobae_4"><a href="infobae/2026-11-24-Martes/5.html">5) Cambio en la cúpula del PAMI: el Gobierno desplazó a las dos máximas autoridades y designó una nueva directora ejecutiva.</a></li>
+<li class="nota" id="infobae_5"><a href="infobae/2026-11-24-Martes/6.html">6) Hoy se conoce un dato clave sobre el rumbo de la economía: ¿la actividad entró en recesión técnica?.</a></li>
+<li class="nota" id="infobae_6"><a href="infobae/2026-11-24-Martes/7.html">7) Fede Bal filmó a Evelyn Botto disfrutando de la pileta de su casa: “Las curvas del verano”.</a></li>
+<li class="nota" id="infobae_7"><a href="infobae/2026-11-24-Martes/8.html">8) La decana de la Facultad de Sociales de la UBA defendió el polémico homenaje: su vínculo con Montoneros.</a></li>
+<li class="nota" id="infobae_8"><a href="infobae/2026-11-24-Martes/9.html">9) El Gobierno le envió una carta formal a la UBA para que impida el homenaje al terrorista Santucho y exigió sanciones.</a></li>
+<li class="nota" id="infobae_9"><a href="infobae/2026-11-24-Martes/10.html">10) Los dos grandes fracasos de Santucho y su idea de &quot;matar a un millón de personas&quot; para lograr la patria socialista.</a></li>
+<li class="nota" id="infobae_10"><a href="infobae/2026-11-24-Martes/11.html">11) El PJ empieza a transitar la discusión sobre cómo ordenarse sin PASO: la compleja tarea para conservar la unidad.</a></li>
+<li class="nota" id="infobae_11"><a href="infobae/2026-11-24-Martes/12.html">12) Un atentado con coche bomba en el centro de Colombia dejó al menos doce heridos y graves daños materiales en edificios.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-pagina_12" aria-labelledby="source-pagina_12-heading">
+<h3 class="source-heading" id="source-pagina_12-heading"><a href="https://www.pagina12.com.ar/?noredirect">Página 12</a></h3>
+<ol class="source-notes">
+<li class="nota" id="pagina_12_0"><a href="pagina_12/2026-11-24-Martes/1.html">1) La ONU advirtió al Gobierno por el ajuste en comedores populares. Con la comida no se juega. Un informe de la ACIJ especial para PáginaI12 revela que el monto que el Gobierno destina a los comedores comunitarios cayó un 36,2%. La ministra Pettovello no solo se niega a actualizar las partidas sino que diseñó un nuevo ajuste del 9,2% para 2027. La situación es tan grave que las Naciones Unidas reclamaron porque estas políticas “no garantizan el derecho a la alimentación”. Por. Laura Vales y Matías Ferrari.</a></li>
+<li class="nota" id="pagina_12_1"><a href="pagina_12/2026-11-24-Martes/2.html">2) Un regreso a los 70 para avanzar sobre la universidad pública. El montaje oficial por el homenaje a Santucho. Por. Karina Micheletto.</a></li>
+<li class="nota" id="pagina_12_2"><a href="pagina_12/2026-11-24-Martes/3.html">3) Trump festejó la medida. Tras el escándalo por sus romances, Nvidia restituyó a Jensen Huang como presidente y CEO.</a></li>
+<li class="nota" id="pagina_12_3"><a href="pagina_12/2026-11-24-Martes/4.html">4) Mientras celebra el desembarco fallido de Lego, se derrumban los jugueteros locales. La “Toy Story” triste del Presidente Milei. Por. Leandro Renou.</a></li>
+<li class="nota" id="pagina_12_4"><a href="pagina_12/2026-11-24-Martes/5.html">5) Calcula que tiene más de 38 votos a favor de la reforma política. Senado: el Gobierno trabaja en la sesión del jueves para avanzar con la suspensión de las PASO.</a></li>
+<li class="nota" id="pagina_12_5"><a href="pagina_12/2026-11-24-Martes/6.html">6) Parastoo Ahmadi tiene 29 años. Una cantante iraní recibió 74 latigazos por emitir un concierto virtual sin velo.</a></li>
+<li class="nota" id="pagina_12_6"><a href="pagina_12/2026-11-24-Martes/7.html">7) Encuentro del Norte Grande. Capitanich reunió a Quintela y Uñac en Chaco mientras el PJ debate cómo elegir candidatos.</a></li>
+<li class="nota" id="pagina_12_7"><a href="pagina_12/2026-11-24-Martes/8.html">8) Otra promesa incumplida de la Casa Rosada. Pataleo de los diputados cordobeses por el cajoneo de la Ley de Biocombustibles. Por. Gregorio Tatián.</a></li>
+<li class="nota" id="pagina_12_8"><a href="pagina_12/2026-11-24-Martes/9.html">9) Mensaje a senadores y senadoras con citas a lo dicho por León XIV. La Iglesia Católica le pone presión al oficialismo: pidió que se apruebe la ley contra la ludopatía. Por. Washington Uranga.</a></li>
+<li class="nota" id="pagina_12_9"><a href="pagina_12/2026-11-24-Martes/10.html">10) Sobre la importancia de la presencia de Mario Roberto Santucho en la Facultad de Ciencias Sociales de la UBA (y no sólo ahí). Por. Cátedra Libre Che Guevara.</a></li>
+<li class="nota" id="pagina_12_10"><a href="pagina_12/2026-11-24-Martes/11.html">11) Las encuestas no benefician a Pedro Sánchez pero los decretos sociales agitan la campaña. España se juega su futuro político este domingo. Por. Héctor Barbotta.</a></li>
+<li class="nota" id="pagina_12_11"><a href="pagina_12/2026-11-24-Martes/12.html">12) Homo Fotogénico. Por. Rodrigo Fresán.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_nacion" aria-labelledby="source-la_nacion-heading">
+<h3 class="source-heading" id="source-la_nacion-heading"><a href="https://www.lanacion.com.ar/">La Nación</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_nacion_0"><a href="la_nacion/2026-11-24-Martes/1.html">1) Javier Milei y sus medidas, en vivo: crece la polémica por el homenaje a Santucho en la UBA y se define la sesión por las PASO.</a></li>
+<li class="nota" id="la_nacion_1"><a href="la_nacion/2026-11-24-Martes/2.html">2) Milei ante senderos que se bifurcan.</a></li>
+<li class="nota" id="la_nacion_2"><a href="la_nacion/2026-11-24-Martes/3.html">3) El Gobierno envió una carta formal a la UBA en la que pidió sancionar a quienes autorizaron el homenaje a Santucho.</a></li>
+<li class="nota" id="la_nacion_3"><a href="la_nacion/2026-11-24-Martes/4.html">4) La decana de Ciencias Sociales que defendió el homenaje a Santucho es militante kirchnerista e hija de un montonero desaparecido.</a></li>
+<li class="nota" id="la_nacion_4"><a href="la_nacion/2026-11-24-Martes/5.html">5) Crisis místicas, visiones del demonio, y “ese no saber decir que no” a los argentinos: un libro revela el mundo íntimo de Francisco.</a></li>
+<li class="nota" id="la_nacion_5"><a href="la_nacion/2026-11-24-Martes/6.html">6) Víctor Manuel Fernández, cardenal: “La tentación que Francisco más temía era sentirse omnipotente”.</a></li>
+<li class="nota" id="la_nacion_6"><a href="la_nacion/2026-11-24-Martes/7.html">7) Favores kirchneristas al gobierno de Milei.</a></li>
+<li class="nota" id="la_nacion_7"><a href="la_nacion/2026-11-24-Martes/8.html">8) El dólar tocó los 6 reales y el mercado le pasa factura a Lula por un ajuste que considera insuficiente.</a></li>
+<li class="nota" id="la_nacion_8"><a href="la_nacion/2026-11-24-Martes/9.html">9) El Gobierno nombró a Verónica Gabriela Pérez como la nueva Directora Ejecutiva del PAMI.</a></li>
+<li class="nota" id="la_nacion_9"><a href="la_nacion/2026-11-24-Martes/10.html">10) Caos en el Bosque: cinco expulsados, la “bicicleta” que generó todo y el botinazo de Cóccaro.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_politica_online" aria-labelledby="source-la_politica_online-heading">
+<h3 class="source-heading" id="source-la_politica_online-heading"><a href="https://www.lapoliticaonline.com">La Politica Online</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_politica_online_0"><a href="la_politica_online/2026-11-24-Martes/1.html">1) Cayó la cúpula del Pami por un ajuste de cuentas interno y la falta de fondos</a></li>
+<li class="nota" id="la_politica_online_1"><a href="la_politica_online/2026-11-24-Martes/2.html">2) La Iglesia cruzó al gobierno por oponerse a la ley contra las apuestas online</a></li>
+<li class="nota" id="la_politica_online_2"><a href="la_politica_online/2026-11-24-Martes/3.html">3) Macri contactó a Llaryora para negociar los lugares en el Consejo de la Magistratura</a></li>
+<li class="nota" id="la_politica_online_3"><a href="la_politica_online/2026-11-24-Martes/4.html">4) &quot;Hay gente en el gobierno que cree que el tiempo de Toto Caputo se agotó&quot;</a></li>
+<li class="nota" id="la_politica_online_4"><a href="la_politica_online/2026-11-24-Martes/5.html">5) Pucciarello enfría su candidatura a gobernador y en el PJ sospechan que la usó para quedarse con un negocio multimillonario</a></li>
+<li class="nota" id="la_politica_online_5"><a href="la_politica_online/2026-11-24-Martes/6.html">6) El costo de los errores no forzados</a></li>
+<li class="nota" id="la_politica_online_6"><a href="la_politica_online/2026-11-24-Martes/7.html">7) Dramático pedido del intendente de Chivilcoy a Milei ante el cierre de una fábrica de calzado</a></li>
+<li class="nota" id="la_politica_online_7"><a href="la_politica_online/2026-11-24-Martes/8.html">8) Crash libertario</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-letra_p" aria-labelledby="source-letra_p-heading">
+<h3 class="source-heading" id="source-letra_p-heading"><a href="https://www.letrap.com.ar/">Letra P</a></h3>
+<ol class="source-notes">
+<li class="nota" id="letra_p_0"><a href="letra_p/2026-11-24-Martes/1.html">1) Los oídos de Kicillof.</a></li>
+<li class="nota" id="letra_p_1"><a href="letra_p/2026-11-24-Martes/2.html">2) La grieta.</a></li>
+<li class="nota" id="letra_p_2"><a href="letra_p/2026-11-24-Martes/3.html">3) Golpeado por los mercados y sostenido por la política.</a></li>
+<li class="nota" id="letra_p_3"><a href="letra_p/2026-11-24-Martes/4.html">4) Milei: la confianza en el Gobierno subió 4,1% en noviembre, pero cayó 17,5% interanual.</a></li>
+<li class="nota" id="letra_p_4"><a href="letra_p/2026-11-24-Martes/5.html">5) Vicegobernador se busca en Salta: Sáenz todavía no se lanzó, pero ya le buscan compañero de fórmula.</a></li>
+<li class="nota" id="letra_p_5"><a href="letra_p/2026-11-24-Martes/6.html">6) Tiempo de gobernadores.</a></li>
+<li class="nota" id="letra_p_6"><a href="letra_p/2026-11-24-Martes/7.html">7) La guerra por las PASO desnuda a Milei y al peronismo.</a></li>
+<li class="nota" id="letra_p_7"><a href="letra_p/2026-11-24-Martes/8.html">8) El riesgo Milei en Córdoba.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-axios" aria-labelledby="source-axios-heading">
+<h3 class="source-heading" id="source-axios-heading"><a href="https://www.axios.com">Axios</a></h3>
+<ol class="source-notes">
+<li class="nota" id="axios_0"><a href="axios/2026-11-23-Lunes/1.html">1) Primicia: Se espera que los viajes aéreos del Día de Acción de Gracias alcancen su nivel más alto en 16 años.</a></li>
+<li class="nota" id="axios_1"><a href="axios/2026-11-23-Lunes/2.html">2) Las luchas electorales en Mississippi no han terminado.</a></li>
+<li class="nota" id="axios_2"><a href="axios/2026-11-23-Lunes/3.html">3) &quot;Preocupante y problemático&quot;: el gobernador Moore critica las acciones de Nvidia de Trump en &quot;The Axios Show&quot;.</a></li>
+<li class="nota" id="axios_3"><a href="axios/2026-11-23-Lunes/4.html">4) El regreso de Huang provoca una reacción bipartidista en el Capitolio.</a></li>
+<li class="nota" id="axios_4"><a href="axios/2026-11-23-Lunes/5.html">5) La iniciativa &quot;demasiado grande para fracasar&quot; de Trump para restaurar al director ejecutivo de Nvidia.</a></li>
+<li class="nota" id="axios_5"><a href="axios/2026-11-23-Lunes/6.html">6) Trump detiene por ahora la detonación de plomo en Iowa.</a></li>
+<li class="nota" id="axios_6"><a href="axios/2026-11-23-Lunes/7.html">7) Rob Arena.</a></li>
+<li class="nota" id="axios_7"><a href="axios/2026-11-23-Lunes/8.html">8) Schumer avisa a Nvidia y a Trump tras la reinstalación de Huang.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-china_daily" aria-labelledby="source-china_daily-heading">
+<h3 class="source-heading" id="source-china_daily-heading"><a href="https://www.chinadaily.com.cn/china">China Daily</a></h3>
+<ol class="source-notes">
+<li class="nota" id="china_daily_0"><a href="china_daily/2026-11-24-Martes/1.html">1) Pakistani astronaut to become first foreign visitor to China&#x27;s Tiangong space station.</a></li>
+<li class="nota" id="china_daily_1"><a href="china_daily/2026-11-24-Martes/2.html">2) Propelling underwater vehicles to new depths.</a></li>
+<li class="nota" id="china_daily_2"><a href="china_daily/2026-11-24-Martes/3.html">3) Wuhan revitalizes idle, messy under-bridge spaces.</a></li>
+<li class="nota" id="china_daily_3"><a href="china_daily/2026-11-24-Martes/4.html">4) Joint welfare plan to cover young and old.</a></li>
+<li class="nota" id="china_daily_4"><a href="china_daily/2026-11-24-Martes/5.html">5) Accelerate natl water diversion project, urge experts.</a></li>
+<li class="nota" id="china_daily_5"><a href="china_daily/2026-11-24-Martes/6.html">6) Zhang Linghe and Tian Xiwei talk about the cross-Strait bonds built through drama.</a></li>
+<li class="nota" id="china_daily_6"><a href="china_daily/2026-11-24-Martes/7.html">7) Surgeon saves overseas worker&#x27;s severed thumb, 40 hours after accident.</a></li>
+<li class="nota" id="china_daily_7"><a href="china_daily/2026-11-24-Martes/8.html">8) Drachen county recovers after 7.0-magnitude earthquake.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_dia" aria-labelledby="source-el_dia-heading">
+<h3 class="source-heading" id="source-el_dia-heading"><a href="https://www.eldia.com/la-ciudad">El Día</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_dia_0"><a href="el_dia/2026-11-24-Martes/1.html">1) La Universidad ante el año más conflictivo desde hace 4 décadas.</a></li>
+<li class="nota" id="el_dia_1"><a href="el_dia/2026-11-24-Martes/2.html">2) Entre alquileres y la caída del consumo, emprender cuesta cada vez más.</a></li>
+<li class="nota" id="el_dia_2"><a href="el_dia/2026-11-24-Martes/3.html">3) Jacarandás sin floración: el clima dejó sin show violeta a la Ciudad.</a></li>
+<li class="nota" id="el_dia_3"><a href="el_dia/2026-11-24-Martes/4.html">4) Un platense de 14 años se subió al podio en Astronomía nacional.</a></li>
+<li class="nota" id="el_dia_4"><a href="el_dia/2026-11-24-Martes/5.html">5) En Altos de San Lorenzo reclaman por las calles, semáforos y la oscuridad.</a></li>
+<li class="nota" id="el_dia_5"><a href="el_dia/2026-11-24-Martes/6.html">6) Feriado a oscuras: otra jornada con apagones en Villa Castells y City Bell.</a></li>
+<li class="nota" id="el_dia_6"><a href="el_dia/2026-11-24-Martes/7.html">7) Dolor en La Plata por la muerte del reconocido abogado Marcos Sorá.</a></li>
+<li class="nota" id="el_dia_7"><a href="el_dia/2026-11-24-Martes/8.html">8) Convocan a debatir sobre construcción de la Ciudad en un encuentro virtual.</a></li>
+<li class="nota" id="el_dia_8"><a href="el_dia/2026-11-24-Martes/9.html">9) Sumando Voluntades recibe donaciones para las viandas de las Fiestas.</a></li>
+<li class="nota" id="el_dia_9"><a href="el_dia/2026-11-24-Martes/10.html">10) Sumando Voluntades busca donaciones para las viandas de las Fiestas.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-rt" aria-labelledby="source-rt-heading">
+<h3 class="source-heading" id="source-rt-heading"><a href="https://actualidad.rt.com">RT</a></h3>
+<ol class="source-notes">
+<li class="nota" id="rt_0"><a href="rt/2026-11-24-Martes/1.html">1) Regreso de Jensen Huang dispara a Nvidia a los 4 billones y desata ola de compras en Wall Street</a></li>
+<li class="nota" id="rt_1"><a href="rt/2026-11-24-Martes/2.html">2) Acciones de Nvidia registran su mejor día desde 2003</a></li>
+<li class="nota" id="rt_2"><a href="rt/2026-11-24-Martes/3.html">3) Tres petroleros escoltados por EE.UU. arden tras chocar con minas en el estrecho de Ormuz</a></li>
+<li class="nota" id="rt_3"><a href="rt/2026-11-24-Martes/4.html">4) Al menos 7 personas heridas en un ataque ucraniano contra una terminal de autobuses en Rusia</a></li>
+<li class="nota" id="rt_4"><a href="rt/2026-11-24-Martes/5.html">5) &quot;Ahora es cuando realmente empezamos a pelear&quot;: La UE se divide por el reparto del dinero</a></li>
+<li class="nota" id="rt_5"><a href="rt/2026-11-24-Martes/6.html">6) Kiev da marcha atrás y borra a Matteo Salvini de su lista negra, pero la polémica está lejos de terminar</a></li>
+<li class="nota" id="rt_6"><a href="rt/2026-11-24-Martes/7.html">7) Hungría compara la negociación del presupuesto de la UE con un bazar de El Cairo o Marrakech</a></li>
+<li class="nota" id="rt_7"><a href="rt/2026-11-24-Martes/8.html">8) Atentado con explosivos en gobernación departamental en Colombia (VIDEOS)</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_observador" aria-labelledby="source-el_observador-heading">
+<h3 class="source-heading" id="source-el_observador-heading"><a href="https://www.elobservador.com.uy/?nogeoredirect">El Observador</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_observador_0"><a href="el_observador/2026-11-24-Martes/1.html">1) Abogada pide a la fiscal de Fray Bentos que carátula del caso de los soldados ahogados pase a homicidio culpable</a></li>
+<li class="nota" id="el_observador_1"><a href="el_observador/2026-11-24-Martes/2.html">2) La trastienda del batacazo de Lorena Roqueta en el BPS: promovida por el director de las empresas y con apoyo sigiloso de una secretaría blanca</a></li>
+<li class="nota" id="el_observador_2"><a href="el_observador/2026-11-24-Martes/3.html">3) Elecciones en el BPS: un golpe al PIT-CNT difícil de digerir y un cambio de rumbo después de 34 años</a></li>
+<li class="nota" id="el_observador_3"><a href="el_observador/2026-11-24-Martes/4.html">4) Una final de la Libertadores podría aportar US$ 26 millones a la economía uruguaya y un recital internacional, US$ 10,6 millones</a></li>
+<li class="nota" id="el_observador_4"><a href="el_observador/2026-11-24-Martes/5.html">5) Que aprendan y que me enseñen: lo que piden los adolescentes a los adultos en Uruguay sobre el mundo digital</a></li>
+<li class="nota" id="el_observador_5"><a href="el_observador/2026-11-24-Martes/6.html">6) Vas a terminar preso: la advertencia de la exjefa jurídica del Hospital Policial al director, que relató en el juicio a Charles Carrera</a></li>
+<li class="nota" id="el_observador_6"><a href="el_observador/2026-11-24-Martes/7.html">7) Académicos advierten que designar exjueces en la Jutep no garantiza su independencia política</a></li>
+<li class="nota" id="el_observador_7"><a href="el_observador/2026-11-24-Martes/8.html">8) La inteligencia artificial entra a escena y así está transformando al teatro en Uruguay y en el mundo</a></li>
+<li class="nota" id="el_observador_8"><a href="el_observador/2026-11-24-Martes/9.html">9) El fin del monopolio humano de la inteligencia: la visión del fundador de Globant Martín Migoya sobre el futuro de la IA en las empresas</a></li>
+<li class="nota" id="el_observador_9"><a href="el_observador/2026-11-24-Martes/10.html">10) Movida gerencial: Riogas tiene una nueva gerenta general y dos cámaras empresariales renuevan sus directorios</a></li>
+<li class="nota" id="el_observador_10"><a href="el_observador/2026-11-24-Martes/11.html">11) Bergara reconoció que la limpieza de Montevideo atravesó un momento mediocre, pero que se está volviendo a la normalidad</a></li>
+<li class="nota" id="el_observador_11"><a href="el_observador/2026-11-24-Martes/12.html">12) Peñarol está de suerte: define de local en el Estadio Campeón del Siglo la segunda final de la Liga AUF Uruguaya</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-la_diaria" aria-labelledby="source-la_diaria-heading">
+<h3 class="source-heading" id="source-la_diaria-heading"><a href="https://ladiaria.com.uy/">La Diaria</a></h3>
+<ol class="source-notes">
+<li class="nota" id="la_diaria_0"><a href="la_diaria/2026-11-24-Martes/1.html">1) Elecciones del BPS: Fernando Pereira afirmó que dirigentes blancos y colorados “partidizaron la campaña”.</a></li>
+<li class="nota" id="la_diaria_1"><a href="la_diaria/2026-11-24-Martes/2.html">2) Operación Tríada: se alcanzó la primera condena por trata con fines de explotación sexual de adolescentes del INAU.</a></li>
+<li class="nota" id="la_diaria_2"><a href="la_diaria/2026-11-24-Martes/3.html">3) Lustemberg será interpelada por el caso Miralles, aunque Casaretto ya pidió su renuncia.</a></li>
+<li class="nota" id="la_diaria_3"><a href="la_diaria/2026-11-24-Martes/4.html">4) A raíz del caso Miralles, Perrone propone modificar el Código Penal para que el homicidio sin intención no sea excarcelable.</a></li>
+<li class="nota" id="la_diaria_4"><a href="la_diaria/2026-11-24-Martes/5.html">5) El foco de la campaña fue “combatir las tres instituciones de 34 años” en el BPS, afirmó el líder de Hay Otro Camino.</a></li>
+<li class="nota" id="la_diaria_5"><a href="la_diaria/2026-11-24-Martes/6.html">6) Elecciones del BPS: el PIT-CNT ganó solo en Montevideo y Canelones y en el interior perdió por 88.000 votos de diferencia.</a></li>
+<li class="nota" id="la_diaria_6"><a href="la_diaria/2026-11-24-Martes/7.html">7) Bergara calificó de “totalmente inadmisible” la denuncia de Adeom y Pereira llamó a poner “siempre primero a la gente”.</a></li>
+<li class="nota" id="la_diaria_7"><a href="la_diaria/2026-11-24-Martes/8.html">8) Ya hay fechas para la final del Uruguayo.</a></li>
+<li class="nota" id="la_diaria_8"><a href="la_diaria/2026-11-24-Martes/9.html">9) La mayoría de las encuestas le siguen dando una sensible ventaja al bloque derechista antes de las elecciones españolas.</a></li>
+<li class="nota" id="la_diaria_9"><a href="la_diaria/2026-11-24-Martes/10.html">10) Con el apoyo de Donald Trump, Jensen Huang volvió a ser el director ejecutivo de Nvidia.</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-nodal" aria-labelledby="source-nodal-heading">
+<h3 class="source-heading" id="source-nodal-heading"><a href="https://www.nodal.am/">Nodal</a></h3>
+<ol class="source-notes">
+<li class="nota" id="nodal_0"><a href="nodal/2026-11-24-Martes/1.html">1) Perú| Consejo de Ministros aprueba la creación del Registro de Organizaciones Criminales con Prácticas Terroristas y anuncia megapenales con apoyo de EEUU</a></li>
+<li class="nota" id="nodal_1"><a href="nodal/2026-11-24-Martes/2.html">2) Argentina| El Riesgo País medido por el banco de inversión JP Morgan, supera los 1.000 puntos y marca nuevo récord anual</a></li>
+<li class="nota" id="nodal_2"><a href="nodal/2026-11-24-Martes/3.html">3) Colombia| Petro rechaza los dichos del presidente De la Espriella: “Nunca los pueblos dan golpes de estado, es el pueblo la fuente del poder”</a></li>
+<li class="nota" id="nodal_3"><a href="nodal/2026-11-24-Martes/4.html">4) Colombia| El Gobierno busca aval en el congreso para desplegar tropas de EEUU en su territorio</a></li>
+<li class="nota" id="nodal_4"><a href="nodal/2026-11-24-Martes/5.html">5) Cuba| Canciller Bruno Rodríguez denuncia la obstrucción del programa de finanzas climáticas por parte de los países desarrollados</a></li>
+<li class="nota" id="nodal_5"><a href="nodal/2026-11-24-Martes/6.html">6) Perú| El Gobierno declara en reorganización al Ministerio de la Mujer y sus programas nacionales</a></li>
+<li class="nota" id="nodal_6"><a href="nodal/2026-11-24-Martes/7.html">7) Internacional| Macron pidió reabrir el debate sobre el ingreso de Ucrania a la OTAN tras la cumbre de Trump, Putin y Xi Jinping</a></li>
+<li class="nota" id="nodal_7"><a href="nodal/2026-11-24-Martes/8.html">8) Milei y la soberanía de los poderosos: Malvinas, negocios extranjeros y doctrina del enemigo interno – Por Emilia Trabucco</a></li>
+</ol>
+</section>
+<section class="source-section" id="source-el_cohete_a_la_luna" aria-labelledby="source-el_cohete_a_la_luna-heading">
+<h3 class="source-heading" id="source-el_cohete_a_la_luna-heading"><a href="https://www.elcohetealaluna.com">El Cohete a la Luna</a></h3>
+<ol class="source-notes">
+<li class="nota" id="el_cohete_a_la_luna_0"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/1.html">1) Un Corso a Contramano. Si el Presidente Javier Milei se distingue por lo bocasucia, su ministro de Economía, Luis Caputo, es el perfecto modelo del lengualarga. Milei es más intrépido, se arroja desde lo alto y engarza disparates a velocidad supersónica. En el avión de regreso a Roma, el Papa León contó que le había dicho que &quot;no es necesario llegar a odiarnos,…. Por Horacio Verbitsky.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_1"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/2.html">2) Certificado de defunción. La cumbre entre Xi Jinping, Putin y Trump dejó una postal histórica irrefutable: el final de la unipolaridad estadounidense. Por Ariela Ruiz Caro.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_2"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/3.html">3) Riesgo de hundirse. El mercado ajusta por su cuenta: amplía la brecha, castiga los bonos y exige rendimientos cada vez mayores para quedarse en pesos. Por Lucka Glezer.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_3"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/4.html">4) Corazón, humor y humildad. La vida es un viaje y no cualquiera es buen pasajero, sugiere Joni Mitchell en su álbum Hejira, que acaba de cumplir 50 años. Por Marcelo Figueras.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_4"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/5.html">5) Destartalados. El modelo de redistribución regresiva del ingreso, con modificación periferizante de la estructura económica argentina, es socialmente inviable. Por Ricardo Aronskind.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_5"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/6.html">6) La timba de siempre. A lo largo de 50 años de historia argentina, la deuda externa sigue enriqueciendo a los mismos y empobreciendo al pueblo argentino. Por Horacio Rovelli.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_6"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/7.html">7) Esa gran obstinación. Desde sus inicios, el peronismo fue objeto de definiciones que poco tienen que ver con su esencia. Por Sebastián Fernández.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_7"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/8.html">8) ¿Imágenes de un naufragio?. Ciberataques, apagones digitales y kits de supervivencia: la vulnerabilidad de las infraestructuras del tecnoceno y la pregunta por quién paga sus costos. Por Pablo Baumann.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_8"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/9.html">9) Maldita industria. El bloque dominante devuelve por cuarta vez una Argentina despedazada y mega endeudada, con su industria devastada. Por Diego Hurtado y Matías Parra Visentin.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_9"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/10.html">10) Máscaras nacionales. La nacionalización de tierras rurales y el artilugio empresario de Tether Holdings Ltd., controlante de Adecoagro, en la compra a Benetton. Por Susana Lara.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_10"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/11.html">11) Hacia un modelo argentino. Economía para vivir bien. Por Foro Economía y Trabajo.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_11"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/12.html">12) La serenata. Cristina contempló desde su balcón la concentración que incluyó la canción de un quilmeño. Por Alberto Moya.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_12"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/13.html">13) Estuve en la cárcel y vinisteis a mí. Cristina libre, punto de partida de la imprescindible transformación. ¿Qué resentimiento o incomprensión vale más que el destino de una nación?. Por Antolín Magallanes.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_13"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/14.html">14) Negocios que cuestan vidas. La responsabilidad de Metrogas y del Estado en el siniestro de gas en Lanús, que costó la vida de dos operarios. Por Andrés Repar.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_14"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/15.html">15) Chiclayo Boy. Impugnación ética y doctrinaria de León XIV al gobierno libertario y pérdida del supuesto “padrinazgo omnipotente” en Washington. Por Luciano Anzelini.</a></li>
+<li class="nota" id="el_cohete_a_la_luna_15"><a href="el_cohete_a_la_luna/2026-11-23-Lunes/16.html">16) El pesebre de la SIDE. Los muros del Bellas Artes siguen guardando el secreto sobre el robo de obras maestras del impresionismo en la Nochebuena de 1980. Por Daniel Ballester.</a></li>
+</ol>
+</section>
+        </div>
+
+        <br>
+        <button class="btnL" onclick="window.location.href='2026-11-23-Lunes.html'">Edición anterior</button>
+
+        <br>
+    </main>
+
+    <button id="tocToggle" aria-expanded="false" aria-controls="tocSidebar" aria-label="Abrir tabla de contenidos">
+        <span class="tocToggleLines" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+        <br>
+        <span class="sr-only">Fuentes</span>
+    </button>
+
+    <aside id="tocSidebar" aria-hidden="true">
+        <p class="tocTitle">Fuentes</p>
+        <nav aria-label="Tabla de contenidos por fuente">
+            <ul id="tocList" class="tocList"></ul>
+            <p id="tocEmpty" class="tocEmpty" hidden>No hay fuentes visibles.</p>
+        </nav>
+    </aside>
+    <div id="tocBackdrop" hidden></div>
+
+    <button id="fullscreenButton" aria-label="Alternar pantalla completa">
+    <svg id="fullscreenIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>
+    </svg>
+    </button>
+
+
+    <script>
+        var elem = document.documentElement;
+        var fullscreenButton = document.getElementById("fullscreenButton");
+        var fullscreenIcon = document.getElementById("fullscreenIcon");
+        var tocToggle = document.getElementById("tocToggle");
+        var tocSidebar = document.getElementById("tocSidebar");
+        var tocBackdrop = document.getElementById("tocBackdrop");
+        var tocList = document.getElementById("tocList");
+        var tocEmpty = document.getElementById("tocEmpty");
+        var sourceIndex = document.getElementById("sourceIndex");
+
+        function slugifyHeading(text, usedIds) {
+            var base = (text || "fuente")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "fuente";
+            var candidate = "source-" + base;
+            var suffix = 2;
+            while (usedIds.has(candidate)) {
+                candidate = "source-" + base + "-" + suffix;
+                suffix += 1;
+            }
+            usedIds.add(candidate);
+            return candidate;
+        }
+
+        function closeToc() {
+            document.body.classList.remove("toc-open");
+            tocToggle.setAttribute("aria-expanded", "false");
+            tocSidebar.setAttribute("aria-hidden", "true");
+            tocBackdrop.hidden = true;
+        }
+
+        function openToc() {
+            document.body.classList.add("toc-open");
+            tocToggle.setAttribute("aria-expanded", "true");
+            tocSidebar.setAttribute("aria-hidden", "false");
+            tocBackdrop.hidden = false;
+        }
+
+        function toggleToc() {
+            if (document.body.classList.contains("toc-open")) {
+                closeToc();
+            } else {
+                openToc();
+            }
+        }
+
+        function buildToc() {
+            if (!sourceIndex) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            var usedIds = new Set();
+            var headings = Array.from(sourceIndex.querySelectorAll("h3"));
+            if (!headings.length) {
+                tocEmpty.hidden = false;
+                return;
+            }
+
+            headings.forEach(function(heading) {
+                var target = heading.closest(".source-section") || heading;
+                if (!target.id) {
+                    target.id = slugifyHeading(heading.textContent, usedIds);
+                } else {
+                    usedIds.add(target.id);
+                }
+
+                var item = document.createElement("li");
+                var link = document.createElement("a");
+                link.className = "tocLink";
+                link.href = "#" + target.id;
+                link.textContent = heading.textContent.trim();
+                link.addEventListener("click", closeToc);
+                item.appendChild(link);
+                tocList.appendChild(item);
+            });
+
+            tocEmpty.hidden = true;
+        }
+
+        buildToc();
+
+        tocToggle.addEventListener("click", toggleToc);
+        tocBackdrop.addEventListener("click", closeToc);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" && document.body.classList.contains("toc-open")) {
+                closeToc();
+            }
+        });
+
+        fullscreenButton.addEventListener("click", function() {
+        if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+            document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+            document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE/Edge */
+            document.msExitFullscreen();
+            }
+        } else {
+            if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+            elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+            elem.msRequestFullscreen();
+            }
+        }
+        });
+
+        document.addEventListener('fullscreenchange', (event) => {
+        if (!document.fullscreenElement) {
+            fullscreenIcon.innerHTML = '<path d="M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z"/>';
+        } else {
+            fullscreenIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        });
+    </script>
+
+
+
+</body>
+</html>
